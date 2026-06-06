@@ -1,0 +1,15 @@
+{
+  "name": "watermenu",
+  "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "backend:dev": "pnpm --filter @watermenu/backend start:dev",
+    "backend:build": "pnpm --filter @watermenu/backend build",
+    "backend:lint": "pnpm --filter @watermenu/backend lint",
+    "backend:typecheck": "pnpm --filter @watermenu/backend typecheck",
+    "backend:test": "pnpm --filter @watermenu/backend test",
+    "backend:prisma:generate": "pnpm --filter @watermenu/backend prisma:generate",
+    "backend:prisma:migrate": "pnpm --filter @watermenu/backend prisma:migrate",
+    "backend:prisma:seed": "pnpm --filter @watermenu/backend prisma:seed"
+  }
+}

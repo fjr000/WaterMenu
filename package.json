@@ -10,6 +10,9 @@
     "backend:test": "pnpm --filter @watermenu/backend test",
     "backend:prisma:generate": "pnpm --filter @watermenu/backend prisma:generate",
     "backend:prisma:migrate": "pnpm --filter @watermenu/backend prisma:migrate",
-    "backend:prisma:seed": "pnpm --filter @watermenu/backend prisma:seed"
+    "backend:prisma:seed": "pnpm --filter @watermenu/backend prisma:seed",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres"
   }
 }

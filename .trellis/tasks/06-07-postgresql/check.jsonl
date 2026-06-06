@@ -1,0 +1,5 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查后端任务是否符合 NestJS、Prisma、PostgreSQL、Session Cookie 当前边界。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查 Docker Compose 数据库环境、Prisma migration / seed 流程是否符合数据库规范。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查认证、Session Cookie、PostgreSQL 接入契约未被破坏。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查 lint、typecheck、test 和验证命令是否满足质量门槛。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"数据库环境、后端认证、session 存储、文档流程跨层，需要检查端到端一致性。"}

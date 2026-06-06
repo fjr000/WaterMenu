@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端任务入口规范，说明 NestJS、Prisma、PostgreSQL、Session Cookie 当前边界。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"本任务新增 PostgreSQL 启动环境并验证 Prisma migration / seed，需要数据库与迁移约束。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"本任务必须保持认证、Prisma、Session Cookie、部署契约一致。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现后需运行后端 lint、typecheck、test 等质量命令。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"新增 Docker Compose、脚本和文档时需遵守现有目录放置约束。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"新增根目录 db:* 脚本属于配置/命令变更，需先复用现有脚本模式。"}

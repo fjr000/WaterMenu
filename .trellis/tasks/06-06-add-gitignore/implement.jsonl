@@ -1,0 +1,3 @@
+{"file":".trellis/spec/backend/index.md","reason":"确认后端根目录、当前源码状态与最小实现约束，避免为 .gitignore 引入超出当前仓库状态的规则。"}
+{"file":".trellis/spec/frontend/index.md","reason":"确认前端根目录、当前源码状态与最小实现约束，确保 .gitignore 只覆盖当前合理需要。"}
+{"file":".trellis/spec/guides/index.md","reason":"加载通用思考指南索引，确保修改前按最小范围和复用原则检查。"}

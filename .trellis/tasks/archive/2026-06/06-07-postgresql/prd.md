@@ -42,12 +42,12 @@
 
 ## Acceptance Criteria (evolving)
 
-* [ ] `pnpm db:up` 能启动 PostgreSQL，并创建 `watermenu` 数据库。
-* [ ] `pnpm backend:prisma:migrate` 能成功应用迁移。
-* [ ] `pnpm backend:prisma:seed` 能成功写入初始 workspace/user。
-* [ ] `pnpm backend:dev` 启动后，认证接口能使用 PostgreSQL 中的数据完成登录。
-* [ ] Session 数据持久化到 PostgreSQL session 表。
-* [ ] 后端 lint、typecheck、test 通过。
+* [x] `pnpm db:up` 能启动 PostgreSQL，并创建 `watermenu` 数据库。
+* [x] `pnpm backend:prisma:migrate` 能成功应用迁移。
+* [x] `pnpm backend:prisma:seed` 能成功写入初始 workspace/user。
+* [x] `pnpm backend:dev` 启动后，认证接口能使用 PostgreSQL 中的数据完成登录。
+* [x] Session 数据持久化到 PostgreSQL session 表。
+* [x] 后端 lint、typecheck、test 通过。
 
 ## Definition of Done
 
@@ -72,8 +72,11 @@
 * 已通过：`pnpm backend:typecheck`。
 * 已通过：`pnpm backend:lint`。
 * 已通过：`pnpm backend:test`，认证 e2e 5 个测试通过。
-* 当前环境运行 `pnpm db:up` 失败：无法访问 Docker daemon socket，错误为 `connect: permission denied`。
-* 因 Docker 权限阻塞，尚未在真实 PostgreSQL 容器上验证 `migrate`、`seed`、登录和 session 表写入。
+* 已通过：`pnpm db:up`，PostgreSQL 容器 `watermenu-postgres` 已启动且 healthy。
+* 已通过：复制 `backend/.env.example` 到本地忽略文件 `backend/.env` 后，`pnpm backend:prisma:migrate` 成功应用迁移。
+* 已通过：`pnpm backend:prisma:seed` 成功写入初始 workspace/user。
+* 已通过：真实后端登录闭环验证：`POST /api/auth/login` 成功、`GET /api/auth/me` 成功、`POST /api/auth/logout` 成功、logout 后 `/api/auth/me` 返回 401。
+* 已通过：登录后 PostgreSQL `session` 表记录数为 1，logout 后记录数为 0。
 
 ## Technical Notes
 

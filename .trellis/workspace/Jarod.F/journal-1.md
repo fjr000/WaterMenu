@@ -102,3 +102,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: 接入 PostgreSQL 本地环境
+
+**Date**: 2026-06-07
+**Task**: 接入 PostgreSQL 本地环境
+**Branch**: `master`
+
+### Summary
+
+通过 Docker Compose 接入本地 PostgreSQL，新增 db:* 脚本和 README 流程，更新数据库规范，并验证 Prisma migrate/seed、认证登录、Session 表写入与登出清理闭环。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9c8c9c8` | (see git log) |
+| `4ab58eb` | (see git log) |
+| `e1d3e89` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
-- **Last Active**: 2026-06-06
+- **Total Sessions**: 4
+- **Last Active**: 2026-06-07
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~104 | Active |
+| `journal-1.md` | ~139 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-06-07 | 接入 PostgreSQL 本地环境 | `9c8c9c8`, `4ab58eb`, `e1d3e89` | `master` |
 | 3 | 2026-06-06 | 实现后端基础登录闭环 | `6d76fe0`, `763b6cc` | `master` |
 | 2 | 2026-06-06 | 添加 gitignore 文件 | `a57ed94` | `master` |
 | 1 | 2026-06-06 | 完成 Bootstrap 规范初始化 | - | `-` |

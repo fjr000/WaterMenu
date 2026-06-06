@@ -1,15 +1,18 @@
 # 后端数据库规范
 
-> 当前仓库尚未接入真实后端源码或数据库配置。本规范仅基于 `AGENTS.md` 的团队工作规则形成临时基础约束；未来接入数据库相关源码后，必须用真实 ORM、迁移方式、查询模式和文件路径刷新本文件。
+> 当前后端已接入 Prisma + PostgreSQL。本规范记录真实 schema、迁移、seed 和 Session 表分工。
 
 ---
 
 ## 当前状态
 
-- 已确认数据库使用 PostgreSQL，数据库访问使用 Prisma。
-- 已确认核心技术契约见 [`technical-contracts.md`](./technical-contracts.md)。
-- 当前尚无真实 Prisma schema、迁移文件、查询封装或源码路径。
-- 禁止编造表名、字段名、事务模式、迁移命令或索引规范。
+- 数据库使用 PostgreSQL，业务数据访问使用 Prisma。
+- Prisma schema：`backend/prisma/schema.prisma`。
+- Prisma migration：`backend/prisma/migrations/`。
+- Seed 脚本：`backend/prisma/seed.ts`。
+- Prisma Service：`backend/src/prisma/prisma.service.ts`。
+- 当前业务表：`workspaces`、`users`。
+- Session 表是基础设施表，由 `connect-pg-simple` 使用 `createTableIfMissing: true` 创建，不在 Prisma schema 中建 `Session` 业务模型。
 
 ---
 
@@ -28,10 +31,31 @@
 - Prisma 是后端访问 PostgreSQL 的主要工具。
 - Prisma 负责模型定义、迁移管理和常规 CRUD 查询。
 - 复杂推荐或统计允许局部使用 Prisma raw SQL，但必须说明原因并补测试。
-- 当前无真实迁移命令可记录；接入源码后，应补充实际命令、查询位置、事务处理、迁移创建方式、命名规则和示例路径。
+当前命令：
+
+```bash
+pnpm --filter @watermenu/backend prisma:generate
+pnpm --filter @watermenu/backend prisma:migrate
+pnpm --filter @watermenu/backend prisma:deploy
+pnpm --filter @watermenu/backend prisma:seed
+```
+
+约束：
+
+- 业务表通过 Prisma schema/migration 管理。
+- `User.email` 当前为全局唯一登录标识。
+- `User.workspaceId` 必填，并关联 `Workspace`。
+- 密码只存 `passwordHash`，seed 必须先 hash 再写入。
+- API 返回 DTO 不得包含 `passwordHash`。
+- Session 中只保存 `userId`，不要保存完整用户、workspace 或权限快照。
 
 ---
 
 ## 源码示例
 
-当前无数据库源码示例，禁止臆造示例。
+实际参考路径：
+
+- `backend/prisma/schema.prisma`
+- `backend/prisma/seed.ts`
+- `backend/src/prisma/prisma.service.ts`
+- `backend/src/auth/auth.service.ts`

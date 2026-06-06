@@ -157,6 +157,142 @@ MVP 后端优先测试：
 
 ---
 
+## 场景：后端基础登录闭环
+
+### 1. Scope / Trigger
+
+- 触发：实现账号密码 + Session Cookie 登录，作为后续 workspace 数据隔离基础。
+- 范围：`backend/` 下 NestJS 后端、Prisma 业务模型、PostgreSQL Session Store、认证 e2e 测试。
+- 不包含：开放注册、邀请码、角色权限、前端页面、JWT、Redis。
+
+### 2. Signatures
+
+API 统一使用 `/api` 前缀：
+
+```text
+POST /api/auth/login
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+Prisma 业务模型：
+
+```text
+Workspace(id, name, createdAt, updatedAt)
+User(id, workspaceId, email, name, passwordHash, createdAt, updatedAt)
+```
+
+后端命令：
+
+```bash
+pnpm --filter @watermenu/backend start:dev
+pnpm --filter @watermenu/backend prisma:generate
+pnpm --filter @watermenu/backend prisma:migrate
+pnpm --filter @watermenu/backend prisma:seed
+```
+
+### 3. Contracts
+
+登录请求：
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "change-me"
+}
+```
+
+登录成功与 `GET /api/auth/me` 返回：
+
+```json
+{
+  "user": {
+    "id": "...",
+    "email": "admin@example.com",
+    "name": "Admin"
+  },
+  "workspace": {
+    "id": "...",
+    "name": "WaterMenu"
+  }
+}
+```
+
+约束：
+
+- `User.email` 全局唯一。
+- `User.workspaceId` 必填。
+- 密码只存 `passwordHash`，API 不返回 `password` / `passwordHash`。
+- Session 中只保存 `userId`。
+- Session Store 使用 PostgreSQL；`connect-pg-simple` 的 session 表是基础设施表，不在 Prisma schema 中建业务模型。
+
+必要环境变量：
+
+```text
+DATABASE_URL
+SESSION_SECRET
+SESSION_COOKIE_NAME
+SESSION_MAX_AGE_MS
+SEED_WORKSPACE_NAME
+SEED_USER_EMAIL
+SEED_USER_PASSWORD
+SEED_USER_NAME
+```
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| `email` 格式非法或密码为空 | DTO + class-validator 拒绝 |
+| 用户不存在 | 返回 401，不泄露账号是否存在 |
+| 密码错误 | 返回 401，不泄露差异化原因 |
+| 未登录访问 `/api/auth/me` | 返回 401 |
+| session 中 userId 对应用户不存在 | 返回 401 |
+| `SESSION_SECRET` 缺失或长度不足 | 应用启动失败 |
+| `DATABASE_URL` 缺失 | 应用启动失败 |
+| logout | 销毁 session 并清除 cookie，返回 `{ ok: true }` |
+
+### 5. Good / Base / Bad Cases
+
+- Good：登录成功后 regenerate session，再写入 `session.userId`。
+- Good：`/api/auth/me` 每次按 `session.userId` 查询 user + workspace，不信任 session 中缓存的用户资料。
+- Base：logout 幂等返回成功，并清理 cookie。
+- Bad：把完整 user、workspace、passwordHash 或权限快照写入 session。
+- Bad：登录失败时区分“账号不存在”和“密码错误”。
+- Bad：前端保存 JWT 或后端同时引入 JWT 登录。
+
+### 6. Tests Required
+
+认证测试应覆盖：
+
+- 未登录访问 `GET /api/auth/me` 返回 401。
+- 正确 email/password 登录成功并设置 `Set-Cookie`。
+- 登录后携带 cookie 访问 `GET /api/auth/me` 返回 user/workspace。
+- 响应体不包含 `password` / `passwordHash`。
+- 错误密码返回 401。
+- 不存在用户返回 401。
+- `POST /api/auth/logout` 后原 cookie 访问 `/api/auth/me` 返回 401。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+POST /api/auth/login -> 返回 JWT -> 前端 localStorage 保存 token
+```
+
+问题：违背项目 Session Cookie 契约，且前端需要手动管理 token。
+
+#### Correct
+
+```text
+POST /api/auth/login -> Set-Cookie -> session.userId -> GET /api/auth/me 查询 user/workspace
+```
+
+原因：登录态由 httpOnly Cookie 和后端 Session Store 管理，后续业务 API 可以统一依赖 session userId 和 workspace 归属。
+
+---
+
 ## 推荐规则契约
 
 MVP 推荐规则：

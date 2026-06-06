@@ -1,6 +1,6 @@
 # 后端质量规范
 
-> 当前仓库尚未接入真实后端源码。本规范仅基于 `AGENTS.md` 的团队工作规则形成临时基础约束；未来接入后端源码后，必须用真实 lint、类型检查、测试命令和文件路径刷新本文件。
+> 当前后端已接入 NestJS + TypeScript。本规范记录真实质量命令和认证测试边界。
 
 ---
 
@@ -27,12 +27,33 @@
 ## 验证要求
 
 - MVP 后端关键测试优先：workspace 数据隔离、登录态访问控制、推荐规则、用餐记录关联/未关联菜品、反馈权重。
-- 当前无后端测试、lint、类型检查命令可记录。
-- 未来接入源码后，必须补充实际验证命令。
+当前后端质量命令：
+
+```bash
+pnpm --filter @watermenu/backend typecheck
+pnpm --filter @watermenu/backend lint
+pnpm --filter @watermenu/backend test
+pnpm --filter @watermenu/backend build
+pnpm --filter @watermenu/backend prisma:generate
+```
+
+认证闭环测试位于 `backend/test/auth.e2e-spec.ts`，至少应断言：
+
+- 未登录访问 `GET /api/auth/me` 返回 401。
+- 正确 email/password 登录成功并设置 `Set-Cookie`。
+- 登录后携带 cookie 访问 `GET /api/auth/me` 返回 user/workspace。
+- 错误密码和不存在用户返回 401，且不泄露差异化原因。
+- API 返回体不包含 `password` / `passwordHash`。
+- `POST /api/auth/logout` 后原 cookie 不再能访问 `GET /api/auth/me`。
 - 修复 bug 时应先复现，再修复，再运行相关验证。
 
 ---
 
 ## 源码示例
 
-当前无后端源码示例，禁止臆造示例。
+实际参考路径：
+
+- `backend/test/auth.e2e-spec.ts`
+- `backend/eslint.config.mjs`
+- `backend/jest.config.cjs`
+- `backend/package.json`

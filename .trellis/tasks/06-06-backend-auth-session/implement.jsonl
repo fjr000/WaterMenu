@@ -1,0 +1,8 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端规范入口，说明当前后端为空、必须按已确认技术栈最小落地"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"包含 NestJS、Prisma、PostgreSQL、Session Cookie、/api 前缀和登录契约"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"约束 backend/ 目录新增文件范围，避免创建无关目录或示例文件"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"约束 Prisma/PostgreSQL 模型、迁移和最小数据库改动"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"约束未登录、非法请求、错误返回的最小后端行为"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"约束测试、lint/type-check 和最小实现质量门槛"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"本任务贯穿数据库、API、Session、测试，需要检查跨层数据流一致性"}
+{"file":".trellis/tasks/06-06-backend-auth-session/research/postgres-session-store.md","reason":"记录 PostgreSQL 持久化 Session 的推荐方案、依赖、配置和测试关注点"}

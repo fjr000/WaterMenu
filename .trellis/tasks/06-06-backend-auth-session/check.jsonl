@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查时先确认后端任务应遵循的规范入口"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查登录、workspace、REST API、Session Cookie 和 Prisma/PostgreSQL 契约是否满足"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查数据库模型、迁移和 Session 表处理是否最小且合理"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查未登录、密码错误、非法请求等错误边界是否符合后端契约"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查测试、lint、type-check 和最小实现原则"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查数据库、服务、Controller、测试之间的数据格式和边界一致性"}
+{"file":".trellis/tasks/06-06-backend-auth-session/research/postgres-session-store.md","reason":"检查 Session store 方案、cookie 配置、logout 行为和测试覆盖是否符合研究结论"}

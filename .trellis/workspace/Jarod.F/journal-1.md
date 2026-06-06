@@ -68,3 +68,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 实现后端基础登录闭环
+
+**Date**: 2026-06-06
+**Task**: 实现后端基础登录闭环
+**Branch**: `master`
+
+### Summary
+
+完成 NestJS 后端认证闭环：pnpm workspace、Prisma Workspace/User、PostgreSQL Session Cookie、seed、auth API、e2e 测试，并更新后端规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6d76fe0` | (see git log) |
+| `763b6cc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

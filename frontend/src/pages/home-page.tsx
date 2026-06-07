@@ -8,6 +8,7 @@ import {
 import type { Dish, MealType } from "../api/types.ts";
 import { CreateDishForm } from "../components/create-dish-form.tsx";
 import { RecommendationPanel } from "../components/recommendation-panel.tsx";
+import { RecipePanel } from "../components/recipe-panel.tsx";
 import { MealRecordForm } from "../components/meal-record-form.tsx";
 import { MealTag } from "../components/meal-tag.tsx";
 import { RecentMealRecords } from "../components/recent-meal-records.tsx";
@@ -32,6 +33,7 @@ export function HomePage() {
     "recommend",
   );
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
+  const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
 
   const handleRecommend = () => {
     recommendMutation.mutate(
@@ -46,6 +48,16 @@ export function HomePage() {
   const resetRecommendationState = () => {
     recommendMutation.reset();
     blindBoxMutation.reset();
+  };
+
+  const handleRecordDish = (dish: Dish) => {
+    setRecipeDish(null);
+    setRecordDish(dish);
+  };
+
+  const handleViewRecipe = (dish: Dish) => {
+    setRecordDish(null);
+    setRecipeDish(dish);
   };
 
   const handleRecordSuccess = () => {
@@ -107,7 +119,8 @@ export function HomePage() {
             blindBoxError={
               blindBoxMutation.isError ? "抽盲盒失败，请重试" : null
             }
-            onRecordDish={setRecordDish}
+            onRecordDish={handleRecordDish}
+            onViewRecipe={handleViewRecipe}
           />
         )}
 
@@ -119,6 +132,16 @@ export function HomePage() {
               defaultMealType={mealType}
               onCancel={() => setRecordDish(null)}
               onSuccess={handleRecordSuccess}
+            />
+          </div>
+        )}
+
+        {recipeDish && (
+          <div className="mt-4">
+            <RecipePanel
+              key={recipeDish.id}
+              dish={recipeDish}
+              onClose={() => setRecipeDish(null)}
             />
           </div>
         )}
@@ -167,7 +190,8 @@ export function HomePage() {
                 <DishCard
                   key={dish.id}
                   dish={dish}
-                  onRecordDish={setRecordDish}
+                  onRecordDish={handleRecordDish}
+                  onViewRecipe={handleViewRecipe}
                 />
               ))}
           </div>
@@ -187,9 +211,11 @@ export function HomePage() {
 function DishCard({
   dish,
   onRecordDish,
+  onViewRecipe,
 }: {
   dish: Dish;
   onRecordDish: (dish: Dish) => void;
+  onViewRecipe: (dish: Dish) => void;
 }) {
   return (
     <Card>
@@ -215,12 +241,20 @@ function DishCard({
           <MealTag key={mt} mealType={mt} />
         ))}
       </div>
-      <SecondaryButton
-        className="mt-3 w-full px-3 py-2 text-xs"
-        onClick={() => onRecordDish(dish)}
-      >
-        记录已吃
-      </SecondaryButton>
+      <div className="mt-3 flex gap-2">
+        <SecondaryButton
+          className="flex-1 px-3 py-2 text-xs"
+          onClick={() => onViewRecipe(dish)}
+        >
+          做法
+        </SecondaryButton>
+        <SecondaryButton
+          className="flex-1 px-3 py-2 text-xs"
+          onClick={() => onRecordDish(dish)}
+        >
+          记录已吃
+        </SecondaryButton>
+      </div>
     </Card>
   );
 }

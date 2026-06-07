@@ -22,6 +22,7 @@ interface Props {
   recommendError: string | null;
   blindBoxError: string | null;
   onRecordDish: (dish: Dish) => void;
+  onViewRecipe: (dish: Dish) => void;
 }
 
 export function RecommendationPanel({
@@ -37,6 +38,7 @@ export function RecommendationPanel({
   recommendError,
   blindBoxError,
   onRecordDish,
+  onViewRecipe,
 }: Props) {
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -101,6 +103,7 @@ export function RecommendationPanel({
               key={candidate.dish.id}
               candidate={candidate}
               onRecordDish={onRecordDish}
+              onViewRecipe={onViewRecipe}
             />
           ))}
         </div>
@@ -125,6 +128,7 @@ export function RecommendationPanel({
               candidate={blindBoxResult}
               highlight
               onRecordDish={onRecordDish}
+              onViewRecipe={onViewRecipe}
             />
           ) : (
             <EmptyState
@@ -143,10 +147,12 @@ function CandidateCard({
   candidate,
   highlight = false,
   onRecordDish,
+  onViewRecipe,
 }: {
   candidate: RecommendationCandidate;
   highlight?: boolean;
   onRecordDish: (dish: Dish) => void;
+  onViewRecipe: (dish: Dish) => void;
 }) {
   return (
     <Card
@@ -188,12 +194,20 @@ function CandidateCard({
         </div>
       )}
 
-      <SecondaryButton
-        className="mt-3 w-full px-3 py-2 text-xs"
-        onClick={() => onRecordDish(candidate.dish)}
-      >
-        记录已吃
-      </SecondaryButton>
+      <div className="mt-3 flex gap-2">
+        <SecondaryButton
+          className="flex-1 px-3 py-2 text-xs"
+          onClick={() => onViewRecipe(candidate.dish)}
+        >
+          查看做法
+        </SecondaryButton>
+        <SecondaryButton
+          className="flex-1 px-3 py-2 text-xs"
+          onClick={() => onRecordDish(candidate.dish)}
+        >
+          记录已吃
+        </SecondaryButton>
+      </div>
     </Card>
   );
 }

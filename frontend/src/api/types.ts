@@ -58,6 +58,16 @@ export interface MealRecord {
   feedbacks: Feedback[];
 }
 
+export interface Recipe {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateDishRequest {
   name: string;
   description?: string;
@@ -77,6 +87,16 @@ export interface UpsertFeedbackRequest {
   mealRecordId: string;
   rating: FeedbackRating;
   note?: string;
+}
+
+export interface CreateRecipeRequest {
+  title: string;
+  content: string;
+}
+
+export interface UpdateRecipeRequest {
+  title?: string;
+  content?: string;
 }
 
 export interface RecommendationCandidate {

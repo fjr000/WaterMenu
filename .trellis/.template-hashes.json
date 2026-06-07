@@ -115,6 +115,7 @@
     ".pi/agents/trellis-check.md": "c38eab17e99c4e903884e815e56152b4dec55a5c2d749302ac64f784c10f879b",
     ".pi/agents/trellis-implement.md": "84fc29b592738571bce9907d65bb33009710b833b9a37c151754f0ae2fb1eea5",
     ".pi/agents/trellis-research.md": "6b7ff7400c2c86cdc27a26f89cd5058c42b869af4c5b1d25a93009174dde6a73",
-    ".pi/extensions/trellis/index.ts": "f0b6dfadbe0e2129c87578a759173d1bbd5fd851de7ffaf0bd214e0e733c8e21"
+    ".pi/extensions/trellis/index.ts": "f0b6dfadbe0e2129c87578a759173d1bbd5fd851de7ffaf0bd214e0e733c8e21",
+    ".pi/settings.json": "a4bc2753bbddc7e626eef8d10c7557059065f00a38888d45654d549310ff8408"
   }
 }

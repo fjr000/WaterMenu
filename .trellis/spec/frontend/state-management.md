@@ -1,38 +1,134 @@
 # 前端状态管理规范
 
-> 当前仓库尚未接入真实前端源码。本规范仅基于 `AGENTS.md` 的团队工作规则形成临时基础约束；未来接入前端源码后，必须用真实状态库、状态分类和文件路径刷新本文件。
+> 基于 `frontend/` 的真实源码，记录当前状态管理方案、状态分类和数据流。
 
 ---
 
 ## 当前状态
 
-- 已确认服务端数据使用 TanStack Query 管理。
-- 已确认本地 UI 状态使用 React `useState` / `useReducer`。
-- MVP 不引入 Redux / Zustand。
-- 已确认核心技术契约见 [`technical-contracts.md`](./technical-contracts.md)。
-- 当前尚无真实 query key、hook、页面或目录路径，禁止臆造。
-
----
-
-## 基础约束
-
-1. **零假设**：状态管理方案不清楚时先询问。
-2. **复用优先**：未来已有状态模块或数据缓存方案时，优先沿用。
-3. **最小实现**：只提升当前任务确实需要共享的状态。
-4. **手术式修改**：不借任务机会替换或重构状态体系。
-5. **简单命名**：状态字段和操作命名应直观、容易搜索。
+- 服务端数据：TanStack Query 5 管理
+- 本地 UI 状态：React useState/useReducer
+- 认证状态：React Context + TanStack Query
+- MVP 不引入 Redux/Zustand
 
 ---
 
 ## 状态分类
 
-- 服务端数据：当前用户、菜品、食谱、用餐记录、反馈、推荐结果等，使用 TanStack Query。
-- 本地 UI 状态：弹窗、tab、表单临时输入、筛选面板、盲盒动画状态等，使用 React 本地状态。
-- 不要把后端数据复制到 Redux/Zustand 类全局 store 作为真实数据源。
-- 接入真实源码后，应补充 query key 规范、状态存放位置、更新方式和实际示例路径。
+### 服务端数据（TanStack Query）
+
+- 当前用户信息：`["auth", "me"]`
+- 菜品列表：`["dishes", mealType]`
+- 推荐结果：通过 mutation 返回
+- 盲盒结果：通过 mutation 返回
+
+### 本地 UI 状态（React 状态）
+
+- 表单输入：React Hook Form 管理
+- 当前 tab：`useState`
+- 餐次筛选：`useState`
+- 新增表单显示/隐藏：`useState`
+
+### 认证状态（Context）
+
+- `AuthProvider`：封装认证逻辑
+- `useAuth()`：获取用户信息、workspace、加载状态、logout 函数
 
 ---
 
-## 源码示例
+## 数据流模式
 
-当前无状态管理源码示例，禁止臆造示例。
+### 服务端数据流
+
+```
+组件 -> useDishes() -> TanStack Query -> apiFetch -> 后端 API
+                ↓
+            缓存 + 自动刷新
+```
+
+### 变更数据流
+
+```
+组件 -> useCreateDish() -> mutation -> apiFetch -> 后端 API
+                ↓
+            onSuccess -> invalidateQueries -> 自动刷新列表
+```
+
+### 认证数据流
+
+```
+App -> AuthProvider -> useQuery(["auth", "me"]) -> apiFetch("/auth/me")
+                ↓
+            Context -> useAuth() -> 组件
+```
+
+---
+
+## Query Key 约定
+
+```typescript
+// 带参数的查询
+const dishesKey = (mealType?: MealType): QueryKey => [
+  "dishes",
+  mealType ?? null,
+];
+
+// 使用示例
+useQuery({ queryKey: dishesKey(mealType), queryFn: ... })
+
+// 失效示例
+queryClient.invalidateQueries({ queryKey: ["dishes"] })
+```
+
+---
+
+## Good / Base / Bad Cases
+
+- Good：菜品列表、当前用户等服务端数据通过 TanStack Query 获取和刷新
+- Good：弹窗开关、当前 tab、筛选状态使用 React 本地状态
+- Good：变更成功后失效相关查询，自动刷新列表
+- Base：复杂表单状态使用 React Hook Form
+- Bad：把菜品列表和用餐记录放入 Redux/Zustand 作为真实数据源
+- Bad：在组件中直接调用 apiFetch 管理数据
+- Bad：手动管理缓存和刷新逻辑
+
+---
+
+## 常见错误
+
+### 错误：把服务端数据放入全局 store
+
+```typescript
+// Bad: Redux/Zustand 管理服务端数据
+const useDishStore = create((set) => ({
+  dishes: [],
+  fetchDishes: async () => {
+    const dishes = await apiFetch("/dishes");
+    set({ dishes });
+  },
+}));
+
+// Good: TanStack Query 管理服务端数据
+function useDishes() {
+  return useQuery({
+    queryKey: ["dishes"],
+    queryFn: () => apiFetch("/dishes"),
+  });
+}
+```
+
+### 错误：手动管理缓存失效
+
+```typescript
+// Bad: 手动更新本地状态
+const [dishes, setDishes] = useState([]);
+const createDish = async (body) => {
+  await apiFetch("/dishes", { method: "POST", body: JSON.stringify(body) });
+  const newDishes = await apiFetch("/dishes");
+  setDishes(newDishes);
+};
+
+// Good: TanStack Query 自动管理
+const { data: dishes } = useDishes();
+const createDish = useCreateDish(); // 内部自动 invalidateQueries
+```

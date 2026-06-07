@@ -1,6 +1,6 @@
 # 前端开发规范索引
 
-> 本目录已完成临时基础规范填充，但当前仓库尚未接入真实前端源码。所有前端规范仅基于 `AGENTS.md` 的团队规则；未来接入真实前端后，必须基于实际文件路径、技术栈和代码模式刷新。
+> 基于 `frontend/` 的真实源码，记录当前前端技术栈、规范和实现细节。
 
 ---
 
@@ -8,23 +8,47 @@
 
 | 规范 | 内容 | 状态 |
 |------|------|------|
-| [目录结构](./directory-structure.md) | 前端文件放置与新增目录约束 | 已填充（受源码未接入限制） |
-| [组件规范](./component-guidelines.md) | 组件实现的临时约束 | 已填充（受源码未接入限制） |
-| [Hook 规范](./hook-guidelines.md) | Hook 与副作用封装的临时约束 | 已填充（受源码未接入限制） |
-| [状态管理](./state-management.md) | 状态管理的临时约束 | 已填充（受源码未接入限制） |
-| [类型安全](./type-safety.md) | 类型组织与校验的临时约束 | 已填充（受源码未接入限制） |
-| [质量规范](./quality-guidelines.md) | 前端质量与验证约束 | 已填充（受源码未接入限制） |
-| [技术契约](./technical-contracts.md) | React、Vite、Tailwind、TanStack Query、PWA、表单与 API 契约 | 已确认（待源码落地） |
+| [目录结构](./directory-structure.md) | 前端文件放置与目录组织 | ✅ 已更新 |
+| [组件规范](./component-guidelines.md) | 组件实现模式、props 约定、样式方案 | ✅ 已更新 |
+| [Hook 规范](./hook-guidelines.md) | Hook 实现模式、数据获取、副作用封装 | ✅ 已更新 |
+| [状态管理](./state-management.md) | TanStack Query + React 状态管理 | ✅ 已更新 |
+| [类型安全](./type-safety.md) | TypeScript 类型、Zod 校验、API 类型 | ✅ 已更新 |
+| [质量规范](./quality-guidelines.md) | 验证命令、质量门禁、测试策略 | ✅ 已更新 |
+| [技术契约](./technical-contracts.md) | React/Vite/Tailwind/TanStack Query/RHF/Zod/PWA 契约 | ✅ 已更新 |
 
 ---
 
-## 当前限制
+## 技术栈
 
-- 当前无真实前端源码示例，禁止臆造示例。
-- 已确认前端根目录为 `frontend/`；当前仅用 `.gitkeep` 保留空目录。
-- 已确认前端技术方向：React + Vite + TypeScript、Tailwind CSS、TanStack Query、React Hook Form + Zod、基础 PWA。
-- 当前无可确认的真实组件模式、测试命令或内部源码目录结构。
-- 后续任何前端任务都应先读取 `docs/project-definition.md` 与本目录技术契约，再按真实源码模式更新这些规范。
+- React 19 + Vite 7 + TypeScript 5.8
+- Tailwind CSS 4（@tailwindcss/vite 插件）
+- TanStack Query 5
+- React Hook Form 7 + Zod 4
+- REST JSON API + Session Cookie
+- 基础 PWA
+
+---
+
+## 当前状态
+
+- 前端根目录：`frontend/`
+- 入口文件：`frontend/src/main.tsx`
+- HTML 入口：`frontend/index.html`
+- 类型检查：`pnpm --filter @watermenu/frontend typecheck`
+- 构建：`pnpm --filter @watermenu/frontend build`
+- 开发：`pnpm --filter @watermenu/frontend dev`
+
+---
+
+## 目录结构
+
+```
+frontend/src/
+├── api/          # API 层（client.ts, types.ts）
+├── components/   # 可复用组件（ui.tsx, create-dish-form.tsx, etc.）
+├── hooks/        # 自定义 Hooks（use-auth.tsx, use-dishes.ts, etc.）
+└── pages/        # 页面组件（login-page.tsx, home-page.tsx）
+```
 
 ---
 

@@ -1,45 +1,90 @@
 # 前端目录结构规范
 
-> 当前仓库尚未接入真实前端源码。本规范仅基于 `AGENTS.md` 的团队工作规则形成临时基础约束；未来接入前端源码后，必须用真实文件路径和实际模式刷新本文件。
+> 基于 `frontend/` 的真实源码，记录当前目录组织方式和新增文件约束。
 
 ---
 
 ## 当前状态
 
-- 目前没有可分析的页面、组件、hook、状态、样式、资源或测试目录。
-- 禁止为前端目录结构编造框架、路由目录、组件分层或资源路径。
-- 新增前端代码前，必须先确认项目实际技术栈与入口位置。
+- 前端根目录：`frontend/`
+- 技术栈：React + Vite + TypeScript + Tailwind CSS v4
+- 入口文件：`frontend/src/main.tsx`
+- HTML 入口：`frontend/index.html`
 
 ---
 
-## 基础约束
+## 目录结构
 
-1. **先思考，零假设**：目录放置不明确时先询问。
-2. **复用优先**：未来已有组件、页面或工具目录时，优先沿用。
-3. **最小实现**：只创建当前任务必要的最少文件夹和文件。
-4. **手术式修改**：只触碰与任务直接相关的前端目录，不顺手重排结构。
-5. **简单命名**：目录、组件、hook、工具命名保持直观、容易搜索。
+```
+frontend/
+├── index.html                    # HTML 入口
+├── package.json                  # 依赖和脚本
+├── tsconfig.app.json             # TypeScript 配置
+├── public/                       # 静态资源
+│   ├── manifest.json             # PWA manifest
+│   └── icons/                    # PWA 图标
+│       ├── icon-192.svg
+│       └── icon-512.svg
+└── src/
+    ├── main.tsx                  # React 入口
+    ├── index.css                 # Tailwind CSS 配置（v4 @theme）
+    ├── api/                      # API 层
+    │   ├── client.ts             # apiFetch 封装
+    │   └── types.ts              # TypeScript 类型定义
+    ├── components/               # 可复用组件
+    │   ├── ui.tsx                # 基础 UI 组件（Button, Input, Card, etc.）
+    │   ├── create-dish-form.tsx  # 新增菜品表单
+    │   ├── meal-tag.tsx          # 餐次标签
+    │   └── recommendation-panel.tsx  # 推荐/盲盒面板
+    ├── hooks/                    # 自定义 Hooks
+    │   ├── use-auth.tsx          # 认证 Hook + AuthProvider
+    │   ├── use-dishes.ts         # 菜品数据 Hook
+    │   └── use-recommendations.ts # 推荐/盲盒 Hook
+    └── pages/                    # 页面组件
+        ├── login-page.tsx        # 登录页
+        └── home-page.tsx         # 主页（推荐 + 菜品管理）
+```
 
 ---
 
-## 已确认的仓库根目录约定
+## 目录职责
 
-- 前端代码根目录使用 `frontend/`。
-- 当前 `frontend/` 仅用 `.gitkeep` 保留空目录，尚无前端源码。
-- `docs/` 用于项目文档，`scripts/` 用于项目级脚本；不要把前端业务代码放入这两个目录。
-- 在技术栈确认前，不在 `frontend/` 下创建框架专属子目录。
+### `src/api/` - API 层
+
+- `client.ts`：封装 `apiFetch` 函数，自动添加 `/api` 前缀和 `credentials: "same-origin"`
+- `types.ts`：定义所有 TypeScript 接口（User, Workspace, Dish, Recommendation, etc.）
+
+### `src/components/` - 可复用组件
+
+- `ui.tsx`：基础 UI 组件（Button, SecondaryButton, Input, Select, Card, PageHeader, EmptyState, Spinner, ErrorBanner）
+- 功能组件：每个文件一个组件，命名使用 kebab-case
+
+### `src/hooks/` - 自定义 Hooks
+
+- `use-auth.tsx`：认证状态管理，包含 `AuthProvider` 和 `useAuth` Hook
+- `use-dishes.ts`：菜品 CRUD 操作
+- `use-recommendations.ts`：推荐和盲盒操作
+
+### `src/pages/` - 页面组件
+
+- 每个页面一个文件，命名使用 kebab-case
+- 页面组件负责组合 hooks 和 components
 
 ---
 
 ## 新增文件规则
 
-- 若已有同类文件，新增代码应放在相邻位置并匹配命名风格。
-- 若没有同类文件，必须先向用户确认目标目录和技术栈。
-- 不允许为了“看起来完整”创建未被任务使用的 components、hooks、stores 等目录。
-- 空目录需要被 Git 跟踪时，使用 `.gitkeep`，不要放入虚假源码或示例文件。
+1. **API 类型**：添加到 `src/api/types.ts`
+2. **基础 UI 组件**：添加到 `src/components/ui.tsx`
+3. **功能组件**：在 `src/components/` 创建新文件，使用 kebab-case
+4. **自定义 Hooks**：在 `src/hooks/` 创建新文件，使用 kebab-case
+5. **页面**：在 `src/pages/` 创建新文件，使用 kebab-case
 
 ---
 
-## 源码示例
+## 命名约定
 
-当前无前端源码示例，禁止臆造示例。接入真实前端源码后，应补充 2-3 个实际文件路径作为参考。
+- 文件名：kebab-case（如 `create-dish-form.tsx`）
+- 组件名：PascalCase（如 `CreateDishForm`）
+- Hook 名：camelCase，以 `use` 开头（如 `useDishes`）
+- 类型名：PascalCase（如 `Dish`, `MealType`）

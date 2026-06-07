@@ -1,0 +1,15 @@
+{"file":"docs/project-definition.md","reason":"检查实现是否符合 MVP 范围、workspace 模型和食谱功能定位。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查数据库、后端 API、前端类型/hook/组件的数据流是否一致。"}
+{"file":".trellis/spec/backend/index.md","reason":"后端检查规范索引。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"检查新增后端模块目录结构。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查 Prisma 模型、迁移和 workspace 隔离查询。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查 recipes API 错误语义是否符合规范。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查后端测试与质量命令。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查后端登录保护、workspace 隔离、API 契约与现有模块一致。"}
+{"file":".trellis/spec/frontend/index.md","reason":"前端检查规范索引。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查 recipe 相关组件实现和样式是否符合规范。"}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"检查 use-recipes query key、mutation 与失效查询。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"检查服务端数据与本地 UI 状态分层。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"检查 API 类型集中、表单校验和类型一致性。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查前端 typecheck/build 与质量门禁。"}
+{"file":".trellis/tasks/06-07-recipe-records/info.md","reason":"检查实现是否符合最终技术设计、验收标准和明确不做事项。"}

@@ -7,12 +7,13 @@
 ## 当前状态
 
 - 数据库使用 PostgreSQL，业务数据访问使用 Prisma。
+- Prisma CLI 配置：`backend/prisma.config.ts`。
 - Prisma schema：`backend/prisma/schema.prisma`。
 - Prisma migration：`backend/prisma/migrations/`。
 - Seed 脚本：`backend/prisma/seed.ts`。
 - Prisma Service：`backend/src/prisma/prisma.service.ts`。
-- 当前业务表：`workspaces`、`users`、`dishes`。
-- 当前业务枚举：`MealType`，取值为 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`。
+- 当前业务表：`workspaces`、`users`、`dishes`、`meal_records`、`feedbacks`。
+- 当前业务枚举：`MealType`，取值为 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`；`FeedbackRating`，取值为 `GOOD`、`OK`、`BAD`。
 - Session 表是基础设施表，由 `connect-pg-simple` 使用 `createTableIfMissing: true` 创建，不在 Prisma schema 中建 `Session` 业务模型。
 
 ---
@@ -44,11 +45,17 @@ pnpm --filter @watermenu/backend prisma:seed
 约束：
 
 - 业务表通过 Prisma schema/migration 管理。
+- Prisma CLI 路径通过 `backend/prisma.config.ts` 配置，保持 schema 为 `prisma/schema.prisma`、migration 目录为 `prisma/migrations`、seed 命令为 `tsx prisma/seed.ts`。
+- 不在 `backend/package.json#prisma` 配置 seed，避免 Prisma CLI deprecated warning。
 - `User.email` 当前为全局唯一登录标识。
 - `User.workspaceId` 必填，并关联 `Workspace`。
 - `Dish.workspaceId` 必填，并关联 `Workspace`；所有菜品查询、读取、更新都必须带当前用户 workspace 边界。
 - `Dish.mealTypes` 使用 Prisma enum 数组；“不限 / 全部”不是可存储枚举值。
 - 同一 workspace 内 `Dish.name` 必须唯一，不同 workspace 可以同名。
+- `MealRecord.workspaceId` 必填，并关联 `Workspace`；所有用餐记录查询、读取、更新都必须带当前用户 workspace 边界。
+- `MealRecord.dishId` 可选；创建 / 更新传入 `dishId` 时必须先校验菜品属于当前 workspace，更新传 `dishId: null` 表示解除关联。
+- `Feedback.workspaceId`、`Feedback.mealRecordId`、`Feedback.userId` 必填；提交反馈前必须确认用餐记录属于当前 workspace。
+- 同一用户对同一条用餐记录最多一条反馈，使用 `@@unique([mealRecordId, userId])` 约束，并通过 `POST /api/feedback` upsert 修改。
 - 密码只存 `passwordHash`，seed 必须先 hash 再写入。
 - API 返回 DTO 不得包含 `passwordHash`。
 - Session 中只保存 `userId`，不要保存完整用户、workspace 或权限快照。
@@ -112,14 +119,17 @@ postgres_data 保留时 session 数据持久化
 | `DATABASE_URL` 与 Compose 配置不匹配 | 先修正配置一致性，再运行 migration / seed |
 | `pnpm db:reset` 后数据丢失 | 这是预期行为；必须重新运行 migrate 和 seed |
 | Session 表不存在 | 启动后端并触发 Session Store 初始化，由 `connect-pg-simple` 自动创建 |
+| 本地 `prisma migrate dev` 因既有 `session` 表提示 drift | 不擅自 reset 数据库；需要保留数据时用 `prisma migrate deploy` 做非破坏性验证，只有用户明确接受清库时才执行 reset |
 | Prisma migration 失败 | 不手工改迁移历史；先检查数据库连接和 schema / migration 状态 |
 
 ### 5. Good / Base / Bad Cases
 
 - Good：`pnpm db:up` 只启动 PostgreSQL，后端继续用 `pnpm backend:dev` 本机运行。
 - Good：`pnpm db:down` 停止容器但保留 `postgres_data`，避免误删本地数据。
+- Good：本地库存在 session 基础设施表且 `migrate dev` 提示 drift 时，使用 `prisma migrate deploy` 验证新业务迁移，避免误清开发数据。
 - Base：新环境先复制 `backend/.env.example`，再启动数据库、迁移、seed、启动后端。
 - Bad：把后端顺手加入 Compose，扩大本地数据库接入任务范围。
+- Bad：看到 `session` 表 drift 就直接 reset 本地库，导致用户开发数据丢失。
 - Bad：`db:reset` 不提醒数据卷会被删除。
 
 ### 6. Tests Required

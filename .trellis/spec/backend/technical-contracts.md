@@ -406,6 +406,155 @@ GET /api/dishes/:id -> 先从 session.userId 解析 workspaceId -> prisma.dish.f
 
 ---
 
+## 场景：用餐记录与反馈基础 API
+
+### 1. Scope / Trigger
+
+- 触发：新增推荐闭环所需的用餐历史与用户反馈数据来源。
+- 范围：`backend/src/meal-records/`、`backend/src/feedback/`、`backend/prisma/schema.prisma` 的 `MealRecord` / `Feedback` / `FeedbackRating`、Prisma migration、后端 e2e 测试。
+- 不包含：前端页面、Recipe、Recommendation、BlindBox、统计报表、搜索、分页、删除接口。
+
+### 2. Signatures
+
+Prisma enum 与模型：
+
+```text
+FeedbackRating = GOOD | OK | BAD
+MealRecord(id, workspaceId, dishId?, title, mealType, eatenAt, note?, createdAt, updatedAt)
+Feedback(id, workspaceId, mealRecordId, userId, rating, note?, createdAt, updatedAt)
+```
+
+数据库约束：
+
+```text
+MealRecord.workspaceId -> Workspace.id
+MealRecord.dishId? -> Dish.id，Dish 删除时 SetNull
+Feedback.workspaceId -> Workspace.id
+Feedback.mealRecordId -> MealRecord.id，MealRecord 删除时 Cascade
+Feedback.userId -> User.id
+Feedback 同一用户同一用餐记录唯一：@@unique([mealRecordId, userId])
+```
+
+API：
+
+```text
+GET   /api/meal-records
+POST  /api/meal-records
+GET   /api/meal-records/:id
+PATCH /api/meal-records/:id
+POST  /api/feedback
+```
+
+### 3. Contracts
+
+创建用餐记录请求：
+
+```json
+{
+  "dishId": "optional-dish-id",
+  "title": "番茄炒蛋",
+  "mealType": "LUNCH",
+  "eatenAt": "2026-06-07T12:00:00.000Z",
+  "note": "少油"
+}
+```
+
+更新用餐记录请求：
+
+```json
+{
+  "title": "番茄炒蛋",
+  "mealType": "DINNER",
+  "eatenAt": "2026-06-07T18:00:00.000Z",
+  "note": "改成晚餐记录",
+  "dishId": null
+}
+```
+
+约束：
+
+- `title` 必填创建字段，提供 `dishId` 时后端也不自动用菜品名称填充标题。
+- `dishId` 创建 / 更新时如为字符串，必须属于当前用户 workspace。
+- `PATCH /api/meal-records/:id` 中 `dishId: null` 表示解除菜品关联；不传 `dishId` 表示保持原关联。
+- `mealType` 复用 `MealType`，只能是 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`。
+- 用餐记录列表和详情必须包含当前 workspace 内该记录的反馈基础信息：`id`、`userId`、`rating`、`note`、`createdAt`、`updatedAt`。
+
+提交 / 修改反馈请求：
+
+```json
+{
+  "mealRecordId": "meal-record-id",
+  "rating": "GOOD",
+  "note": "好吃"
+}
+```
+
+约束：
+
+- `POST /api/feedback` 是按当前登录用户与 `mealRecordId` 的 upsert：没有则创建，已有则更新。
+- `rating` 只能是 `GOOD`、`OK`、`BAD`。
+- 反馈归属 `Workspace`、`MealRecord` 与提交反馈的 `User`。
+- 同一用户对同一条用餐记录最多一条反馈。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 未登录访问任一用餐记录或反馈 API | 返回 401 |
+| 创建 / 更新用餐记录时 `title` 缺失或为空 | DTO 校验拒绝 |
+| `mealType` 非法 | DTO 校验拒绝 |
+| `rating` 非法 | DTO 校验拒绝 |
+| 创建 / 更新用餐记录传入其他 workspace 的 `dishId` | 返回不存在，不泄露菜品存在性 |
+| 读取 / 更新其他 workspace 的用餐记录 id | 返回不存在，不泄露记录存在性 |
+| 为其他 workspace 的用餐记录提交反馈 | 返回不存在，不泄露记录存在性 |
+| 重复提交同一用户同一用餐记录反馈 | 更新原反馈，不创建重复记录 |
+| session 中 userId 对应用户不存在 | 返回 401 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：所有用餐记录查询都先解析当前 `session.userId` 的 `workspaceId`，再用 `id + workspaceId` 或 `workspaceId` 过滤。
+- Good：用餐记录返回的 `feedbacks` include 也显式带 `workspaceId` 过滤，避免依赖关系数据天然一致。
+- Good：反馈 upsert 前先确认 `mealRecordId` 属于当前 workspace，再用 `mealRecordId + userId` 唯一键写入。
+- Base：只写文本的用餐记录 `dishId=null`，仍可保存历史和反馈，但暂不参与菜品推荐权重。
+- Base：关联菜品的用餐记录可被后续推荐逻辑用来计算近期吃过和反馈权重。
+- Bad：只用 `dishId`、`mealRecordId` 或 `feedbackId` 全局查询后再判断 workspace，容易泄露存在性或漏掉隔离。
+- Bad：把反馈直接挂在 `Dish` 上；这会丢失具体吃饭事件和多用户反馈语义。
+- Bad：重复 `POST /api/feedback` 创建多条反馈；应更新当前用户原反馈。
+
+### 6. Tests Required
+
+用餐记录与反馈 e2e 至少覆盖：
+
+- 未登录访问 meal-records / feedback API 返回 401。
+- 登录后创建不关联菜品的用餐记录。
+- 登录后创建关联当前 workspace 菜品的用餐记录。
+- 不能用其他 workspace 的 `dishId` 创建 / 更新用餐记录。
+- 列表和详情只返回当前 workspace 的用餐记录，并包含反馈基础信息。
+- 更新用餐记录只能影响当前 workspace，且覆盖 `dishId` 新值、`null`、省略三种语义。
+- `POST /api/feedback` 可创建反馈，也可更新当前用户已有反馈，且不会产生重复记录。
+- 不能为其他 workspace 的用餐记录提交反馈。
+- 非法 `mealType` 与非法 `rating` 被 DTO 校验拒绝。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+POST /api/feedback -> prisma.feedback.create({ mealRecordId, userId, rating })
+```
+
+问题：重复提交会产生多条同一用户对同一用餐记录的反馈，破坏偏好数据。
+
+#### Correct
+
+```text
+POST /api/feedback -> 先用 mealRecordId + workspaceId 校验记录 -> 按 mealRecordId_userId upsert
+```
+
+原因：先隔离 workspace，避免存在性泄露；再用唯一键保证同一用户同一记录只有一条反馈，同时支持修改。
+
+---
+
 ## 推荐规则契约
 
 MVP 推荐规则：

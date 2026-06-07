@@ -1,4 +1,4 @@
-import type { MealType, RecommendationCandidate } from "../api/types.ts";
+import type { Dish, MealType, RecommendationCandidate } from "../api/types.ts";
 import { mealLabel } from "./meal-tag.tsx";
 import {
   Button,
@@ -21,6 +21,7 @@ interface Props {
   blindBoxFired: boolean;
   recommendError: string | null;
   blindBoxError: string | null;
+  onRecordDish: (dish: Dish) => void;
 }
 
 export function RecommendationPanel({
@@ -35,6 +36,7 @@ export function RecommendationPanel({
   blindBoxFired,
   recommendError,
   blindBoxError,
+  onRecordDish,
 }: Props) {
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -95,7 +97,11 @@ export function RecommendationPanel({
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-slate-700">推荐结果</h2>
           {recommendResult.map((candidate) => (
-            <CandidateCard key={candidate.dish.id} candidate={candidate} />
+            <CandidateCard
+              key={candidate.dish.id}
+              candidate={candidate}
+              onRecordDish={onRecordDish}
+            />
           ))}
         </div>
       )}
@@ -115,7 +121,11 @@ export function RecommendationPanel({
             🎲 盲盒结果
           </h2>
           {blindBoxResult ? (
-            <CandidateCard candidate={blindBoxResult} highlight />
+            <CandidateCard
+              candidate={blindBoxResult}
+              highlight
+              onRecordDish={onRecordDish}
+            />
           ) : (
             <EmptyState
               icon="🎲"
@@ -132,9 +142,11 @@ export function RecommendationPanel({
 function CandidateCard({
   candidate,
   highlight = false,
+  onRecordDish,
 }: {
   candidate: RecommendationCandidate;
   highlight?: boolean;
+  onRecordDish: (dish: Dish) => void;
 }) {
   return (
     <Card
@@ -175,6 +187,13 @@ function CandidateCard({
           ))}
         </div>
       )}
+
+      <SecondaryButton
+        className="mt-3 w-full px-3 py-2 text-xs"
+        onClick={() => onRecordDish(candidate.dish)}
+      >
+        记录已吃
+      </SecondaryButton>
     </Card>
   );
 }

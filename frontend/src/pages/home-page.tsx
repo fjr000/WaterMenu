@@ -8,7 +8,9 @@ import {
 import type { Dish, MealType } from "../api/types.ts";
 import { CreateDishForm } from "../components/create-dish-form.tsx";
 import { RecommendationPanel } from "../components/recommendation-panel.tsx";
+import { MealRecordForm } from "../components/meal-record-form.tsx";
 import { MealTag } from "../components/meal-tag.tsx";
+import { RecentMealRecords } from "../components/recent-meal-records.tsx";
 import {
   Button,
   Card,
@@ -29,6 +31,7 @@ export function HomePage() {
   const [activeTab, setActiveTab] = useState<"recommend" | "dishes">(
     "recommend",
   );
+  const [recordDish, setRecordDish] = useState<Dish | null>(null);
 
   const handleRecommend = () => {
     recommendMutation.mutate(
@@ -38,6 +41,16 @@ export function HomePage() {
 
   const handleBlindBox = () => {
     blindBoxMutation.mutate(mealType ? { mealType: mealType as MealType } : {});
+  };
+
+  const resetRecommendationState = () => {
+    recommendMutation.reset();
+    blindBoxMutation.reset();
+  };
+
+  const handleRecordSuccess = () => {
+    setRecordDish(null);
+    resetRecommendationState();
   };
 
   return (
@@ -94,7 +107,20 @@ export function HomePage() {
             blindBoxError={
               blindBoxMutation.isError ? "抽盲盒失败，请重试" : null
             }
+            onRecordDish={setRecordDish}
           />
+        )}
+
+        {recordDish && (
+          <div className="mt-4">
+            <MealRecordForm
+              key={recordDish.id}
+              dish={recordDish}
+              defaultMealType={mealType}
+              onCancel={() => setRecordDish(null)}
+              onSuccess={handleRecordSuccess}
+            />
+          </div>
         )}
 
         {activeTab === "dishes" && (
@@ -138,16 +164,33 @@ export function HomePage() {
 
             {dishesQuery.data &&
               dishesQuery.data.map((dish) => (
-                <DishCard key={dish.id} dish={dish} />
+                <DishCard
+                  key={dish.id}
+                  dish={dish}
+                  onRecordDish={setRecordDish}
+                />
               ))}
           </div>
+        )}
+
+        {auth.user && (
+          <RecentMealRecords
+            userId={auth.user.id}
+            onFeedbackSuccess={resetRecommendationState}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function DishCard({ dish }: { dish: Dish }) {
+function DishCard({
+  dish,
+  onRecordDish,
+}: {
+  dish: Dish;
+  onRecordDish: (dish: Dish) => void;
+}) {
   return (
     <Card>
       <div className="flex items-start justify-between gap-2">
@@ -172,6 +215,12 @@ function DishCard({ dish }: { dish: Dish }) {
           <MealTag key={mt} mealType={mt} />
         ))}
       </div>
+      <SecondaryButton
+        className="mt-3 w-full px-3 py-2 text-xs"
+        onClick={() => onRecordDish(dish)}
+      >
+        记录已吃
+      </SecondaryButton>
     </Card>
   );
 }

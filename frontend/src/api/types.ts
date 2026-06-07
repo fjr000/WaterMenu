@@ -1,5 +1,7 @@
 export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 
+export type FeedbackRating = "GOOD" | "OK" | "BAD";
+
 export interface User {
   id: string;
   email: string;
@@ -32,11 +34,49 @@ export interface Dish {
   updatedAt: string;
 }
 
+export interface Feedback {
+  id: string;
+  workspaceId?: string;
+  mealRecordId?: string;
+  userId: string;
+  rating: FeedbackRating;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MealRecord {
+  id: string;
+  workspaceId: string;
+  dishId: string | null;
+  title: string;
+  mealType: MealType;
+  eatenAt: string;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  feedbacks: Feedback[];
+}
+
 export interface CreateDishRequest {
   name: string;
   description?: string;
   mealTypes?: MealType[];
   isActive?: boolean;
+}
+
+export interface CreateMealRecordRequest {
+  dishId?: string;
+  title: string;
+  mealType: MealType;
+  eatenAt: string;
+  note?: string;
+}
+
+export interface UpsertFeedbackRequest {
+  mealRecordId: string;
+  rating: FeedbackRating;
+  note?: string;
 }
 
 export interface RecommendationCandidate {

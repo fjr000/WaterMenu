@@ -12,7 +12,7 @@
 - Prisma migration：`backend/prisma/migrations/`。
 - Seed 脚本：`backend/prisma/seed.ts`。
 - Prisma Service：`backend/src/prisma/prisma.service.ts`。
-- 当前业务表：`workspaces`、`users`、`dishes`、`meal_records`、`feedbacks`。
+- 当前业务表：`workspaces`、`users`、`dishes`、`recipes`、`meal_records`、`feedbacks`。
 - 当前业务枚举：`MealType`，取值为 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`；`FeedbackRating`，取值为 `GOOD`、`OK`、`BAD`。
 - Session 表是基础设施表，由 `connect-pg-simple` 使用 `createTableIfMissing: true` 创建，不在 Prisma schema 中建 `Session` 业务模型。
 
@@ -52,6 +52,10 @@ pnpm --filter @watermenu/backend prisma:seed
 - `Dish.workspaceId` 必填，并关联 `Workspace`；所有菜品查询、读取、更新都必须带当前用户 workspace 边界。
 - `Dish.mealTypes` 使用 Prisma enum 数组；“不限 / 全部”不是可存储枚举值。
 - 同一 workspace 内 `Dish.name` 必须唯一，不同 workspace 可以同名。
+- `Recipe.workspaceId` 必填，并关联 `Workspace`；`Recipe.dishId` 必填，并关联 `Dish`，Dish 删除时 recipe 级联删除。
+- `Recipe` 第一版只包含 `title` / `content` 纯文本做法，不包含 `isDefault`、图片、结构化 ingredients / steps。
+- 所有 recipe list/create 必须先校验 `dishId + workspaceId`；recipe update 必须用 `id + workspaceId` 查找，找不到统一返回不存在。
+- `Recipe.title` / `Recipe.content` API 入参必须 trim 后包含非空白字符，不能只依赖前端校验。
 - `MealRecord.workspaceId` 必填，并关联 `Workspace`；所有用餐记录查询、读取、更新都必须带当前用户 workspace 边界。
 - `MealRecord.dishId` 可选；创建 / 更新传入 `dishId` 时必须先校验菜品属于当前 workspace，更新传 `dishId: null` 表示解除关联。
 - `Feedback.workspaceId`、`Feedback.mealRecordId`、`Feedback.userId` 必填；提交反馈前必须确认用餐记录属于当前 workspace。

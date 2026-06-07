@@ -504,6 +504,172 @@ POST /api/meal-records 成功 -> invalidate meal-records -> reset recommendMutat
 
 ---
 
+## 场景：前端食谱做法记录
+
+### 1. 范围 / 触发
+
+- 触发：前端接入后端 recipes API，让用户能在菜品管理、推荐结果、盲盒结果中查看、新增、编辑某个菜品的纯文本做法。
+- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-recipes.ts`、`frontend/src/components/recipe-panel.tsx`、`frontend/src/components/recommendation-panel.tsx`、`frontend/src/pages/home-page.tsx`。
+- 不包含：Recipe 删除、默认做法、图片上传、富文本编辑器、markdown 渲染、结构化 ingredients / steps、独立食谱 tab、弹窗 / drawer。
+
+### 2. 签名
+
+前端 API 类型：
+
+```typescript
+export interface Recipe {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRecipeRequest {
+  title: string;
+  content: string;
+}
+
+export interface UpdateRecipeRequest {
+  title?: string;
+  content?: string;
+}
+```
+
+Hook 签名：
+
+```typescript
+recipesKey(dishId: string): QueryKey;
+useRecipes(dishId: string, enabled?: boolean);
+useCreateRecipe(dishId: string);
+useUpdateRecipe(dishId: string);
+```
+
+API 路径：
+
+```text
+GET   /api/dishes/:dishId/recipes
+POST  /api/dishes/:dishId/recipes
+PATCH /api/recipes/:id
+```
+
+组件入口：
+
+```typescript
+<RecipePanel dish={dish} onClose={...} />
+```
+
+### 3. 契约
+
+RecipePanel：
+
+```text
+RecipePanel 是页面级单个面板，由 HomePage 持有 recipeDish: Dish | null 控制。
+不要在每张菜品卡片内展开多个 RecipePanel。
+不要使用弹窗 / drawer。
+面板接收 dish 后通过 useRecipes(dish.id) 拉取做法列表。
+面板必须展示 loading / error / empty / list 状态。
+没有做法时显示明确空状态，并提供新增入口。
+```
+
+入口范围：
+
+```text
+菜品管理 DishCard 提供“做法”入口。
+推荐结果 CandidateCard 提供“查看做法”入口。
+盲盒结果复用 CandidateCard，因此也必须有“查看做法”入口。
+三处入口都调用同一个 onViewRecipes(dish) 页面层回调。
+```
+
+与记录已吃互斥：
+
+```typescript
+点击查看做法 -> setRecordDish(null); setRecipeDish(dish);
+点击记录已吃 -> setRecipeDish(null); setRecordDish(dish);
+```
+
+表单：
+
+```text
+新增和编辑表单使用 React Hook Form + Zod。
+title/content 必填，trim 后必须包含非空白字符。
+提交给 API 前 trim title/content。
+content 使用原生 textarea + Tailwind；不要为了单一场景扩展基础 UI。
+新增成功后关闭新增表单并刷新列表。
+编辑成功后退出编辑态并刷新列表。
+```
+
+缓存：
+
+```text
+recipes query key 使用 ["recipes", dishId]。
+create/update 成功后 invalidateQueries({ queryKey: ["recipes", dishId] })。
+不做乐观更新；不手动复制服务端列表到本地状态作为真实数据源。
+```
+
+### 4. 校验与错误矩阵
+
+| 条件 | 前端处理 |
+|------|----------|
+| recipes 列表加载中 | 显示加载状态 |
+| recipes 列表加载失败 | 显示错误提示并允许重试 |
+| recipes 列表为空 | 显示空状态和新增入口 |
+| title 为空或纯空白 | Zod 阻止提交并显示错误 |
+| content 为空或纯空白 | Zod 阻止提交并显示错误 |
+| 新增 recipe 成功 | 关闭新增表单,刷新 `['recipes', dishId]` |
+| 新增 recipe 失败 | 保留表单,显示错误提示 |
+| 编辑 recipe 成功 | 退出编辑态,刷新 `['recipes', dishId]` |
+| 编辑 recipe 失败 | 保留编辑态,显示错误提示 |
+| 点击查看做法时已有记录表单展开 | 关闭记录表单,打开做法面板 |
+| 点击记录已吃时已有做法面板展开 | 关闭做法面板,打开记录表单 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：recipes API 调用集中在 `use-recipes.ts`，组件不直接调用 `apiFetch`。
+- Good：Recipe API 类型集中在 `frontend/src/api/types.ts`，不要在组件里重复定义响应形状。
+- Good：页面层维护单个 `recipeDish`，让菜品管理、推荐、盲盒共用同一个 RecipePanel。
+- Good：前端 trim 后提交，后端 DTO 仍是最终校验防线。
+- Base：RecipePanel 使用原生 textarea；后续多个场景需要 textarea 时再抽基础 UI。
+- Base：新增 / 编辑成功后只 invalidate，不做乐观更新。
+- Bad：在每个 DishCard / CandidateCard 内各自挂一个 RecipePanel，导致手机端多个大面板同时展开。
+- Bad：打开做法面板时不关闭 MealRecordForm，导致两个大面板同时占用手机页面。
+- Bad：为了未来预留默认做法 UI 或 `isDefault` 状态，但后端没有对应语义。
+- Bad：只校验 `.min(1)`，允许纯空白 title/content 通过。
+
+### 6. 测试要求
+
+MVP 前端至少验证：
+
+- `pnpm frontend:typecheck` 通过。
+- `pnpm frontend:build` 通过。
+- 手动检查：登录 → 菜品管理 → 打开做法面板 → 空状态 → 新增做法 → 列表刷新。
+- 手动检查：编辑已有做法后退出编辑态,刷新后展示新内容。
+- 手动检查：推荐结果 / 盲盒结果点击“查看做法”能打开同一个页面级面板。
+- 手动检查：打开做法时记录已吃表单关闭；打开记录已吃时做法面板关闭。
+- 手动检查：title/content 空字符串或纯空白时前端阻止提交。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+每个 CandidateCard 内部 useRecipes(candidate.dish.id) 并展开自己的做法面板
+```
+
+问题：推荐结果、盲盒结果和菜品列表会产生多个服务端查询和多个大面板，手机端状态难以维护。
+
+#### Correct
+
+```text
+CandidateCard 点击“查看做法” -> HomePage setRecipeDish(dish) -> 页面级 RecipePanel useRecipes(dish.id)
+```
+
+原因：服务端数据仍由 TanStack Query 管理，但 UI 只维护一个当前做法上下文，符合手机优先和最小状态原则。
+
+---
+
 ## 校验与错误矩阵
 
 | 条件 | 前端处理 |

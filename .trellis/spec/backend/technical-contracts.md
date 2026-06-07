@@ -406,6 +406,144 @@ GET /api/dishes/:id -> 先从 session.userId 解析 workspaceId -> prisma.dish.f
 
 ---
 
+## 场景:食谱做法记录 API
+
+### 1. Scope / Trigger
+
+- 触发:补齐 MVP 的「某个菜怎么做」能力,新增 workspace 级 `Recipe` 数据模型和 recipes API。
+- 范围:`backend/src/recipes/` NestJS 模块、`backend/prisma/schema.prisma` 的 `Recipe`、Prisma migration、后端 e2e 测试。
+- 不包含:Recipe 删除、默认做法、图片、AI 自动生成、结构化 ingredients / steps、推荐权重调整、独立权限系统。
+
+### 2. Signatures
+
+Prisma 模型:
+
+```text
+Recipe(id, workspaceId, dishId, title, content, createdAt, updatedAt)
+```
+
+数据库约束:
+
+```text
+Recipe.workspaceId -> Workspace.id, onDelete Restrict
+Recipe.dishId -> Dish.id, onDelete Cascade
+Recipe @@index([workspaceId])
+Recipe @@index([dishId])
+Recipe @@map("recipes")
+Workspace.recipes Recipe[]
+Dish.recipes Recipe[]
+```
+
+API:
+
+```text
+GET   /api/dishes/:dishId/recipes
+POST  /api/dishes/:dishId/recipes
+PATCH /api/recipes/:id
+```
+
+### 3. Contracts
+
+创建请求:
+
+```json
+{
+  "title": "家常版",
+  "content": "1. 备菜\n2. 下锅翻炒\n3. 调味出锅"
+}
+```
+
+更新请求:
+
+```json
+{
+  "title": "少油版",
+  "content": "全程少油，小火慢炒。"
+}
+```
+
+响应直接返回 Recipe 业务数据或 Recipe 数组:
+
+```json
+{
+  "id": "...",
+  "workspaceId": "...",
+  "dishId": "...",
+  "title": "家常版",
+  "content": "...",
+  "createdAt": "2026-06-07T00:00:00.000Z",
+  "updatedAt": "2026-06-07T00:00:00.000Z"
+}
+```
+
+字段约束:
+
+- `title` 创建必填,更新可选;提供时必须是 trim 后包含非空白字符的字符串。
+- `content` 创建必填,更新可选;提供时必须是 trim 后包含非空白字符的字符串。
+- 后端写入前应 trim `title` / `content`,避免保存首尾无意义空白。
+- `dishId` 来自嵌套路由,不允许通过 PATCH 修改。
+- `workspaceId` 由当前登录用户解析,不接受前端传入。
+- Recipe 第一版不包含 `isDefault`;不要引入默认做法唯一性、切换或排序语义。
+- `GET /api/dishes/:dishId/recipes` 按 `createdAt asc` 返回稳定列表。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 未登录访问任一 recipes API | `AuthGuard` 返回 401 |
+| `dishId` 不属于当前 workspace | 返回 404,不泄露资源存在性 |
+| `recipeId` 不属于当前 workspace | 返回 404,不泄露资源存在性 |
+| 创建时 `title` / `content` 缺失、空字符串或纯空白 | 返回 400 |
+| 更新时提供的 `title` / `content` 为空字符串或纯空白 | 返回 400 |
+| 更新时未提供任何可更新字段 | 允许保持原值或按 DTO/Service 当前实现处理,但不得修改 `dishId` / `workspaceId` |
+| Dish 被删除 | 关联 Recipe 按数据库外键 Cascade 删除 |
+| session 中 userId 对应用户不存在 | 返回 401 |
+
+### 5. Good / Base / Bad Cases
+
+- Good:list/create 先从 `session.userId` 解析 `workspaceId`,再用 `dishId + workspaceId` 校验菜品归属。
+- Good:update 先用 `id + workspaceId` 查询 recipe,找不到统一返回 404。
+- Good:Recipe 只承载「怎么做」,不参与推荐 / 盲盒评分权重。
+- Base:一个 Dish 可以有 0 到多条 Recipe;没有做法时由前端显示空状态。
+- Base:列表按创建时间正序展示,编辑不会改变列表顺序。
+- Bad:只用 `recipeId` 全局查找后再判断 workspace,容易泄露存在性或遗漏隔离。
+- Bad:为了未来预留 `isDefault` 但不实现唯一默认规则,会留下未定义语义。
+- Bad:允许 PATCH 修改 `dishId` 把做法移动到其他菜,这会扩大 workspace 校验和 UI 复杂度。
+- Bad:只依赖前端 trim,后端允许纯空白 title/content 写入数据库。
+
+### 6. Tests Required
+
+recipes e2e 至少覆盖:
+
+- 未登录访问 list/create/update 返回 401。
+- 登录后能给当前 workspace 的 dish 创建 recipe,返回 workspaceId/dishId/title/content。
+- 创建和更新时 title/content 会 trim。
+- list 只返回当前 workspace 且当前 dish 的 recipes,并按 `createdAt asc`。
+- 不能给其他 workspace 的 dish 创建 recipe,返回 404。
+- 不能编辑其他 workspace 的 recipe,返回 404。
+- 编辑当前 workspace 的 recipe 后返回更新后的 title/content。
+- 空字符串和纯空白 title/content 被拒绝,返回 400。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+PATCH /api/recipes/:id -> prisma.recipe.update({ where: { id }, data: body })
+```
+
+问题:只按全局 id 更新会绕过 workspace 隔离,也可能允许前端修改 `dishId` / `workspaceId`。
+
+#### Correct
+
+```text
+PATCH /api/recipes/:id -> 先解析 workspaceId -> findFirst({ id, workspaceId }) -> update title/content
+```
+
+原因:查询边界限制在当前 workspace,找不到统一返回 404;只更新纯文本内容字段,避免扩大功能语义。
+
+---
+
 ## 场景:用餐记录与反馈基础 API
 
 ### 1. Scope / Trigger

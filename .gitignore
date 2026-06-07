@@ -19,6 +19,14 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+deploy/env/prod.env
+
+# 生产部署本地数据
+deploy/certs/*
+!deploy/certs/.gitkeep
+deploy/uploads/*
+!deploy/uploads/.gitkeep
+deploy/backups/
 
 # IDE / 编辑器
 .vscode/

@@ -34,11 +34,14 @@ frontend/
     ├── components/               # 可复用组件
     │   ├── ui.tsx                # 基础 UI 组件（Button, Input, Card, etc.）
     │   ├── create-dish-form.tsx  # 新增菜品表单
+    │   ├── meal-record-form.tsx  # 用餐记录确认表单
     │   ├── meal-tag.tsx          # 餐次标签
+    │   ├── recent-meal-records.tsx # 最近用餐记录与反馈
     │   └── recommendation-panel.tsx  # 推荐/盲盒面板
     ├── hooks/                    # 自定义 Hooks
     │   ├── use-auth.tsx          # 认证 Hook + AuthProvider
     │   ├── use-dishes.ts         # 菜品数据 Hook
+    │   ├── use-meal-records.ts   # 用餐记录与反馈数据 Hook
     │   └── use-recommendations.ts # 推荐/盲盒 Hook
     └── pages/                    # 页面组件
         ├── login-page.tsx        # 登录页
@@ -52,7 +55,7 @@ frontend/
 ### `src/api/` - API 层
 
 - `client.ts`：封装 `apiFetch` 函数，自动添加 `/api` 前缀和 `credentials: "same-origin"`
-- `types.ts`：定义所有 TypeScript 接口（User, Workspace, Dish, Recommendation, etc.）
+- `types.ts`：定义所有 TypeScript 接口（User, Workspace, Dish, MealRecord, Feedback, Recommendation, etc.）
 
 ### `src/components/` - 可复用组件
 
@@ -63,6 +66,7 @@ frontend/
 
 - `use-auth.tsx`：认证状态管理，包含 `AuthProvider` 和 `useAuth` Hook
 - `use-dishes.ts`：菜品 CRUD 操作
+- `use-meal-records.ts`：用餐记录查询、创建与反馈 upsert 操作
 - `use-recommendations.ts`：推荐和盲盒操作
 
 ### `src/pages/` - 页面组件

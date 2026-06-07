@@ -18,6 +18,7 @@
 ### 数据获取 Hooks
 
 - `use-dishes.ts`：菜品 CRUD 操作
+- `use-meal-records.ts`：用餐记录查询、创建与反馈 upsert 操作
 - `use-recommendations.ts`：推荐和盲盒操作
 
 ### 状态管理 Hooks
@@ -162,7 +163,9 @@ export function isUnauthorized(error: unknown): boolean {
 
 - 使用数组形式：`["dishes", mealType]`
 - 参数为可选时使用 `null`：`["dishes", mealType ?? null]`
-- 变更时失效相关查询：`queryClient.invalidateQueries({ queryKey: ["dishes"] })`
+- 用餐记录列表使用稳定 key：`["meal-records"]`
+- 变更时失效相关查询：`queryClient.invalidateQueries({ queryKey: ["dishes"] })`、`queryClient.invalidateQueries({ queryKey: ["meal-records"] })`
+- 对推荐 / 盲盒这类用户主动触发的 mutation 结果，相关历史数据变更后不能只依赖 query invalidation；页面层需要 reset mutation 结果或重新触发，避免展示明显陈旧的候选。
 
 ---
 
@@ -170,6 +173,7 @@ export function isUnauthorized(error: unknown): boolean {
 
 - Good：服务端数据通过 TanStack Query 获取和缓存
 - Good：变更成功后失效相关查询，自动刷新列表
+- Good：创建用餐记录或提交反馈后刷新 `meal-records` 查询，并由页面层处理推荐 / 盲盒 mutation 结果是否需要 reset。
 - Good：认证状态使用 Context + Query 组合
 - Base：复杂逻辑可以封装到自定义 Hook
 - Bad：把服务端数据复制到本地状态
@@ -233,3 +237,26 @@ useMutation({
   },
 });
 ```
+
+### 错误：历史数据变了但推荐 mutation 结果仍停留
+
+**症状**：用户把推荐菜记录为已吃后，页面上的推荐 / 盲盒结果仍显示刚吃过的菜；或反馈改变权重后旧候选仍作为当前结果展示。
+
+**原因**：推荐和盲盒是 `useMutation` 主动触发结果，不是带 query key 的服务端列表；`invalidateQueries({ queryKey: ["meal-records"] })` 只会刷新记录列表，不会自动清空 mutation 的 `data`。
+
+**修复**：用餐记录或反馈成功后，除刷新 `meal-records`，页面层还要 reset 推荐 / 盲盒 mutation 结果，或明确重新触发推荐。
+
+```typescript
+// Good
+const resetRecommendationState = () => {
+  recommendMutation.reset();
+  blindBoxMutation.reset();
+};
+
+const handleRecordSuccess = () => {
+  setRecordDish(null);
+  resetRecommendationState();
+};
+```
+
+MVP 优先 reset，不自动重跑推荐；自动重跑容易让盲盒结果无提示改变。

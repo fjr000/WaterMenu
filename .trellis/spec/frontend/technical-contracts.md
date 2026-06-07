@@ -350,6 +350,160 @@ body {
 
 ---
 
+## 场景：前端用餐记录与反馈闭环
+
+### 1. 范围 / 触发
+
+- 触发：前端接入后端 `meal-records` 与 `feedback` API，让推荐 / 盲盒、菜品列表、最近用餐记录形成真实使用闭环。
+- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-meal-records.ts`、`frontend/src/components/meal-record-form.tsx`、`frontend/src/components/recent-meal-records.tsx`、`frontend/src/components/recommendation-panel.tsx`、`frontend/src/pages/home-page.tsx`。
+- 不包含：Recipe / 做法记录、复杂日历、历史统计、删除记录、离线同步、后端推荐算法调整。
+
+### 2. 签名
+
+前端 API 类型：
+
+```typescript
+export type FeedbackRating = "GOOD" | "OK" | "BAD";
+
+export interface MealRecord {
+  id: string;
+  workspaceId: string;
+  dishId: string | null;
+  title: string;
+  mealType: MealType;
+  eatenAt: string;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  feedbacks: Feedback[];
+}
+
+export interface CreateMealRecordRequest {
+  dishId?: string;
+  title: string;
+  mealType: MealType;
+  eatenAt: string;
+  note?: string;
+}
+
+export interface UpsertFeedbackRequest {
+  mealRecordId: string;
+  rating: FeedbackRating;
+  note?: string;
+}
+```
+
+Hook 签名：
+
+```typescript
+useMealRecords();
+useCreateMealRecord();
+useUpsertFeedback();
+```
+
+API 路径：
+
+```text
+GET  /api/meal-records
+POST /api/meal-records
+POST /api/feedback
+```
+
+### 3. 契约
+
+创建用餐记录：
+
+```text
+点击“记录已吃”后必须先展示轻量确认表单，不直接创建记录。
+表单至少包含餐次、默认当前时间、可选备注、确认与取消。
+从推荐 / 盲盒结果和菜品列表进入时复用同一个表单。
+提交时传 dishId、title、mealType、eatenAt、note。
+```
+
+最近用餐记录：
+
+```text
+首页展示最近用餐记录区域。
+默认只展示最近 5 条记录。
+记录按后端返回顺序消费；当前后端按 eatenAt desc 返回。
+每条记录展示好吃 / 一般 / 不好吃反馈按钮。
+当前登录用户已有反馈时高亮对应按钮。
+```
+
+反馈：
+
+```text
+反馈提交目标是 MealRecord，不是 Dish。
+点击好吃 / 一般 / 不好吃立即 POST /api/feedback upsert。
+反馈备注为可选入口，按需展开；备注更新必须带已有 rating。
+```
+
+推荐 / 盲盒状态：
+
+```text
+推荐和盲盒结果由 useMutation 保存，不会被 query invalidation 自动清空。
+创建用餐记录或提交反馈成功后，必须刷新 meal-records 查询。
+当历史或反馈变化会让当前推荐明显陈旧时，页面层 reset 推荐 / 盲盒 mutation 结果，或显式重新触发推荐。
+MVP 优先 reset，不自动重跑盲盒。
+```
+
+### 4. 校验与错误矩阵
+
+| 条件 | 前端处理 |
+|------|----------|
+| 未登录访问首页 | 认证层显示登录页或清理当前用户状态 |
+| 用餐记录列表加载中 | 显示加载状态 |
+| 用餐记录列表加载失败 | 显示错误提示并允许重试 |
+| 点击记录入口 | 打开确认表单，不直接创建 |
+| 餐次为空 | Zod / 表单校验阻止提交 |
+| 时间为空或非法 | Zod / 表单校验阻止提交 |
+| 创建记录成功 | 关闭表单，刷新 `meal-records`，reset 推荐 / 盲盒结果 |
+| 创建记录失败 | 保留表单，显示错误提示 |
+| 反馈提交中 | 禁用对应重复操作或展示 pending 状态 |
+| 反馈提交失败 | 保留原状态或回滚本地高亮，显示错误提示 |
+| 已有反馈备注 | 展开备注时预填当前备注 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：用餐记录和反馈 API 调用集中在 `use-meal-records.ts`，组件不直接调用 `apiFetch`。
+- Good：用餐记录确认表单使用 React Hook Form + Zod，后端 DTO 仍是最终校验防线。
+- Good：记录创建和反馈成功后刷新 `meal-records`，并处理推荐 / 盲盒 mutation 结果陈旧问题。
+- Base：最近用餐记录区域前端取前 5 条展示，后续历史页或分页单独设计。
+- Base：最近记录只显示 `title`，不强依赖后端 include `dish`。
+- Bad：点击“记录已吃”直接创建记录，导致误点产生脏数据。
+- Bad：把反馈直接挂在 Dish 上，丢失具体用餐事件语义。
+- Bad：只 invalidate `meal-records`，但页面继续展示旧推荐 / 盲盒结果。
+
+### 6. 测试要求
+
+MVP 前端至少验证：
+
+- `pnpm frontend:typecheck` 通过。
+- `pnpm frontend:build` 通过。
+- 手动检查：登录 → 推荐 / 盲盒 → 记录已吃 → 最近用餐出现记录 → 提交 / 修改反馈 → 刷新后记录仍存在。
+- 手动检查：创建用餐记录成功后旧推荐 / 盲盒结果不继续误导用户。
+- 手动检查：反馈备注按需展开，且无 rating 时不允许提交单独备注。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+POST /api/meal-records 成功 -> invalidate meal-records -> 页面继续展示旧推荐结果
+```
+
+问题：推荐 / 盲盒结果来自 mutation `data`，不会因为 `meal-records` query invalidation 自动消失；用户可能看到刚记录已吃的菜仍作为当前推荐。
+
+#### Correct
+
+```text
+POST /api/meal-records 成功 -> invalidate meal-records -> reset recommendMutation / blindBoxMutation
+```
+
+原因：历史数据变化会影响推荐候选池，MVP 先清空旧结果，避免展示明显陈旧状态；用户可手动重新推荐。
+
+---
+
 ## 校验与错误矩阵
 
 | 条件 | 前端处理 |

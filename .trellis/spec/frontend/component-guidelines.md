@@ -34,7 +34,9 @@
 每个功能组件单独一个文件，使用 kebab-case 命名：
 
 - `create-dish-form.tsx`：新增菜品表单
+- `meal-record-form.tsx`：用餐记录确认表单
 - `meal-tag.tsx`：餐次标签
+- `recent-meal-records.tsx`：最近用餐记录与反馈区域
 - `recommendation-panel.tsx`：推荐/盲盒面板
 
 ---

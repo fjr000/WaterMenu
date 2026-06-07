@@ -39,8 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // 忽略退出登录错误
     } finally {
-      queryClient.clear();
       queryClient.setQueryData(authMeKey, null);
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "auth",
+      });
     }
   }, [queryClient]);
 

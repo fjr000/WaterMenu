@@ -349,3 +349,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: 实现食谱做法记录
+
+**Date**: 2026-06-07
+**Task**: 实现食谱做法记录
+**Branch**: `main`
+
+### Summary
+
+实现 Recipe 数据模型、recipes API、后端隔离测试、前端 RecipePanel 与三处查看入口，并沉淀后端/前端食谱契约。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ab5cd64` | (see git log) |
+| `efd00ef` | (see git log) |
+| `8de5739` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

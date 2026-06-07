@@ -313,3 +313,39 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: 前端用餐记录与反馈闭环
+
+**Date**: 2026-06-07
+**Task**: 前端用餐记录与反馈闭环
+**Branch**: `master`
+
+### Summary
+
+补齐前端用餐记录与反馈闭环：新增用餐记录 API 类型与 hooks、记录确认表单、最近 5 条用餐记录区域、反馈 upsert 与备注入口，并沉淀前端用餐记录/推荐状态契约。验证 pnpm frontend:typecheck 和 pnpm frontend:build 通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `95ae5f3` | (see git log) |
+| `6346b7f` | (see git log) |
+| `17cfeb1` | (see git log) |
+| `7fe9ebb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -828,6 +828,171 @@ POST /api/blind-box -> 生成与推荐接口相同的候选评分池 -> 按 weig
 
 ---
 
+## 场景:生产部署与备份闭环
+
+### 1. Scope / Trigger
+
+- 触发:核心业务 MVP 已可用,需要把本地开发应用交付为单服务器 Docker Compose 生产部署。
+- 范围:根目录生产 Compose、后端生产镜像、前端 Nginx 静态镜像、Nginx `/api` 反代、PostgreSQL 持久化、uploads 预留挂载、数据库备份/恢复脚本与部署文档。
+- 不包含:实际登录服务器部署、域名解析、证书签发、防火墙配置、CI/镜像仓库、图片上传业务。
+
+### 2. Signatures
+
+生产文件与命令:
+
+```text
+docker-compose.prod.yml
+backend/Dockerfile
+frontend/Dockerfile
+deploy/env/prod.env.example
+deploy/nginx/nginx.conf
+deploy/nginx/conf.d/watermenu.conf
+scripts/backup-postgres.sh
+scripts/restore-postgres.sh
+```
+
+生产启动命令:
+
+```bash
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+生产后端启动命令必须等价于:
+
+```bash
+pnpm prisma:deploy && pnpm start
+```
+
+### 3. Contracts
+
+生产 Compose 服务契约:
+
+```text
+postgres: PostgreSQL Alpine,不向公网暴露 5432,数据持久化到生产专用 volume
+backend: 从 backend/Dockerfile 构建,连接 postgres:5432,启动前自动 migrate deploy
+nginx: 从 frontend/Dockerfile 构建最终 Nginx 镜像,暴露 80/443,服务前端静态文件并反代 /api
+```
+
+生产必要环境变量:
+
+```text
+NODE_ENV=production
+PORT=3000
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+DATABASE_URL=postgresql://<user>:<password>@postgres:5432/<db>?schema=public
+SESSION_SECRET
+SESSION_COOKIE_NAME
+SESSION_MAX_AGE_MS
+SEED_WORKSPACE_NAME
+SEED_USER_EMAIL
+SEED_USER_PASSWORD
+SEED_USER_NAME
+```
+
+Nginx 入口契约:
+
+```text
+HTTP 80 -> HTTPS 443
+/ -> /usr/share/nginx/html 静态前端,SPA fallback 到 /index.html
+/api -> http://backend:3000,保留 /api 前缀
+证书默认挂载到 /etc/nginx/certs/fullchain.pem 与 /etc/nginx/certs/privkey.pem
+必须传递 X-Forwarded-Proto,配合后端 production trust proxy 与 secure Session Cookie
+```
+
+Seed 契约:
+
+```text
+容器启动不自动 seed
+首次部署后由文档命令手动执行 pnpm prisma:seed
+```
+
+备份契约:
+
+```text
+宿主机执行 scripts/backup-postgres.sh
+默认输出 deploy/backups/postgres/watermenu-postgres-<UTC>.dump
+默认保留最近 7 天
+恢复必须显式传入 dump 文件并输入 RESTORE 确认
+```
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| `docker compose -f docker-compose.prod.yml config --quiet` 失败 | 不进入部署,先修正 Compose 语法/环境文件兼容性 |
+| HTTPS 证书文件缺失 | Nginx 不应静默降级为生产 HTTP;文档要求补齐证书后启动 |
+| 生产 HTTP 访问登录失败 | 这是预期风险;`NODE_ENV=production` 下 Cookie `secure=true`,必须使用 HTTPS |
+| `DATABASE_URL` 与 `POSTGRES_*` 不一致 | PostgreSQL 可能健康但后端迁移失败;先修正环境变量一致性 |
+| `prisma migrate deploy` 失败 | 后端不继续启动,避免代码与 schema 不一致 |
+| seed 被放进启动命令 | 禁止;会在重启时反复覆盖初始用户密码 |
+| 备份脚本找不到 postgres 服务 | 非 0 退出,不能声称备份成功 |
+| 恢复脚本无参数或文件不存在 | 非 0 退出,不能进入恢复 |
+| 恢复前未确认覆盖风险 | 必须要求显式输入确认词,避免误恢复生产库 |
+
+### 5. Good / Base / Bad Cases
+
+- Good:生产使用独立 `docker-compose.prod.yml`,本地 `docker-compose.yml` 继续只提供开发 PostgreSQL。
+- Good:后端镜像运行期保留 Prisma CLI、schema 与 migrations,保证 `prisma migrate deploy` 可执行。
+- Good:前端最终镜像基于 Nginx,同一个 `nginx` 服务同时负责静态文件和 `/api` 反代。
+- Good:生产 PostgreSQL 不映射公网端口,只允许 Compose 内部网络访问。
+- Good:uploads 仅预留宿主机目录挂载到 `/app/uploads`,不顺手实现图片上传业务。
+- Base:服务器通过 `git pull` 后本地 `docker compose build` 构建镜像,不要求 Node/pnpm。
+- Bad:把 seed 放入后端容器启动命令。
+- Bad:让生产服务器安装 Node/pnpm 后直接跑 `pnpm start`,绕过 Docker 部署契约。
+- Bad:生产 Compose 复用本地 `postgres_data` 或向公网暴露数据库端口。
+- Bad:把证书、`prod.env`、uploads 或 backup dump 带进 Docker build context。
+
+### 6. Tests Required
+
+生产部署资产至少验证:
+
+```bash
+docker compose -f docker-compose.prod.yml config --quiet
+pnpm --filter @watermenu/backend typecheck
+pnpm --filter @watermenu/backend lint
+pnpm --filter @watermenu/backend test
+pnpm --filter @watermenu/backend build
+pnpm --filter @watermenu/frontend typecheck
+pnpm --filter @watermenu/frontend build
+docker build -f backend/Dockerfile -t watermenu-backend-check .
+docker build -f frontend/Dockerfile -t watermenu-frontend-check .
+bash -n scripts/backup-postgres.sh scripts/restore-postgres.sh
+```
+
+环境允许时还应验证:
+
+```bash
+docker run --rm watermenu-backend-check sh -c 'test -f dist/src/main.js && pnpm prisma migrate deploy --help >/dev/null'
+docker compose -f docker-compose.prod.yml up -d postgres
+docker compose -f docker-compose.prod.yml run --rm backend pnpm prisma:deploy
+./scripts/backup-postgres.sh
+```
+
+Nginx 配置应在有测试证书时用 `nginx -t` 或启动容器验证 `/` 与 `/api/docs`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+backend CMD: pnpm prisma:deploy && pnpm prisma:seed && node dist/main.js
+```
+
+问题:seed 会在每次重启时覆盖初始用户密码;且当前 Nest 构建入口是 `dist/src/main.js`,不是 `dist/main.js`。
+
+#### Correct
+
+```text
+backend CMD: pnpm prisma:deploy && pnpm start
+backend package start: node dist/src/main.js
+seed: 部署文档中的一次性手动命令
+```
+
+原因:迁移应随部署自动执行,但 seed 是初始化动作;启动入口必须匹配真实 Nest build 产物。
+
 ## 备份契约
 
 单服务器部署必须配置备份:

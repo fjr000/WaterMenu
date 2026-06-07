@@ -30,10 +30,9 @@ async function main() {
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
   .finally(async () => {
     await prisma.$disconnect();
+  })
+  .catch((error: unknown) => {
+    throw new Error(`Seed 执行失败：${error instanceof Error ? error.message : String(error)}`);
   });

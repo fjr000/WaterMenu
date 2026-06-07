@@ -117,8 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // 忽略退出登录错误
     } finally {
-      queryClient.clear();
       queryClient.setQueryData(authMeKey, null);
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "auth",
+      });
     }
   }, [queryClient]);
 
@@ -177,6 +179,26 @@ export function isUnauthorized(error: unknown): boolean {
 ---
 
 ## 常见错误
+
+### 错误：退出登录时清空整个 QueryClient
+
+**症状**：点击“退出”后后端 session 已失效，刷新会回到登录页，但当前页面不会立即切换到登录页。
+
+**原因**：`queryClient.clear()` 会清理 QueryCache，可能让当前 `useQuery(authMeKey)` observer 无法收到后续 `setQueryData(authMeKey, null)` 的通知。
+
+**修复**：先更新认证查询，再移除非 `auth` 的业务查询缓存；不要在 logout 中调用 `queryClient.clear()`。
+
+```typescript
+// Bad
+queryClient.clear();
+queryClient.setQueryData(authMeKey, null);
+
+// Good
+queryClient.setQueryData(authMeKey, null);
+queryClient.removeQueries({
+  predicate: (query) => query.queryKey[0] !== "auth",
+});
+```
 
 ### 错误：在组件中直接调用 API
 

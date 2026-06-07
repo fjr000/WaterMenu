@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端规范入口，确认需要遵守的后端契约与具体规范文件。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"新增 recommendations 模块、controller、service、dto 时需要匹配现有 NestJS 目录风格。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"推荐逻辑依赖 Dish、MealRecord、Feedback、MealType、FeedbackRating，并必须遵守 workspace 隔离。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"接口需复用现有 AuthGuard、DTO 校验和不泄露跨 workspace 数据的错误边界。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现后需要补 e2e 测试并运行后端 lint、typecheck、test。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"包含推荐/盲盒 API、候选为空行为、推荐规则和后端主技术契约。"}
+{"file":".trellis/spec/backend/logging-guidelines.md","reason":"确认当前无日志封装，避免实现推荐时臆造日志系统或记录敏感信息。"}

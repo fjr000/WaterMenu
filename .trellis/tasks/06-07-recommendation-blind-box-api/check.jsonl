@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查后端实现是否覆盖规范索引要求。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"检查新增文件是否符合现有后端模块目录结构。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查推荐查询是否严格限制 workspace，并正确使用现有 Prisma 模型。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查未登录、非法输入和跨 workspace 边界是否符合错误处理约束。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查 lint、typecheck、test 和 e2e 覆盖是否满足后端质量要求。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查推荐/盲盒行为是否满足项目技术契约和测试要求。"}

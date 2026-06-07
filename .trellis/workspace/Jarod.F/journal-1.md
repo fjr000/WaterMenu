@@ -137,3 +137,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: 实现菜品基础模型与管理 API
+
+**Date**: 2026-06-07
+**Task**: 实现菜品基础模型与管理 API
+**Branch**: `master`
+
+### Summary
+
+完成 Dish/MealType 数据模型、菜品管理 API、workspace 隔离与 e2e 测试，并更新后端规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5a75434` | (see git log) |
+| `1b08e66` | (see git log) |
+| `feb5978` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

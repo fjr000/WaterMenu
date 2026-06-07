@@ -172,3 +172,39 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: 实现用餐记录与反馈后端 API
+
+**Date**: 2026-06-07
+**Task**: 实现用餐记录与反馈后端 API
+**Branch**: `master`
+
+### Summary
+
+完成 MealRecord/Feedback Prisma 模型、受保护 REST API、workspace 隔离、反馈 upsert、e2e 测试、Prisma 配置迁移与后端规范更新；通过迁移、seed、lint、typecheck、test、build 和本地 HTTP 联调。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f815f70` | (see git log) |
+| `5c00f12` | (see git log) |
+| `67f5f75` | (see git log) |
+| `48aca52` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

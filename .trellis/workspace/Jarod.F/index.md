@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-06-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~174 | Active |
+| `journal-1.md` | ~210 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-06-07 | 实现用餐记录与反馈后端 API | `f815f70`, `5c00f12`, `67f5f75`, `48aca52` | `master` |
 | 5 | 2026-06-07 | 实现菜品基础模型与管理 API | `5a75434`, `1b08e66`, `feb5978` | `master` |
 | 4 | 2026-06-07 | 接入 PostgreSQL 本地环境 | `9c8c9c8`, `4ab58eb`, `e1d3e89` | `master` |
 | 3 | 2026-06-06 | 实现后端基础登录闭环 | `6d76fe0`, `763b6cc` | `master` |

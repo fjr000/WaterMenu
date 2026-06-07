@@ -1,0 +1,12 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端规范索引，帮助实现者定位生产部署、数据库与质量规范。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"包含后端部署契约、Session Cookie、/api、Docker Compose、Nginx、备份等生产约束。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"包含 PostgreSQL、Prisma migrate deploy、本地 Compose 不破坏、Session 表和备份相关约束。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"约束后端相关文件和 Dockerfile 放置方式，避免无关重构。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现后需要按真实后端命令做 lint/typecheck/test 验证。"}
+{"file":".trellis/spec/frontend/index.md","reason":"前端规范索引，帮助实现者定位 Vite/React/Tailwind 与构建规范。"}
+{"file":".trellis/spec/frontend/technical-contracts.md","reason":"包含前端同域 /api、Vite 构建、PWA、移动端优先和生产静态托管契约。"}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"约束前端 Dockerfile 与相关部署资产放置，不改动无关前端源码。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"实现后需要按真实前端命令做 typecheck/build 验证。"}
+{"file":".trellis/spec/guides/index.md","reason":"共享思考指南索引，提醒跨层和复用检查。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"本任务横跨前端构建、后端服务、Nginx、数据库和脚本，需要检查跨层数据流与部署边界。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"修改配置与脚本前需搜索复用现有命令、环境变量和 Compose 模式。"}

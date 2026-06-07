@@ -1,0 +1,6 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端规范入口，帮助实现代理定位本任务相关后端约束。"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"新增 dishes NestJS 模块、DTO、service、controller 与测试时需遵守现有目录和最小新增规则。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"本任务新增 Prisma enum、Dish 模型、workspace 归属和迁移，必须遵守数据库/Prisma 约束。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"菜品 API 需要处理未登录、跨 workspace 访问、非法字段和非法餐次等错误边界。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现后必须补充关键后端测试并运行 typecheck、lint、test 等质量命令。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"包含 REST API、Session Cookie、workspace 数据隔离、餐次与后续推荐候选池契约。"}

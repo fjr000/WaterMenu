@@ -1,6 +1,6 @@
 # 后端技术契约
 
-> 决策来源：`docs/project-definition.md`。当前尚无后端源码，本文件记录已确认的实现契约；后续接入源码后，必须用真实文件路径和代码示例刷新。
+> 决策来源：`docs/project-definition.md` 与当前 `backend/` 实现。本文件记录已确认的后端实现契约；新增业务 API、数据库 schema 或跨层请求/响应契约时必须同步更新。
 
 ---
 
@@ -290,6 +290,119 @@ POST /api/auth/login -> Set-Cookie -> session.userId -> GET /api/auth/me 查询 
 ```
 
 原因：登录态由 httpOnly Cookie 和后端 Session Store 管理，后续业务 API 可以统一依赖 session userId 和 workspace 归属。
+
+---
+
+## 场景：菜品基础管理 API
+
+### 1. Scope / Trigger
+
+- 触发：新增第一个 workspace 级业务资源 `Dish`，为后续食谱、用餐记录、反馈、推荐和盲盒提供候选池。
+- 范围：`backend/src/dishes/` NestJS 模块、`backend/prisma/schema.prisma` 的 `Dish` / `MealType`、Prisma migration、后端 e2e 测试。
+- 不包含：前端页面、图片上传、Recipe、MealRecord、Feedback、Recommendation、BlindBox、删除接口。
+
+### 2. Signatures
+
+Prisma enum 与模型：
+
+```text
+MealType = BREAKFAST | LUNCH | DINNER | SNACK
+Dish(id, workspaceId, name, description?, mealTypes[], isActive, createdAt, updatedAt)
+```
+
+数据库约束：
+
+```text
+Dish.workspaceId -> Workspace.id
+Dish.mealTypes 默认 [LUNCH, DINNER]
+Dish.isActive 默认 true
+Dish 同 workspace 内 name 唯一：@@unique([workspaceId, name])
+```
+
+API：
+
+```text
+GET   /api/dishes?mealType=<MealType>&isActive=<true|false>
+POST  /api/dishes
+GET   /api/dishes/:id
+PATCH /api/dishes/:id
+```
+
+### 3. Contracts
+
+创建请求：
+
+```json
+{
+  "name": "番茄炒蛋",
+  "description": "少油版",
+  "mealTypes": ["LUNCH", "DINNER"],
+  "isActive": true
+}
+```
+
+字段约束：
+
+- `name` 必填，非空字符串。
+- `description` 可选字符串，只承载轻量说明，不承载 Recipe / 做法步骤。
+- `mealTypes` 可选，必须是非空 `MealType[]`；未传时默认 `LUNCH`、`DINNER`。
+- `isActive` 可选布尔值；未传时默认 `true`。
+- 列表 query 的 `mealType` 必须是 `MealType`，`isActive` 只接受可转换为布尔的值。
+
+响应直接返回 Dish 业务数据，不包含用户密码字段；后续如需要前端专用响应 DTO，再单独收敛契约。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 未登录访问任一菜品 API | 返回 401 |
+| `name` 缺失或为空 | DTO 校验拒绝 |
+| `mealTypes` 为空数组或包含非法餐次 | DTO 校验拒绝 |
+| `mealType` query 非法 | DTO 校验拒绝 |
+| 同 workspace 创建 / 更新为重名菜品 | 返回冲突错误 |
+| 读取或更新其他 workspace 的菜品 id | 返回不存在，不泄露数据存在性 |
+| session 中 userId 对应用户不存在 | 返回 401 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：所有 dishes 查询先解析当前 `session.userId` 的 `workspaceId`，再带 `workspaceId` 过滤。
+- Good：详情和更新使用 `id + workspaceId` 查找；找不到统一返回不存在。
+- Good：推荐 / 盲盒后续只把 `isActive=true` 的菜品纳入候选池。
+- Base：管理列表默认返回当前 workspace 全部菜品，可按 `mealType` 和 `isActive` 筛选。
+- Bad：只用 `id` 查菜品再判断 workspace，这容易产生存在性泄露或遗漏校验。
+- Bad：把“全部 / 不限”存进 `mealTypes`；它只是推荐入口筛选条件，不是菜品属性。
+- Bad：在菜品基础任务里顺手加入图片、Recipe、用餐记录或推荐逻辑。
+
+### 6. Tests Required
+
+菜品 e2e 至少覆盖：
+
+- 未登录访问 dishes API 返回 401。
+- 登录后创建菜品归属当前用户 workspace。
+- 未传 `mealTypes` 时默认 `LUNCH`、`DINNER`；未传 `isActive` 时默认 `true`。
+- 同 workspace 重名返回冲突；不同 workspace 可同名。
+- 列表只返回当前 workspace 的菜品。
+- 列表按 `mealType` 和 `isActive` 筛选。
+- 详情和更新不能跨 workspace 访问。
+- 创建和更新时非法餐次被 DTO 拒绝。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+GET /api/dishes/:id -> prisma.dish.findUnique({ where: { id } }) -> 再返回或再判断 workspace
+```
+
+问题：容易泄露其他 workspace 是否存在该 id，也容易在后续改动中遗漏隔离判断。
+
+#### Correct
+
+```text
+GET /api/dishes/:id -> 先从 session.userId 解析 workspaceId -> prisma.dish.findFirst({ where: { id, workspaceId } })
+```
+
+原因：查询边界天然限制在当前 workspace，找不到时统一按不存在处理。
 
 ---
 

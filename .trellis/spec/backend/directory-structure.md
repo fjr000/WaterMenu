@@ -10,6 +10,7 @@
 - NestJS 源码入口：`backend/src/main.ts`。
 - 应用初始化公共配置：`backend/src/app.setup.ts`。
 - 认证模块：`backend/src/auth/`。
+- 菜品模块：`backend/src/dishes/`。
 - Session 配置：`backend/src/session/`。
 - Prisma 模块：`backend/src/prisma/`。
 - Prisma schema、migration、seed：`backend/prisma/`。
@@ -52,5 +53,8 @@
 - `backend/src/auth/auth.controller.ts`：认证 API Controller。
 - `backend/src/auth/auth.service.ts`：登录校验与当前用户查询。
 - `backend/src/auth/auth.guard.ts`：Session 登录态 Guard。
+- `backend/src/dishes/dishes.controller.ts`：菜品管理 API Controller。
+- `backend/src/dishes/dishes.service.ts`：菜品 workspace 隔离查询与写入逻辑。
+- `backend/src/dishes/dto/`：菜品创建、更新和列表查询 DTO。
 - `backend/src/session/session.config.ts`：`express-session` 与 PostgreSQL session store 配置。
 - `backend/prisma/schema.prisma`：业务数据模型。

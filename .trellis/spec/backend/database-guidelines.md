@@ -11,7 +11,8 @@
 - Prisma migration：`backend/prisma/migrations/`。
 - Seed 脚本：`backend/prisma/seed.ts`。
 - Prisma Service：`backend/src/prisma/prisma.service.ts`。
-- 当前业务表：`workspaces`、`users`。
+- 当前业务表：`workspaces`、`users`、`dishes`。
+- 当前业务枚举：`MealType`，取值为 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`。
 - Session 表是基础设施表，由 `connect-pg-simple` 使用 `createTableIfMissing: true` 创建，不在 Prisma schema 中建 `Session` 业务模型。
 
 ---
@@ -45,6 +46,9 @@ pnpm --filter @watermenu/backend prisma:seed
 - 业务表通过 Prisma schema/migration 管理。
 - `User.email` 当前为全局唯一登录标识。
 - `User.workspaceId` 必填，并关联 `Workspace`。
+- `Dish.workspaceId` 必填，并关联 `Workspace`；所有菜品查询、读取、更新都必须带当前用户 workspace 边界。
+- `Dish.mealTypes` 使用 Prisma enum 数组；“不限 / 全部”不是可存储枚举值。
+- 同一 workspace 内 `Dish.name` 必须唯一，不同 workspace 可以同名。
 - 密码只存 `passwordHash`，seed 必须先 hash 再写入。
 - API 返回 DTO 不得包含 `passwordHash`。
 - Session 中只保存 `userId`，不要保存完整用户、workspace 或权限快照。
@@ -153,3 +157,4 @@ Docker Compose 只提供 PostgreSQL；backend/.env 使用 postgresql://postgres:
 - `backend/prisma/seed.ts`
 - `backend/src/prisma/prisma.service.ts`
 - `backend/src/auth/auth.service.ts`
+- `backend/src/dishes/dishes.service.ts`

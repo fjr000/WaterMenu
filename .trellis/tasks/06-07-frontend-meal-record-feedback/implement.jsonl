@@ -1,0 +1,10 @@
+{"file":".trellis/spec/frontend/index.md","reason":"前端实现必须先读取规范索引，确认需要遵守的具体规范。"}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"新增前端 hooks/types/components 时需要遵守目录放置约束。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"首页和可复用 UI/表单组件改动需要匹配现有组件风格。"}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"新增用餐记录与反馈 hooks 需要复用现有 TanStack Query hook 模式。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"创建记录和反馈后需要正确处理 Query cache invalidation，避免状态陈旧。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"补齐 API 类型和请求/响应类型时需要遵守类型安全约束。"}
+{"file":".trellis/spec/frontend/technical-contracts.md","reason":"实现需符合当前 React/Vite/Tailwind/TanStack Query/REST API 技术契约。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"实现完成后需要按前端质量门禁运行 typecheck/build。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"本任务虽然主要改前端，但依赖后端用餐记录/反馈 API 契约，需要检查跨层数据流。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"前端 API 对接需参考后端 REST JSON、Session Cookie、数据隔离等技术契约。"}

@@ -1,0 +1,10 @@
+{"file":".trellis/spec/frontend/index.md","reason":"检查阶段需从前端规范索引确认所有相关约束。"}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"检查新增/修改文件是否放在符合规范的位置。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查组件拆分、props、样式和交互是否符合现有前端模式。"}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"检查新增 hooks 是否符合 TanStack Query 和副作用封装规范。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"检查 mutation 后 cache invalidation 是否覆盖用餐记录、反馈、推荐状态。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"检查 API 类型、表单数据、枚举映射和空值处理是否类型安全。"}
+{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查实现是否符合当前前端技术契约。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查阶段需按规范运行前端 typecheck/build 等质量命令。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查前后端 API 契约、数据格式和缓存刷新是否存在跨层遗漏。"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查前端对接是否符合后端 REST JSON、Session Cookie 与 API 技术契约。"}

@@ -8,25 +8,28 @@ datasource db {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  users     User[]
-  dishes    Dish[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(cuid())
+  name        String
+  users       User[]
+  dishes      Dish[]
+  mealRecords MealRecord[]
+  feedbacks   Feedback[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@map("workspaces")
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   workspaceId  String
-  email        String    @unique
+  email        String     @unique
   name         String
   passwordHash String
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  feedbacks    Feedback[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([workspaceId])
   @@map("users")
@@ -39,18 +42,63 @@ enum MealType {
   SNACK
 }
 
+enum FeedbackRating {
+  GOOD
+  OK
+  BAD
+}
+
 model Dish {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   workspaceId String
   name        String
   description String?
-  mealTypes   MealType[] @default([LUNCH, DINNER])
-  isActive    Boolean   @default(true)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  mealTypes   MealType[]   @default([LUNCH, DINNER])
+  isActive    Boolean      @default(true)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  mealRecords MealRecord[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([workspaceId, name])
   @@index([workspaceId])
   @@map("dishes")
+}
+
+model MealRecord {
+  id          String     @id @default(cuid())
+  workspaceId String
+  dishId      String?
+  title       String
+  mealType    MealType
+  eatenAt     DateTime
+  note        String?
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  dish        Dish?      @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  feedbacks   Feedback[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([workspaceId])
+  @@index([dishId])
+  @@map("meal_records")
+}
+
+model Feedback {
+  id           String         @id @default(cuid())
+  workspaceId  String
+  mealRecordId String
+  userId       String
+  rating       FeedbackRating
+  note         String?
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  mealRecord   MealRecord     @relation(fields: [mealRecordId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([mealRecordId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+  @@map("feedbacks")
 }

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
-- **Last Active**: 2026-06-07
+- **Total Sessions**: 12
+- **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~386 | Active |
+| `journal-1.md` | ~421 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-06-08 | 完成生产部署与备份闭环 | `d0d9b26`, `e6a34d6`, `8a5721f` | `main` |
 | 11 | 2026-06-07 | 实现食谱做法记录 | `ab5cd64`, `efd00ef`, `8de5739` | `main` |
 | 10 | 2026-06-07 | 前端用餐记录与反馈闭环 | `95ae5f3`, `6346b7f`, `17cfeb1`, `7fe9ebb` | `master` |
 | 9 | 2026-06-07 | 修复前端退出登录跳转 | `0c90b55`, `5593f85`, `095830b` | `master` |

@@ -384,3 +384,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: 完成生产部署与备份闭环
+
+**Date**: 2026-06-08
+**Task**: 完成生产部署与备份闭环
+**Branch**: `main`
+
+### Summary
+
+确定下一步优先做生产部署与备份闭环；新增生产 Docker Compose、前后端 Dockerfile、Nginx HTTPS 入口配置、生产环境变量模板、部署文档，以及 PostgreSQL 备份和恢复脚本；记录生产部署契约并完成任务归档。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d0d9b26` | (see git log) |
+| `e6a34d6` | (see git log) |
+| `8a5721f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

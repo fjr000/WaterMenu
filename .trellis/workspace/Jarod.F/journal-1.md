@@ -278,3 +278,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: 修复前端退出登录跳转
+
+**Date**: 2026-06-07
+**Task**: 修复前端退出登录跳转
+**Branch**: `master`
+
+### Summary
+
+修复前端 logout 使用 queryClient.clear 导致认证 observer 未立即更新的问题；改为置空 auth 查询并移除非 auth 业务缓存，同步前端认证缓存规范。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0c90b55` | (see git log) |
+| `5593f85` | (see git log) |
+| `095830b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

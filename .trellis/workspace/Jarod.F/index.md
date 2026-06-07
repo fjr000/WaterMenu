@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
+- **Total Sessions**: 9
 - **Last Active**: 2026-06-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~280 | Active |
+| `journal-1.md` | ~315 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-06-07 | 修复前端退出登录跳转 | `0c90b55`, `5593f85`, `095830b` | `master` |
 | 8 | 2026-06-07 | 前端 MVP 垂直切片 | `24fc08b`, `5e1b63d`, `4081ae2` | `master` |
 | 7 | 2026-06-07 | 实现推荐与盲盒后端 API | `69cf813`, `1dcd90f`, `8e16281` | `master` |
 | 6 | 2026-06-07 | 实现用餐记录与反馈后端 API | `f815f70`, `5c00f12`, `67f5f75`, `48aca52` | `master` |

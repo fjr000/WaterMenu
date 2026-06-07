@@ -11,6 +11,7 @@ model Workspace {
   id        String   @id @default(cuid())
   name      String
   users     User[]
+  dishes    Dish[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -29,4 +30,27 @@ model User {
 
   @@index([workspaceId])
   @@map("users")
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+model Dish {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  mealTypes   MealType[] @default([LUNCH, DINNER])
+  isActive    Boolean   @default(true)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("dishes")
 }

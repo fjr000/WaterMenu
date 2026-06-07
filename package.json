@@ -13,6 +13,9 @@
     "backend:prisma:seed": "pnpm --filter @watermenu/backend prisma:seed",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "db:reset": "docker compose down -v && docker compose up -d postgres"
+    "db:reset": "docker compose down -v && docker compose up -d postgres",
+    "frontend:dev": "pnpm --filter @watermenu/frontend dev",
+    "frontend:build": "pnpm --filter @watermenu/frontend build",
+    "frontend:typecheck": "pnpm --filter @watermenu/frontend typecheck"
   }
 }

@@ -658,3 +658,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: 精简手动记录入口代码
+
+**Date**: 2026-06-08
+**Task**: 精简手动记录入口代码
+**Branch**: `feature/manual-meal-record`
+
+### Summary
+
+精简手动记录入口相关前端代码：提取表单 Props 和默认值构造，复用历史页 resetPage；行为保持不变。验证通过 frontend typecheck/build。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e19e7c6` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 19
+- **Total Sessions**: 20
 - **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~660 | Active |
+| `journal-1.md` | ~693 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 20 | 2026-06-08 | 精简手动记录入口代码 | `e19e7c6` | `feature/manual-meal-record` |
 | 19 | 2026-06-08 | 手动新增用餐记录入口 | `7a7c93a` | `feature/manual-meal-record` |
 | 18 | 2026-06-08 | 用餐记录编辑与删除 | `0fbc6ca`, `fc7b16e` | `main` |
 | 17 | 2026-06-08 | 优化菜品管理卡片界面 | `7f56040`, `c1a4fb1`, `b7ea86c` | `main` |

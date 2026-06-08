@@ -879,6 +879,157 @@ DishImage.fileUrl 是受保护后端接口路径，可直接作为 img src。
 
 ---
 
+## 场景：前端菜品编辑与启停用管理
+
+### 1. 范围 / 触发
+
+- 触发：前端接入后端 `PATCH /api/dishes/:id`，让用户能在菜品管理中修改菜品基础信息，并通过启用 / 停用控制推荐与盲盒候选池。
+- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-dishes.ts`、`frontend/src/components/create-dish-form.tsx`、`frontend/src/pages/home-page.tsx`。
+- 不包含：菜品硬删除、批量启停用、菜品搜索 / 筛选 / 分页、推荐算法权重调整、独立编辑页面。
+
+### 2. 签名
+
+前端 API 类型：
+
+```typescript
+export interface UpdateDishRequest {
+  name?: string;
+  description?: string;
+  mealTypes?: MealType[];
+  isActive?: boolean;
+}
+```
+
+Hook 签名：
+
+```typescript
+useUpdateDish();
+```
+
+API 路径：
+
+```text
+PATCH /api/dishes/:id
+```
+
+页面入口：
+
+```typescript
+<EditDishForm dish={dish} onCancel={...} onSuccess={...} />
+```
+
+### 3. 契约
+
+编辑表单：
+
+```text
+创建和编辑菜品必须复用同一套名称、简介、餐次字段和 Zod 校验。
+编辑入口在菜品卡片中展示，不新增独立页面。
+编辑时可修改 name、description、mealTypes，不在编辑表单内承担唯一启停用入口。
+name 提交前 trim，trim 后必须非空。
+mealTypes 至少选择一个。
+编辑时允许把 description 清空，并向 PATCH 请求提交空字符串；创建时空 description 不传。
+```
+
+启停用：
+
+```text
+菜品卡片直接展示“停用 / 启用”按钮。
+停用 / 启用只提交 { isActive: !dish.isActive }，不得顺手提交 name、description、mealTypes。
+停用菜品仍在菜品列表中展示，并显示“已停用”标签。
+前端不做硬删除；隐藏推荐候选依赖后端推荐服务的 Dish.isActive=true 契约。
+```
+
+缓存与推荐状态：
+
+```text
+useUpdateDish 成功后 invalidateQueries({ queryKey: ["dishes"] })。
+编辑成功后关闭当前编辑表单，并 reset 推荐 / 盲盒 mutation 旧结果。
+停用 / 启用成功后 reset 推荐 / 盲盒 mutation 旧结果。
+MVP 不自动重跑推荐或盲盒，用户手动重新获取。
+```
+
+页面互斥：
+
+```text
+HomePage 只维护一个 editingDish: Dish | null。
+打开编辑时关闭图库、做法、记录已吃面板，并关闭新增菜品表单。
+打开图库、做法或记录已吃时关闭编辑表单。
+不要在每张卡片里持有独立服务端菜品副本。
+```
+
+### 4. 校验与错误矩阵
+
+| 条件 | 前端处理 |
+|------|----------|
+| 菜品名称为空或纯空白 | Zod 阻止提交并显示错误 |
+| 未选择任何餐次 | 前端阻止提交并显示“请至少选择一个餐次” |
+| 编辑时简介被清空 | 提交 `description: ""`，确保后端清空旧值 |
+| 创建时简介为空 | 不传 `description`，沿用后端可选字段语义 |
+| PATCH 返回名称冲突或失败 | 保留表单或卡片状态，显示错误提示 |
+| 停用 / 启用提交中 | 禁用对应按钮，避免重复点击 |
+| 更新成功 | 刷新 `['dishes']`，关闭编辑态或保留卡片，reset 推荐 / 盲盒旧结果 |
+| 已停用菜品 | 列表继续展示“已停用”标签，不进入后端推荐候选池 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：菜品 PATCH 调用集中在 `use-dishes.ts` 的 `useUpdateDish`，组件不直接调用 `apiFetch`。
+- Good：创建和编辑共用 `DishForm`，避免字段、餐次选项和校验规则漂移。
+- Good：启停用只提交 `isActive`，降低误覆盖其他字段的风险。
+- Good：编辑清空简介时显式提交空字符串，避免 `undefined` 被 PATCH 当作“不更新”。
+- Good：更新后 reset 推荐 / 盲盒 mutation，避免页面继续展示停用前或编辑前的旧候选。
+- Base：停用菜品仍在管理列表可见，不提供本任务内筛选。
+- Bad：前端实现硬删除按钮，破坏历史记录、做法和图片关系。
+- Bad：只在编辑表单里提供启停用，导致高频候选池管理操作路径过深。
+- Bad：停用成功后只刷新菜品列表但不清空推荐 / 盲盒旧结果。
+
+### 6. 测试要求
+
+前端至少验证：
+
+- `pnpm --filter @watermenu/frontend typecheck` 通过。
+- `pnpm --filter @watermenu/frontend build` 通过。
+- 手动检查：登录 → 菜品列表 → 编辑名称 / 简介 / 餐次 → 保存后列表刷新。
+- 手动检查：编辑时把已有简介清空 → 保存后简介不再显示。
+- 手动检查：菜品卡片点击“停用”后显示“已停用”，重新推荐 / 盲盒不会返回该菜。
+- 手动检查：已停用菜品点击“启用”后标签消失，可重新进入推荐候选池。
+- 手动检查：更新菜品后旧推荐 / 盲盒结果被清空。
+- 手动检查：打开编辑时图库 / 做法 / 记录已吃面板关闭；打开这些面板时编辑关闭。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+点击停用 -> PATCH /api/dishes/:id { name, description, mealTypes, isActive: false }
+```
+
+问题：启停用是高频轻量操作，顺手提交其他字段会增加误覆盖风险，尤其当卡片数据不是最新时。
+
+#### Correct
+
+```text
+点击停用 -> PATCH /api/dishes/:id { isActive: false }
+```
+
+原因：只修改目标字段，后端 `UpdateDishDto` 可选字段会保持其他属性不变。
+
+#### Wrong
+
+```text
+编辑简介清空 -> description 转成 undefined -> PATCH body 不包含 description
+```
+
+问题：后端会把缺失字段视为不更新，导致旧简介保留，用户无法清空简介。
+
+#### Correct
+
+```text
+编辑简介清空 -> PATCH body 包含 { description: "" }
+```
+
+原因：空字符串是明确的更新意图；创建场景仍可把空简介省略。
+
 ## 校验与错误矩阵
 
 | 条件 | 前端处理 |

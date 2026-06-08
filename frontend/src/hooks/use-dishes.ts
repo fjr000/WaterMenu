@@ -5,7 +5,12 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { apiFetch } from "../api/client.ts";
-import type { CreateDishRequest, Dish, MealType } from "../api/types.ts";
+import type {
+  CreateDishRequest,
+  Dish,
+  MealType,
+  UpdateDishRequest,
+} from "../api/types.ts";
 
 const dishesKey = (mealType?: MealType): QueryKey => [
   "dishes",
@@ -33,6 +38,21 @@ export function useCreateDish() {
     mutationFn: (body: CreateDishRequest) =>
       apiFetch<Dish>("/dishes", {
         method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dishes"] });
+    },
+  });
+}
+
+export function useUpdateDish() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateDishRequest }) =>
+      apiFetch<Dish>(`/dishes/${id}`, {
+        method: "PATCH",
         body: JSON.stringify(body),
       }),
     onSuccess: () => {

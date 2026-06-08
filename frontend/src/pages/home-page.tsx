@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/use-auth.tsx";
-import { useDishes } from "../hooks/use-dishes.ts";
+import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import {
   useRecommend,
   useBlindBox,
 } from "../hooks/use-recommendations.ts";
 import type { Dish, MealType } from "../api/types.ts";
-import { CreateDishForm } from "../components/create-dish-form.tsx";
+import {
+  CreateDishForm,
+  EditDishForm,
+} from "../components/create-dish-form.tsx";
 import { DishCoverImage } from "../components/dish-cover-image.tsx";
 import { DishImagePanel } from "../components/dish-image-panel.tsx";
 import { RecommendationPanel } from "../components/recommendation-panel.tsx";
@@ -38,6 +41,7 @@ export function HomePage() {
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
   const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
   const [imageDish, setImageDish] = useState<Dish | null>(null);
+  const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
   const handleRecommend = () => {
     recommendMutation.mutate(
@@ -57,19 +61,35 @@ export function HomePage() {
   const handleRecordDish = (dish: Dish) => {
     setRecipeDish(null);
     setImageDish(null);
+    setEditingDish(null);
     setRecordDish(dish);
   };
 
   const handleViewRecipe = (dish: Dish) => {
     setRecordDish(null);
     setImageDish(null);
+    setEditingDish(null);
     setRecipeDish(dish);
   };
 
   const handleManageImages = (dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
+    setEditingDish(null);
     setImageDish(dish);
+  };
+
+  const handleEditDish = (dish: Dish) => {
+    setRecordDish(null);
+    setRecipeDish(null);
+    setImageDish(null);
+    setShowCreateForm(false);
+    setEditingDish(dish);
+  };
+
+  const handleDishUpdated = () => {
+    setEditingDish(null);
+    resetRecommendationState();
   };
 
   const handleRecordSuccess = () => {
@@ -222,9 +242,14 @@ export function HomePage() {
                 <DishCard
                   key={dish.id}
                   dish={dish}
+                  isEditing={editingDish?.id === dish.id}
+                  onEditDish={handleEditDish}
+                  onCancelEdit={() => setEditingDish(null)}
+                  onDishUpdated={handleDishUpdated}
                   onRecordDish={handleRecordDish}
                   onViewRecipe={handleViewRecipe}
                   onManageImages={handleManageImages}
+                  onResetRecommendations={resetRecommendationState}
                 />
               ))}
           </div>
@@ -250,15 +275,39 @@ export function HomePage() {
 
 function DishCard({
   dish,
+  isEditing,
+  onEditDish,
+  onCancelEdit,
+  onDishUpdated,
   onRecordDish,
   onViewRecipe,
   onManageImages,
+  onResetRecommendations,
 }: {
   dish: Dish;
+  isEditing: boolean;
+  onEditDish: (dish: Dish) => void;
+  onCancelEdit: () => void;
+  onDishUpdated: () => void;
   onRecordDish: (dish: Dish) => void;
   onViewRecipe: (dish: Dish) => void;
   onManageImages: (dish: Dish) => void;
+  onResetRecommendations: () => void;
 }) {
+  const updateDish = useUpdateDish();
+
+  const handleToggleActive = () => {
+    updateDish.mutate(
+      {
+        id: dish.id,
+        body: { isActive: !dish.isActive },
+      },
+      {
+        onSuccess: onResetRecommendations,
+      },
+    );
+  };
+
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
@@ -284,21 +333,51 @@ function DishCard({
           <MealTag key={mt} mealType={mt} />
         ))}
       </div>
-      <div className="mt-3 flex gap-2">
+
+      {isEditing && (
+        <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+          <EditDishForm
+            dish={dish}
+            onCancel={onCancelEdit}
+            onSuccess={onDishUpdated}
+          />
+        </div>
+      )}
+
+      {updateDish.isError && (
+        <p className="mt-3 rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+          更新失败，请重试
+        </p>
+      )}
+
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <SecondaryButton
-          className="flex-1 px-3 py-2 text-xs"
+          className="px-3 py-2 text-xs"
+          onClick={() => onEditDish(dish)}
+        >
+          编辑
+        </SecondaryButton>
+        <SecondaryButton
+          className="px-3 py-2 text-xs"
+          onClick={handleToggleActive}
+          disabled={updateDish.isPending}
+        >
+          {updateDish.isPending ? "处理中…" : dish.isActive ? "停用" : "启用"}
+        </SecondaryButton>
+        <SecondaryButton
+          className="px-3 py-2 text-xs"
           onClick={() => onManageImages(dish)}
         >
           图库
         </SecondaryButton>
         <SecondaryButton
-          className="flex-1 px-3 py-2 text-xs"
+          className="px-3 py-2 text-xs"
           onClick={() => onViewRecipe(dish)}
         >
           做法
         </SecondaryButton>
         <SecondaryButton
-          className="flex-1 px-3 py-2 text-xs"
+          className="px-3 py-2 text-xs sm:col-auto"
           onClick={() => onRecordDish(dish)}
         >
           记录已吃

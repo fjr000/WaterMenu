@@ -111,6 +111,13 @@ export interface CreateDishRequest {
   isActive?: boolean;
 }
 
+export interface UpdateDishRequest {
+  name?: string;
+  description?: string;
+  mealTypes?: MealType[];
+  isActive?: boolean;
+}
+
 export interface CreateMealRecordRequest {
   dishId?: string;
   title: string;

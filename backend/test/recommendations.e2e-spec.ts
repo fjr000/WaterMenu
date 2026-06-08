@@ -247,8 +247,16 @@ describe('Recommendations and blind box API', () => {
       .expect(201)
       .expect(({ body }) => {
         expect(body.items.map((item: { dish: Dish }) => item.dish.id)).toEqual(['dish-good', 'dish-recent', 'dish-bad']);
-        expect(body.items[0]).toMatchObject({ score: 120, weight: 120 });
-        expect(body.items[2]).toMatchObject({ score: 85, weight: 85 });
+        expect(body.items[0]).toMatchObject({
+          score: 120,
+          weight: 120,
+          dish: { mealRecordCount: 1, feedbackRatingAverage: 5 },
+        });
+        expect(body.items[2]).toMatchObject({
+          score: 85,
+          weight: 85,
+          dish: { mealRecordCount: 1, feedbackRatingAverage: 1 },
+        });
         expect(body.items[2].reasons).toEqual(expect.arrayContaining(['收到 1 次不好吃反馈，已降低权重']));
       });
   });

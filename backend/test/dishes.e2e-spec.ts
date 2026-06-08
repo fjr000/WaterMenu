@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { MealType, Prisma } from '@prisma/client';
+import { FeedbackRating, MealType, Prisma } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import request from 'supertest';
@@ -35,6 +35,7 @@ type Dish = {
   description?: string | null;
   mealTypes: MealType[];
   isActive: boolean;
+  mealRecords?: { feedbacks: { rating: FeedbackRating }[] }[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -247,6 +248,35 @@ describe('Dishes API', () => {
       .expect(({ body }) => {
         expect(body).toHaveLength(1);
         expect(body[0]).toMatchObject({ name: '燕麦粥', workspaceId: workspace.id });
+      });
+  });
+
+  it('列表返回用餐次数和全部反馈加权评分', async () => {
+    const now = new Date();
+    dishes.push({
+      id: 'dish-stats',
+      workspaceId: workspace.id,
+      name: '统计菜品',
+      description: null,
+      mealTypes: [MealType.LUNCH],
+      isActive: true,
+      mealRecords: [
+        { feedbacks: [{ rating: FeedbackRating.GOOD }, { rating: FeedbackRating.OK }] },
+        { feedbacks: [{ rating: FeedbackRating.BAD }] },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await loginAs(user.id)
+      .get('/api/dishes')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body[0]).toMatchObject({
+          id: 'dish-stats',
+          mealRecordCount: 2,
+          feedbackRatingAverage: 3,
+        });
       });
   });
 

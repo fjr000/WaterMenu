@@ -9,6 +9,11 @@ const BAD_SCORE = -15;
 const MIN_WEIGHT = 10;
 const RECENT_DAYS = 3;
 const RECOMMENDATION_LIMIT = 5;
+const FEEDBACK_RATING_SCORE: Record<FeedbackRating, number> = {
+  [FeedbackRating.GOOD]: 5,
+  [FeedbackRating.OK]: 3,
+  [FeedbackRating.BAD]: 1,
+};
 const coverImageInclude = {
   images: {
     where: { isCover: true },
@@ -20,6 +25,8 @@ const coverImageInclude = {
 type DishWithCoverImage = Prisma.DishGetPayload<{ include: typeof coverImageInclude }>;
 type DishCandidate = Omit<DishWithCoverImage, 'images'> & {
   coverImage: (DishWithCoverImage['images'][number] & { fileUrl: string }) | null;
+  mealRecordCount: number;
+  feedbackRatingAverage: number | null;
 };
 type MealRecordWithFeedbacks = Prisma.MealRecordGetPayload<{
   include: { feedbacks: { select: { rating: true } } };
@@ -67,7 +74,7 @@ export class RecommendationsService {
     const candidateDishes = relaxedRecentLimit ? dishes : recentFilteredDishes;
 
     return candidateDishes
-      .map((dish) => this.withCoverImage(dish))
+      .map((dish) => this.withDishCardFields(dish, mealRecords))
       .map((dish) => this.scoreDish(dish, mealRecords, recentDishIds, relaxedRecentLimit, body.mealType))
       .sort((left, right) => right.score - left.score || left.dish.name.localeCompare(right.dish.name));
   }
@@ -88,9 +95,16 @@ export class RecommendationsService {
     });
   }
 
-  private withCoverImage(dish: DishWithCoverImage): DishCandidate {
+  private withDishCardFields(dish: DishWithCoverImage, mealRecords: MealRecordWithFeedbacks[]): DishCandidate {
     const { images, ...data } = dish;
     const coverImage = images?.[0] ?? null;
+    const dishMealRecords = mealRecords.filter((mealRecord) => mealRecord.dishId === dish.id);
+    const feedbackScores = dishMealRecords.flatMap((mealRecord) =>
+      mealRecord.feedbacks.map((feedback) => FEEDBACK_RATING_SCORE[feedback.rating]),
+    );
+    const feedbackRatingAverage = feedbackScores.length
+      ? feedbackScores.reduce((sum, score) => sum + score, 0) / feedbackScores.length
+      : null;
 
     return {
       ...data,
@@ -100,6 +114,8 @@ export class RecommendationsService {
             fileUrl: `/api/dish-images/${coverImage.id}/file`,
           }
         : null,
+      mealRecordCount: dishMealRecords.length,
+      feedbackRatingAverage,
     };
   }
 

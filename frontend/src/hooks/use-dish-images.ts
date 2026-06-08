@@ -15,10 +15,11 @@ function invalidateDishImageQueries(queryClient: QueryClient, dishId: string) {
   void queryClient.invalidateQueries({ queryKey: ["dishes"] });
 }
 
-export function useDishImages(dishId: string) {
+export function useDishImages(dishId: string, enabled = true) {
   return useQuery({
     queryKey: dishImagesKey(dishId),
     queryFn: () => apiFetch<DishImage[]>(`/dishes/${dishId}/images`),
+    enabled,
   });
 }
 

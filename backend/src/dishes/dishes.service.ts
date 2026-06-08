@@ -1,20 +1,34 @@
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { MealType, Prisma } from '@prisma/client';
+import { FeedbackRating, MealType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { ListDishesQueryDto } from './dto/list-dishes-query.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
 
 const DEFAULT_MEAL_TYPES = [MealType.LUNCH, MealType.DINNER];
-const coverImageInclude = {
+const FEEDBACK_SCORE: Record<FeedbackRating, number> = {
+  [FeedbackRating.GOOD]: 5,
+  [FeedbackRating.OK]: 3,
+  [FeedbackRating.BAD]: 1,
+};
+const dishInclude = (workspaceId: string) => ({
   images: {
     where: { isCover: true },
     orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'asc' as const }],
     take: 1,
   },
-};
+  mealRecords: {
+    where: { workspaceId },
+    select: {
+      feedbacks: {
+        where: { workspaceId },
+        select: { rating: true },
+      },
+    },
+  },
+});
 
-type DishWithCoverImage = Prisma.DishGetPayload<{ include: typeof coverImageInclude }>;
+type DishWithStats = Prisma.DishGetPayload<{ include: ReturnType<typeof dishInclude> }>;
 
 @Injectable()
 export class DishesService {
@@ -36,7 +50,7 @@ export class DishesService {
 
     const dishes = await this.prisma.dish.findMany({
       where,
-      include: coverImageInclude,
+      include: dishInclude(workspaceId),
     });
 
     return dishes.map((dish) => this.withCoverImage(dish));
@@ -54,7 +68,7 @@ export class DishesService {
           mealTypes: body.mealTypes ?? DEFAULT_MEAL_TYPES,
           isActive: body.isActive ?? true,
         },
-        include: coverImageInclude,
+        include: dishInclude(workspaceId),
       });
 
       return this.withCoverImage(dish);
@@ -70,7 +84,7 @@ export class DishesService {
         id,
         workspaceId,
       },
-      include: coverImageInclude,
+      include: dishInclude(workspaceId),
     });
 
     if (!dish) {
@@ -103,7 +117,7 @@ export class DishesService {
           mealTypes: body.mealTypes,
           isActive: body.isActive,
         },
-        include: coverImageInclude,
+        include: dishInclude(workspaceId),
       });
 
       return this.withCoverImage(updated);
@@ -125,9 +139,17 @@ export class DishesService {
     return user.workspaceId;
   }
 
-  private withCoverImage(dish: DishWithCoverImage) {
-    const { images, ...data } = dish;
-    const coverImage = images?.[0] ?? null;
+  private withCoverImage(dish: DishWithStats) {
+    const { images, mealRecords, ...data } = dish;
+    const dishImages = images ?? [];
+    const records = mealRecords ?? [];
+    const coverImage = dishImages[0] ?? null;
+    const feedbackScores = records.flatMap((mealRecord) =>
+      mealRecord.feedbacks.map((feedback) => FEEDBACK_SCORE[feedback.rating]),
+    );
+    const feedbackRatingAverage = feedbackScores.length
+      ? feedbackScores.reduce((sum, score) => sum + score, 0) / feedbackScores.length
+      : null;
 
     return {
       ...data,
@@ -137,6 +159,8 @@ export class DishesService {
             fileUrl: `/api/dish-images/${coverImage.id}/file`,
           }
         : null,
+      mealRecordCount: records.length,
+      feedbackRatingAverage,
     };
   }
 

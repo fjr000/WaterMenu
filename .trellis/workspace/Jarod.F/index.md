@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 15
+- **Total Sessions**: 16
 - **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~523 | Active |
+| `journal-1.md` | ~558 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 16 | 2026-06-08 | 统一前端手账风视觉 | `78b2f82`, `21eb3f5`, `451216a` | `main` |
 | 15 | 2026-06-08 | 完善菜品编辑与启停用管理 | `2127785` | `main` |
 | 14 | 2026-06-08 | 完成历史记录浏览搜索筛选 | `65ad3cf`, `4943db3`, `c9b35f2` | `main` |
 | 13 | 2026-06-08 | 菜品多图图库与封面展示 | `9bba880`, `91efcb0` | `main` |

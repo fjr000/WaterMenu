@@ -828,6 +828,161 @@ POST /api/blind-box -> 生成与推荐接口相同的候选评分池 -> 按 weig
 
 ---
 
+## 场景：菜品图片上传与封面展示
+
+### 1. Scope / Trigger
+
+- 触发：为菜品增加多图图库、封面展示和受保护图片读取能力。
+- 范围：`backend/prisma/schema.prisma` 的 `DishImage`、`backend/src/dish-images/` 图片 API、`dishes` / `recommendations` 返回 `coverImage`、uploads 文件生命周期、部署备份说明。
+- 不包含：对象存储、图片裁剪 / 滤镜 / 压缩编辑器、批量上传、手动排序、公开分享、AI 识别。
+
+### 2. Signatures
+
+Prisma 模型：
+
+```text
+DishImage(id, workspaceId, dishId, storageKey, mimeType, size, width, height, sortOrder, isCover, createdAt, updatedAt)
+Workspace.dishImages DishImage[]
+Dish.images DishImage[]
+```
+
+API：
+
+```text
+GET    /api/dishes/:dishId/images
+POST   /api/dishes/:dishId/images     multipart/form-data, field=file
+PATCH  /api/dish-images/:id/cover
+DELETE /api/dish-images/:id
+GET    /api/dish-images/:id/file
+```
+
+Dish 响应扩展：
+
+```text
+Dish.coverImage = DishImage | null
+DishImage.fileUrl = /api/dish-images/:id/file
+```
+
+后端依赖：
+
+```text
+image-size: 读取上传图片 width / height，并校验实际图片类型
+```
+
+### 3. Contracts
+
+上传契约：
+
+```text
+字段名: file
+文件类型: image/jpeg | image/png | image/webp
+单文件最大: 5MB
+每道菜最多: 9 张图片
+图片本体: uploads 下本地文件
+数据库: 只保存 storageKey、MIME、大小、宽高、封面、排序等元数据
+```
+
+展示与排序契约：
+
+```text
+第一张图片自动成为封面
+图库列表固定排序: sortOrder asc, createdAt asc
+第一版不提供手动排序 UI 或 API
+推荐 / 盲盒只展示 coverImage，不提供图库管理入口
+```
+
+权限与文件读取契约：
+
+```text
+所有图片 API 需要 AuthGuard
+所有查询必须先从 session.userId 解析 workspaceId
+上传 / 列表先校验 dishId + workspaceId
+设封面 / 删除 / 读取文件使用 imageId + workspaceId 查找
+不能通过 Nginx 或静态中间件公开整个 uploads 目录
+```
+
+删除契约：
+
+```text
+DELETE /api/dish-images/:id 同时删除数据库记录和本地文件
+本地文件缺失不阻断数据库删除结果
+删除的是封面且仍有剩余图片时，自动把最早的一张剩余图片设为封面
+GET /api/dish-images/:id/file 在数据库记录存在但文件缺失时返回 404
+```
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 未登录访问任一图片 API | 返回 401 |
+| `dishId` 不属于当前 workspace | 返回 404，不泄露存在性 |
+| `imageId` 不属于当前 workspace | 返回 404，不泄露存在性 |
+| 上传缺少 `file` 字段 | 返回 400 |
+| MIME 不是 JPEG / PNG / WebP | 返回 400 |
+| 文件超过 5MB | 上传中间件拒绝请求 |
+| 实际图片头无法解析或与 MIME 不匹配 | 返回 400，并清理已落盘文件 |
+| 同一菜品已有 9 张图片 | 返回 400，并清理已落盘文件 |
+| 读取文件时本地文件缺失 | 返回 404 |
+| 删除本地文件时文件已缺失 | 不阻断数据库删除结果 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：上传图片先校验登录态、workspace、菜品归属、MIME、实际图片格式、张数上限，再写元数据。
+- Good：图片文件 URL 使用 `/api/dish-images/:id/file`，由后端校验权限后流式返回。
+- Good：`GET /api/dishes`、`GET /api/dishes/:id`、推荐和盲盒返回同一形状的 `coverImage`，前端不需要二次查询才能展示封面。
+- Base：菜品没有图片时 `coverImage=null`，前端保留纯文本卡片体验。
+- Base：`sortOrder` 为未来预留，第一版按固定顺序展示，不允许用户排序。
+- Bad：把 `uploads` 目录通过 Nginx 直接公开。
+- Bad：只信任浏览器传来的 MIME 或扩展名，不校验实际图片头。
+- Bad：删除数据库记录但不删除本地文件，造成 uploads 孤儿文件不断积累。
+- Bad：推荐结果另行拼接图片类型，导致 Dish 响应形状和菜品列表漂移。
+
+### 6. Tests Required
+
+图片后端 e2e 至少覆盖：
+
+- 未登录访问图片 API 返回 401。
+- 上传合法图片保存元数据、写入本地文件，第一张自动成为封面。
+- 图库列表与文件读取只能访问当前 workspace 数据。
+- 非法 MIME、伪造 MIME / 实际图片头不匹配被拒绝。
+- 超过 9 张图片被拒绝，并清理已落盘文件。
+- 设置封面只影响当前菜品，不能跨 workspace。
+- 删除图片会删除本地文件。
+- 删除封面后自动补选最早剩余图片。
+- 数据库记录存在但本地文件缺失时读取返回 404。
+
+跨层验证至少运行：
+
+```bash
+pnpm --filter @watermenu/backend prisma:generate
+pnpm --filter @watermenu/backend typecheck
+pnpm --filter @watermenu/backend lint
+pnpm --filter @watermenu/backend test
+pnpm --filter @watermenu/backend build
+pnpm --filter @watermenu/frontend typecheck
+pnpm --filter @watermenu/frontend build
+```
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```text
+Nginx /uploads/* -> 直接服务 deploy/uploads 下的图片文件
+```
+
+问题：URL 泄露后会绕过登录态和 workspace 隔离，家庭私有图片可能被其他人读取。
+
+#### Correct
+
+```text
+前端 img src=/api/dish-images/:id/file -> AuthGuard -> imageId + workspaceId 查询 -> createReadStream(file)
+```
+
+原因：图片本体仍在本地 uploads，但读取路径与业务数据一样经过后端鉴权和 workspace 校验。
+
+---
+
 ## 场景:生产部署与备份闭环
 
 ### 1. Scope / Trigger

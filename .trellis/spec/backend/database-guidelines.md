@@ -12,7 +12,7 @@
 - Prisma migration：`backend/prisma/migrations/`。
 - Seed 脚本：`backend/prisma/seed.ts`。
 - Prisma Service：`backend/src/prisma/prisma.service.ts`。
-- 当前业务表：`workspaces`、`users`、`dishes`、`recipes`、`meal_records`、`feedbacks`。
+- 当前业务表：`workspaces`、`users`、`dishes`、`dish_images`、`recipes`、`meal_records`、`feedbacks`。
 - 当前业务枚举：`MealType`，取值为 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`；`FeedbackRating`，取值为 `GOOD`、`OK`、`BAD`。
 - Session 表是基础设施表，由 `connect-pg-simple` 使用 `createTableIfMissing: true` 创建，不在 Prisma schema 中建 `Session` 业务模型。
 
@@ -52,6 +52,11 @@ pnpm --filter @watermenu/backend prisma:seed
 - `Dish.workspaceId` 必填，并关联 `Workspace`；所有菜品查询、读取、更新都必须带当前用户 workspace 边界。
 - `Dish.mealTypes` 使用 Prisma enum 数组；“不限 / 全部”不是可存储枚举值。
 - 同一 workspace 内 `Dish.name` 必须唯一，不同 workspace 可以同名。
+- `DishImage.workspaceId` 必填，并关联 `Workspace`；`DishImage.dishId` 必填，并关联 `Dish`，Dish 删除时图片记录级联删除。
+- `DishImage.storageKey` 只保存 uploads 下的相对存储键，图片本体不进入 PostgreSQL；读取文件必须经受保护 API 校验 workspace，不能公开整个 uploads 目录。
+- `DishImage.mimeType` 只允许 JPEG / PNG / WebP 对应 MIME；`size`、`width`、`height` 必须在上传时由后端保存。
+- 同一 Dish 最多 9 张 `DishImage`；同一 Dish 最多一张封面图，`isCover` 唯一性由 service 事务逻辑保证。
+- 删除 `DishImage` 时业务层必须同步删除本地文件；删除封面后如果还有剩余图片，业务层自动补选最早的一张为封面。
 - `Recipe.workspaceId` 必填，并关联 `Workspace`；`Recipe.dishId` 必填，并关联 `Dish`，Dish 删除时 recipe 级联删除。
 - `Recipe` 第一版只包含 `title` / `content` 纯文本做法，不包含 `isDefault`、图片、结构化 ingredients / steps。
 - 所有 recipe list/create 必须先校验 `dishId + workspaceId`；recipe update 必须用 `id + workspaceId` 查找，找不到统一返回不存在。

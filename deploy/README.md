@@ -10,7 +10,7 @@
 - `deploy/nginx/`：Nginx 主配置与站点配置。
 - `deploy/env/prod.env.example`：生产环境变量模板。
 - `deploy/certs/`：宿主机证书挂载目录，默认需要 `fullchain.pem` 与 `privkey.pem`。
-- `deploy/uploads/`：预留 uploads 持久化目录，当前业务尚未实现图片上传。
+- `deploy/uploads/`：uploads 持久化目录，保存菜品图片本体；数据库只保存图片路径与元数据。
 - `scripts/backup-postgres.sh`：PostgreSQL 备份脚本。
 - `scripts/restore-postgres.sh`：PostgreSQL 恢复脚本。
 
@@ -162,7 +162,7 @@ docker compose -f docker-compose.prod.yml up -d backend
 
 建议首次上线后在非生产环境验证一次备份可恢复性。
 
-## uploads 持久化
+## uploads 持久化与图片生命周期
 
 生产 Compose 已把宿主机目录挂载到后端容器：
 
@@ -170,7 +170,13 @@ docker compose -f docker-compose.prod.yml up -d backend
 ./deploy/uploads -> /app/uploads
 ```
 
-当前不实现图片上传 API 或 UI；该目录只是为后续图片功能和文件备份预留。
+菜品图片本体保存在该 uploads 目录；PostgreSQL 只保存 `dish_images` 记录中的 `storageKey`、MIME、大小、宽高、封面标记等元数据，不保存图片二进制。
+
+图片读取必须通过后端受保护接口完成，后端会先校验登录态和 workspace 归属，再读取对应文件。不要在 Nginx 中直接公开整个 `deploy/uploads/` 目录，否则会绕过 workspace 隔离。
+
+删除菜品图片时，后端会删除数据库记录并尝试删除本地文件；如果删除的是封面且该菜品还有其他图片，后端会自动选择最早的一张剩余图片作为新封面。
+
+备份时必须把 `deploy/uploads/` 与 PostgreSQL dump 作为同一时间点的数据一起保护。只恢复数据库而不恢复 uploads 会导致图片记录存在但文件缺失；只恢复 uploads 而不恢复数据库会留下不可访问的孤儿文件。正式长期使用前，建议将 `deploy/backups/`、`deploy/uploads/`、`deploy/env/prod.env` 与证书配置纳入异地备份。
 
 ## 升级
 

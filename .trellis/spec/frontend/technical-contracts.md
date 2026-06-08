@@ -670,6 +670,153 @@ CandidateCard 点击“查看做法” -> HomePage setRecipeDish(dish) -> 页面
 
 ---
 
+## 场景：前端菜品图库与封面展示
+
+### 1. 范围 / 触发
+
+- 触发：前端接入后端菜品图片 API，在菜品管理中管理多图图库，并在菜品列表、推荐、盲盒展示封面。
+- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-dish-images.ts`、`frontend/src/components/dish-image-panel.tsx`、`frontend/src/components/dish-cover-image.tsx`、`frontend/src/components/recommendation-panel.tsx`、`frontend/src/pages/home-page.tsx`。
+- 不包含：批量上传、手动排序、裁剪 / 滤镜 / 压缩编辑器、推荐 / 盲盒图库管理入口、离线图片上传。
+
+### 2. 签名
+
+前端 API 类型：
+
+```typescript
+export interface DishImage {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  width: number;
+  height: number;
+  sortOrder: number;
+  isCover: boolean;
+  fileUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Dish {
+  // ...既有字段
+  coverImage: DishImage | null;
+}
+```
+
+Hook 签名：
+
+```typescript
+useDishImages(dishId: string);
+useUploadDishImage(dishId: string);
+useSetDishImageCover(dishId: string);
+useDeleteDishImage(dishId: string);
+```
+
+API 路径：
+
+```text
+GET    /api/dishes/:dishId/images
+POST   /api/dishes/:dishId/images   FormData file
+PATCH  /api/dish-images/:id/cover
+DELETE /api/dish-images/:id
+GET    /api/dish-images/:id/file    用作 img src
+```
+
+### 3. 契约
+
+图库管理入口：
+
+```text
+只有菜品管理卡片提供“图库”入口。
+HomePage 维护单个 imageDish: Dish | null，页面级展示 DishImagePanel。
+打开图库时关闭做法面板和记录已吃表单；打开做法或记录时关闭图库。
+```
+
+推荐 / 盲盒展示：
+
+```text
+推荐结果与盲盒结果只展示 dish.coverImage。
+推荐 / 盲盒不提供图库管理入口。
+没有 coverImage 时保留现有纯文本卡片或轻量占位，不阻断记录已吃 / 查看做法。
+```
+
+上传与缓存：
+
+```text
+上传使用 FormData，字段名 file，不手动设置 Content-Type。
+文件 input accept="image/jpeg,image/png,image/webp" 只是前端提示，后端仍是最终校验。
+图片变更成功后 invalidate ['dish-images', dishId] 和 ['dishes']。
+推荐 / 盲盒结果来自 mutation data；图片变更不自动重跑推荐或盲盒，只保证后续查询刷新。
+```
+
+图片 URL：
+
+```text
+DishImage.fileUrl 是受保护后端接口路径，可直接作为 img src。
+前端不要拼接 uploads 静态路径，也不要假设 storageKey 可公开访问。
+```
+
+### 4. 校验与错误矩阵
+
+| 条件 | 前端处理 |
+|------|----------|
+| 图库列表加载中 | 显示加载状态 |
+| 图库列表加载失败 | 显示错误提示并允许重试 |
+| 图库为空 | 显示空状态，提示上传第一张图片 |
+| 未选择文件点击上传 | 禁用上传按钮或无操作 |
+| 上传中 | 禁用重复上传按钮 |
+| 上传失败 | 保留面板并显示错误提示 |
+| 设置封面 / 删除中 | 禁用对应操作，避免重复提交 |
+| 设置封面 / 删除失败 | 显示错误提示并保留当前列表 |
+| 菜品没有封面 | 不阻断卡片主要操作 |
+| API 返回 401 | 由全局认证错误处理清理登录态 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：图片 API 调用集中在 `use-dish-images.ts`，组件不直接调用 `apiFetch`。
+- Good：`DishImage` 和 `Dish.coverImage` 类型集中在 `frontend/src/api/types.ts`。
+- Good：页面层只维护一个当前图库面板，避免每张卡片各自展开复杂状态。
+- Good：`img src` 使用 `image.fileUrl`，由后端鉴权读取文件。
+- Base：单文件上传；用户需要多张图片时重复选择上传。
+- Base：图库按后端返回顺序展示，不做前端排序拖拽。
+- Bad：组件中直接请求 `/api/dishes/:id/images` 或手写 fetch。
+- Bad：前端拼接 `/uploads/${storageKey}` 读取图片，绕过权限契约。
+- Bad：推荐 / 盲盒卡片提供图库管理入口，导致核心推荐流程状态变重。
+
+### 6. 测试要求
+
+前端至少验证：
+
+- `pnpm --filter @watermenu/frontend typecheck` 通过。
+- `pnpm --filter @watermenu/frontend build` 通过。
+- 手动检查：登录 → 菜品管理 → 打开图库 → 空状态 → 上传图片 → 图片出现且第一张为封面。
+- 手动检查：上传多张图片 → 设置封面 → 菜品卡片封面刷新。
+- 手动检查：删除封面 → 自动显示新封面。
+- 手动检查：推荐 / 盲盒结果展示封面，但没有图库管理入口。
+- 手动检查：无封面菜品仍能记录已吃和查看做法。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```typescript
+<img src={`/uploads/${image.storageKey}`} />
+```
+
+问题：前端假设 uploads 可公开访问，会绕过后端登录态和 workspace 校验。
+
+#### Correct
+
+```typescript
+<img src={image.fileUrl} loading="lazy" />
+```
+
+原因：`fileUrl` 指向受保护后端接口，浏览器会携带同域 Session Cookie，由后端校验权限后返回图片文件。
+
+---
+
 ## 校验与错误矩阵
 
 | 条件 | 前端处理 |

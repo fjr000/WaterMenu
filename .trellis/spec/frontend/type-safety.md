@@ -159,6 +159,65 @@ export function RecommendationPanel({ mealType, onMealTypeChange, ... }: Props)
 
 ---
 
+## 成员邀请类型契约
+
+成员邀请功能新增跨层类型时必须集中在 `frontend/src/api/types.ts`，组件和 hooks 只导入类型，不在局部重复定义。
+
+### 必要类型
+
+```typescript
+export type UserRole = 'ADMIN' | 'MEMBER';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  workspaceId: string;
+}
+
+export interface Member {
+  id: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+  email?: string;
+}
+
+export type InvitePreviewStatus = 'VALID' | 'EXPIRED' | 'USED' | 'REVOKED' | 'INVALID';
+```
+
+### 表单校验
+
+- 接受邀请表单字段：`name`、`email`、`password`、`confirmPassword`。
+- `password` 至少 8 个字符。
+- `confirmPassword` 只存在于前端表单 schema，用于校验两次密码一致。
+- `POST /api/invites/:token/accept` 请求体只发送 `name`、`email`、`password`，禁止发送 `confirmPassword`。
+
+### Wrong vs Correct
+
+#### Wrong
+
+```typescript
+// 错：把 confirmPassword 传给后端。
+apiFetch('/invites/token/accept', {
+  method: 'POST',
+  body: JSON.stringify({ name, email, password, confirmPassword }),
+});
+```
+
+#### Correct
+
+```typescript
+// 对：confirmPassword 只参与前端校验。
+apiFetch('/invites/token/accept', {
+  method: 'POST',
+  body: JSON.stringify({ name, email, password }),
+});
+```
+
+---
+
 ## Good / Base / Bad Cases
 
 - Good：API 类型集中在 `types.ts`，便于查找和维护

@@ -28,6 +28,9 @@ deploy/uploads/*
 !deploy/uploads/.gitkeep
 deploy/backups/
 
+# 后端运行时上传文件
+backend/uploads/
+
 # IDE / 编辑器
 .vscode/
 .idea/

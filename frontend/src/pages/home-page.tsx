@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
@@ -29,6 +29,38 @@ import {
   Spinner,
 } from "../components/ui.tsx";
 
+type HomeTab = "recommend" | "dishes" | "history";
+
+const homeTabs: Array<{
+  key: HomeTab;
+  label: string;
+  shortLabel: string;
+  eyebrow: string;
+  mark: string;
+}> = [
+  {
+    key: "recommend",
+    label: "今天吃什么",
+    shortLabel: "推荐",
+    eyebrow: "今日",
+    mark: "今",
+  },
+  {
+    key: "dishes",
+    label: "菜品管理",
+    shortLabel: "菜品",
+    eyebrow: "菜单",
+    mark: "菜",
+  },
+  {
+    key: "history",
+    label: "历史记录",
+    shortLabel: "历史",
+    eyebrow: "回看",
+    mark: "历",
+  },
+];
+
 export function HomePage() {
   const auth = useAuth();
   const [mealType, setMealType] = useState<MealType | "">("");
@@ -36,9 +68,7 @@ export function HomePage() {
   const recommendMutation = useRecommend();
   const blindBoxMutation = useBlindBox();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"recommend" | "dishes" | "history">(
-    "recommend",
-  );
+  const [activeTab, setActiveTab] = useState<HomeTab>("recommend");
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
   const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
   const [imageDish, setImageDish] = useState<Dish | null>(null);
@@ -99,8 +129,8 @@ export function HomePage() {
   };
 
   return (
-    <div className="min-h-dvh">
-      <div className="mx-auto max-w-lg px-4 pb-8 pt-4">
+    <div className="min-h-dvh pb-28 md:pb-0">
+      <div className="mx-auto max-w-5xl px-4 pb-8 pt-4 md:pb-10">
         <PageHeader
           title={auth.workspace?.name ?? "WaterMenu"}
           subtitle={auth.user?.name}
@@ -111,26 +141,7 @@ export function HomePage() {
           }
         />
 
-        {/* 标签栏 */}
-        <div className="mt-6 flex gap-1 rounded-full border border-slate-200 bg-white/55 p-1 shadow-inner">
-          {[
-            ["recommend", "今天吃什么"],
-            ["dishes", "菜品管理"],
-            ["history", "历史记录"],
-          ].map(([tab, label]) => (
-            <button
-              key={tab}
-              className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
-                activeTab === tab
-                  ? "bg-red-500 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-amber-50 hover:text-slate-700"
-              }`}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <DesktopTabNav activeTab={activeTab} onChange={setActiveTab} />
 
         {activeTab === "recommend" && (
           <RecommendationPanel
@@ -187,8 +198,8 @@ export function HomePage() {
         )}
 
         {activeTab === "dishes" && (
-          <div className="mt-4 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+          <div className="mx-auto mt-5 flex max-w-2xl flex-col gap-4 md:mt-6">
+            <div className="flex items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-white/60 p-3 shadow-[0_10px_24px_rgba(111,82,56,0.08)]">
               <div>
                 <h2 className="font-serif text-lg font-semibold text-slate-900">
                   菜品列表
@@ -196,10 +207,10 @@ export function HomePage() {
                 <p className="text-xs text-slate-500">管理家里的常吃菜单</p>
               </div>
               <Button
-                className="px-3 py-1.5 text-xs"
+                className="shrink-0 px-3 py-2 text-xs sm:px-4 sm:text-sm"
                 onClick={() => setShowCreateForm((v) => !v)}
               >
-                {showCreateForm ? "取消" : "+ 新增菜品"}
+                {showCreateForm ? "收起" : "新增"}
               </Button>
             </div>
 
@@ -260,7 +271,135 @@ export function HomePage() {
           />
         )}
       </div>
+
+      <MobileTabBar activeTab={activeTab} onChange={setActiveTab} />
     </div>
+  );
+}
+
+function DesktopTabNav({
+  activeTab,
+  onChange,
+}: {
+  activeTab: HomeTab;
+  onChange: (tab: HomeTab) => void;
+}) {
+  return (
+    <nav className="mt-6 hidden grid-cols-3 gap-3 md:grid" aria-label="首页栏目">
+      {homeTabs.map((tab) => {
+        const active = activeTab === tab.key;
+
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            className={`group flex items-center gap-3 rounded-3xl border p-3 text-left shadow-sm transition ${
+              active
+                ? "border-red-200 bg-red-50/90 shadow-[0_12px_28px_rgba(217,75,53,0.13)]"
+                : "border-slate-200 bg-white/55 hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/70"
+            }`}
+            onClick={() => onChange(tab.key)}
+            aria-current={active ? "page" : undefined}
+          >
+            <span
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl border text-base font-black ${
+                active
+                  ? "border-red-200 bg-red-500 text-white"
+                  : "border-amber-200 bg-white/80 text-slate-600 group-hover:text-red-600"
+              }`}
+              aria-hidden="true"
+            >
+              {tab.mark}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold text-slate-500">
+                {tab.eyebrow}
+              </span>
+              <span
+                className={`block truncate text-sm font-bold ${
+                  active ? "text-red-700" : "text-slate-800"
+                }`}
+              >
+                {tab.label}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function MobileTabBar({
+  activeTab,
+  onChange,
+}: {
+  activeTab: HomeTab;
+  onChange: (tab: HomeTab) => void;
+}) {
+  return (
+    <nav
+      className="fixed inset-x-3 bottom-3 z-30 rounded-[1.75rem] border border-slate-200 bg-white/90 p-2 shadow-[0_18px_44px_rgba(111,82,56,0.22)] backdrop-blur md:hidden"
+      aria-label="首页栏目"
+    >
+      <div className="grid grid-cols-3 gap-1">
+        {homeTabs.map((tab) => {
+          const active = activeTab === tab.key;
+
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-bold transition ${
+                active
+                  ? "bg-red-500 text-white shadow-[0_8px_18px_rgba(217,75,53,0.24)]"
+                  : "text-slate-500 hover:bg-amber-50 hover:text-slate-700"
+              }`}
+              onClick={() => onChange(tab.key)}
+              aria-current={active ? "page" : undefined}
+            >
+              <span
+                className={`grid h-7 w-7 place-items-center rounded-xl border text-sm ${
+                  active ? "border-red-100/40 bg-white/15" : "border-amber-200 bg-white/70"
+                }`}
+                aria-hidden="true"
+              >
+                {tab.mark}
+              </span>
+              <span className="max-w-full truncate">{tab.shortLabel}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function DishToolButton({
+  mark,
+  label,
+  tone = "amber",
+  onClick,
+}: {
+  mark: ReactNode;
+  label: string;
+  tone?: "amber" | "emerald";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`grid h-11 w-11 place-items-center rounded-2xl border text-sm font-black shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-500/25 ${
+        tone === "emerald"
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100"
+          : "border-amber-200 bg-amber-50/80 text-red-600 hover:bg-amber-100"
+      }`}
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      <span aria-hidden="true">{mark}</span>
+    </button>
   );
 }
 
@@ -285,6 +424,8 @@ function DishCard({
   onManageImages: (dish: Dish) => void;
   onResetRecommendations: () => void;
 }) {
+  const activeSwitchId = useId();
+  const recipePanelId = useId();
   const updateDish = useUpdateDish();
   const imagesQuery = useDishImages(dish.id, Boolean(dish.coverImage));
   const [recipesOpen, setRecipesOpen] = useState(false);
@@ -305,16 +446,18 @@ function DishCard({
   };
 
   return (
-    <Card className="overflow-hidden border-amber-200 bg-gradient-to-br from-white/90 via-amber-50/65 to-orange-50/55 p-0 shadow-[0_14px_34px_rgba(111,82,56,0.13)]">
+    <Card className="overflow-hidden border-amber-200 bg-gradient-to-br from-white/95 via-amber-50/70 to-red-50/45 p-0 shadow-[0_16px_38px_rgba(111,82,56,0.14)]">
       {images.length > 0 && (
-        <div className="border-b border-amber-100 bg-amber-50/60 px-4 py-3">
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
-            {images.map((image) => (
+        <div className="border-b border-amber-100 bg-amber-50/55 px-3 py-3 sm:px-4">
+          <div className="flex snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+            {images.map((image, index) => (
               <img
                 key={image.id}
                 src={image.fileUrl}
                 alt={image.isCover ? `${dish.name}封面` : `${dish.name}图片`}
-                className="h-28 w-36 shrink-0 rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)]"
+                className={`h-28 shrink-0 snap-start rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] ${
+                  index === 0 ? "w-44" : "w-32"
+                }`}
                 loading="lazy"
               />
             ))}
@@ -328,35 +471,49 @@ function DishCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate font-serif text-xl font-semibold text-slate-900">
-              {dish.name}
-            </p>
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate font-serif text-xl font-semibold text-slate-900">
+                {dish.name}
+              </p>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  dish.isActive
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {dish.isActive ? "启用" : "停用"}
+              </span>
+            </div>
             {dish.description && (
               <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">
                 {dish.description}
               </p>
             )}
           </div>
-          <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-amber-200 bg-white/75 px-2 py-1 shadow-inner">
-            <span className="text-xs font-semibold text-slate-600">
-              {dish.isActive ? "启用" : "停用"}
-            </span>
-            <input
-              type="checkbox"
-              checked={dish.isActive}
-              onChange={handleToggleActive}
-              disabled={updateDish.isPending}
-              className="peer sr-only"
-              aria-label={`${dish.name}${dish.isActive ? "停用" : "启用"}`}
-            />
-            <span className="h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
-              <span
-                className={`block h-5 w-5 rounded-full bg-white shadow transition ${
-                  dish.isActive ? "translate-x-5" : ""
-                }`}
+          <div className="shrink-0 text-right">
+            <label
+              className="block cursor-pointer rounded-2xl border border-amber-200 bg-white/75 px-2.5 py-2 shadow-inner"
+              htmlFor={activeSwitchId}
+            >
+              <input
+                id={activeSwitchId}
+                type="checkbox"
+                checked={dish.isActive}
+                onChange={handleToggleActive}
+                disabled={updateDish.isPending}
+                aria-label="启用状态开关"
+                className="peer sr-only"
               />
-            </span>
-          </label>
+              <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
+                <span
+                  className={`block h-5 w-5 rounded-full bg-white shadow transition ${
+                    dish.isActive ? "translate-x-5" : ""
+                  }`}
+                />
+              </span>
+            </label>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -393,45 +550,75 @@ function DishCard({
           </p>
         )}
 
-        <div className="mt-4 flex flex-col gap-2 border-t border-amber-100 pt-3">
-          <div className="flex flex-wrap gap-2">
-            <SecondaryButton
-              className="px-3 py-2 text-xs"
-              onClick={() => onEditDish(dish)}
-            >
-              编辑
-            </SecondaryButton>
-            <SecondaryButton
-              className="px-3 py-2 text-xs"
-              onClick={() => setRecipesOpen((value) => !value)}
-            >
-              {recipesOpen ? "收起做法" : "展开做法"}
-            </SecondaryButton>
+        <div className="mt-4 rounded-3xl border border-amber-100 bg-white/55 p-2.5 shadow-inner">
+          <div className="flex items-center gap-2">
             <Button
-              className="px-3 py-2 text-xs"
+              className="min-h-12 flex-1 justify-between rounded-2xl px-4 py-3 text-sm shadow-[0_5px_0_rgba(111,82,56,0.16)]"
               onClick={() => onRecordDish(dish)}
             >
-              记录已吃
+              <span className="truncate">记录已吃</span>
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/20 text-base"
+                aria-hidden="true"
+              >
+                +
+              </span>
             </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <SecondaryButton
-              className="px-3 py-1.5 text-xs"
-              onClick={() => onManageImages(dish)}
+
+            <div
+              className="flex shrink-0 items-center gap-1 rounded-2xl border border-amber-100 bg-white/70 p-1"
+              role="toolbar"
+              aria-label={`${dish.name}管理操作`}
             >
-              管理图库
-            </SecondaryButton>
-            <SecondaryButton
-              className="px-3 py-1.5 text-xs"
-              onClick={() => onViewRecipe(dish)}
-            >
-              管理做法
-            </SecondaryButton>
+              <DishToolButton
+                mark="编"
+                label="编辑菜品"
+                onClick={() => onEditDish(dish)}
+              />
+              <DishToolButton
+                mark="图"
+                label="管理图库"
+                onClick={() => onManageImages(dish)}
+              />
+              <DishToolButton
+                mark="做"
+                label="管理做法"
+                tone="emerald"
+                onClick={() => onViewRecipe(dish)}
+              />
+            </div>
           </div>
+
+          <button
+            type="button"
+            className={`mt-2 flex min-h-10 w-full items-center justify-between rounded-2xl border px-3 text-left text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-red-500/20 ${
+              recipesOpen
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-amber-100 bg-amber-50/70 text-slate-600 hover:bg-amber-100"
+            }`}
+            onClick={() => setRecipesOpen((value) => !value)}
+            aria-expanded={recipesOpen}
+            aria-controls={recipePanelId}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className={`grid h-6 w-6 shrink-0 place-items-center rounded-xl text-[11px] ${
+                  recipesOpen ? "bg-emerald-100 text-emerald-700" : "bg-white/85 text-red-600"
+                }`}
+                aria-hidden="true"
+              >
+                做
+              </span>
+              <span className="truncate">做法</span>
+            </span>
+            <span className="shrink-0 text-[11px] text-slate-500">
+              {recipesOpen ? "收起" : "展开"}
+            </span>
+          </button>
         </div>
 
         {recipesOpen && (
-          <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3">
+          <div id={recipePanelId} className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3">
             {recipesQuery.isLoading && <Spinner />}
 
             {recipesQuery.isError && (

@@ -52,6 +52,7 @@ tmp/
 temp/
 
 # 本地 AI 工具配置
+.worktrees/
 .agents/
 .pi/
 .codex/

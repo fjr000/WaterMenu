@@ -42,6 +42,9 @@ export interface Dish {
   description: string | null;
   mealTypes: MealType[];
   isActive: boolean;
+  coverImage: DishImage | null;
+  mealRecordCount: number;
+  feedbackRatingAverage: number | null;
   createdAt: string;
   updatedAt: string;
 }

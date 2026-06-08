@@ -349,7 +349,20 @@ PATCH /api/dishes/:id
 - `isActive` 可选布尔值;未传时默认 `true`。
 - 列表 query 的 `mealType` 必须是 `MealType`,`isActive` 只接受可转换为布尔的值。
 
-响应直接返回 Dish 业务数据,不包含用户密码字段;后续如需要前端专用响应 DTO,再单独收敛契约。
+响应直接返回 Dish 业务数据,不包含用户密码字段。当前 Dish 响应额外包含前端卡片展示字段:
+
+```text
+coverImage: DishImage | null
+mealRecordCount: number
+feedbackRatingAverage: number | null
+```
+
+统计字段约束:
+
+- `mealRecordCount` 只统计当前 workspace 内关联该 `dishId` 的用餐记录数量。
+- `feedbackRatingAverage` 按当前 workspace 内该菜全部关联用餐记录的全部反馈加权平均;`GOOD=5`,`OK=3`,`BAD=1`。
+- 没有任何反馈时 `feedbackRatingAverage=null`;没有任何用餐记录时 `mealRecordCount=0`。
+- 推荐 / 盲盒返回的 `candidate.dish` 必须保持同一 Dish 响应形状,不能漏掉 `coverImage`、`mealRecordCount` 或 `feedbackRatingAverage`。
 
 ### 4. Validation & Error Matrix
 
@@ -368,10 +381,12 @@ PATCH /api/dishes/:id
 - Good:所有 dishes 查询先解析当前 `session.userId` 的 `workspaceId`,再带 `workspaceId` 过滤。
 - Good:详情和更新使用 `id + workspaceId` 查找;找不到统一返回不存在。
 - Good:推荐 / 盲盒后续只把 `isActive=true` 的菜品纳入候选池。
+- Good:Dish 卡片统计查询必须带 `workspaceId` 边界,并显式过滤嵌套反馈的 `workspaceId`,避免跨 workspace 反馈混入评分。
 - Base:管理列表默认返回当前 workspace 全部菜品,可按 `mealType` 和 `isActive` 筛选。
 - Bad:只用 `id` 查菜品再判断 workspace,这容易产生存在性泄露或遗漏校验。
 - Bad:把"全部 / 不限"存进 `mealTypes`;它只是推荐入口筛选条件,不是菜品属性。
 - Bad:在菜品基础任务里顺手加入图片、Recipe、用餐记录或推荐逻辑。
+- Bad:前端为了算菜品评分分页拉取历史记录再聚合;这会造成统计不完整且让展示逻辑漂移到前端。
 
 ### 6. Tests Required
 
@@ -385,6 +400,7 @@ PATCH /api/dishes/:id
 - 列表按 `mealType` 和 `isActive` 筛选。
 - 详情和更新不能跨 workspace 访问。
 - 创建和更新时非法餐次被 DTO 拒绝。
+- 列表返回 `mealRecordCount` 和 `feedbackRatingAverage`,并覆盖无记录、无反馈、多反馈加权平均场景。
 
 ### 7. Wrong vs Correct
 
@@ -825,6 +841,7 @@ Dish.isActive = true
 ```text
 POST /api/recommendations -> 返回最多 5 个候选
 每个候选包含 dish、score、weight、reasons
+dish 与 /api/dishes 的 Dish 响应形状一致,包含 coverImage、mealRecordCount、feedbackRatingAverage
 按 score 降序排列
 ```
 
@@ -834,6 +851,7 @@ POST /api/recommendations -> 返回最多 5 个候选
 POST /api/blind-box -> 返回单个候选
 候选来自同一评分池，并按 weight 随机抽取
 结果包含 dish、score、weight、reasons
+dish 与 /api/dishes 的 Dish 响应形状一致,包含 coverImage、mealRecordCount、feedbackRatingAverage
 ```
 
 推荐理由只展示命中的事实，例如适配餐次、最近 3 天没吃过、之前反馈好吃、之前反馈不好吃较少推荐。
@@ -855,6 +873,7 @@ POST /api/blind-box -> 返回单个候选
 - Good：所有 Dish、MealRecord、Feedback 查询都带当前用户 `workspaceId` 边界。
 - Good：推荐和盲盒共用同一候选池与评分规则，避免两个入口行为漂移。
 - Good：盲盒只随机抽取已过滤、已评分的合理候选，而不是全量随机菜品。
+- Good：推荐和盲盒的 `candidate.dish` 复用菜品卡片展示字段，避免推荐页和菜品管理页对 Dish 形状理解不一致。
 - Base：无 `mealType` 时从当前 workspace 全部启用菜品推荐。
 - Base：有 `mealType` 时只从适配该餐次的启用菜品推荐。
 - Bad：把“不限 / 全部”写入 `Dish.mealTypes`。
@@ -873,6 +892,7 @@ POST /api/blind-box -> 返回单个候选
 - GOOD 反馈让菜品排序或抽中权重上升。
 - BAD 反馈降低权重但不会完全排除菜品。
 - 推荐结果最多返回 5 个候选，并包含 `reasons`。
+- 推荐候选中的 `dish` 包含 `mealRecordCount` 和 `feedbackRatingAverage`,且统计口径与 `/api/dishes` 一致。
 - 盲盒返回单个候选，并按权重随机。
 - 空候选返回可解释的空结果。
 

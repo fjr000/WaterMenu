@@ -1,0 +1,79 @@
+# 优化菜品管理卡片界面
+
+## Goal
+
+优化「菜品管理」页的菜品卡片，让常用信息和操作更贴近手账风菜单管理：图片直接可见，做法可就地展开，停用/启用更像状态控制，已吃状态以标签表达，整体卡片配合图片呈现并提升视觉质感。
+
+## What I already know
+
+* 用户希望菜品管理中的按键不再简陋。
+* 停用和启用应改为开关形式。
+* 图库应直接展示，可采用横向滚动展示，用户自行滚动。
+* 做法应支持展开。
+* 是否已吃可以作为标签；用户已确认只在吃过时显示次数和评分，无记录时不显示未吃标签。
+* 用户已确认：标签不写「吃过」，用数字表示次数即可；评分按全部反馈汇总加权，权重为「好吃=5 分、一般=3 分、不好吃=1 分」。
+* 卡片应配合图片展示：有图片时展示图片，没有图片时不占图片区域。
+* 可对卡片做进一步美化/优化。
+* 当前前端是 React + TypeScript + Tailwind CSS，入口在 `frontend/src/pages/home-page.tsx`。
+* 当前 `DishCard` 位于 `home-page.tsx`，已有编辑、停用/启用、图库、做法、记录已吃按钮。
+* 当前 `DishImagePanel` 是单独面板，使用 `useDishImages(dish.id)` 拉取菜品图片。
+* 当前 `RecipePanel` 是单独面板，使用 `useRecipes(dish.id)` 拉取菜品做法。
+* `Dish` 类型只包含 `coverImage`，不包含所有图片、做法或已吃状态。
+* `MealRecordsQuery` 支持 `dishId`，`useMealRecords({ dishId, pageSize: 1 })` 可用于判断某道菜是否已有历史记录；但当前菜品列表接口本身未直接返回「是否吃过」。
+
+## Assumptions (temporary)
+
+* 本任务优先优化菜品管理页前端交互与视觉；用户已确认允许扩展后端聚合字段/接口，以准确返回次数和评分。
+* 图库直接展示可通过每张卡片懒加载/就地拉取菜品图片实现。
+* 做法展开可在卡片内按需拉取并显示，不再跳出到全局面板。
+* 「是否已吃」可先用现有历史记录接口按菜品懒加载判断，避免为本次 UI 优化扩展后端。
+
+## Open Questions
+
+* 无。
+
+## Requirements (evolving)
+
+* 菜品卡片使用更精致的视觉层级，和现有暖色手账风主题保持一致。
+* 停用/启用操作改为开关控件，并明确显示当前状态。
+* 有图片的菜品卡片应直接展示图片；无图片菜品不保留空图位。
+* 图库应在卡片内直接展示，支持横向滚动。
+* 做法应可在卡片内展开/收起。
+* 是否已吃应以标签形式呈现；只在吃过时显示次数数字和加权评分，不写「吃过」文案。
+* 后端应为菜品管理卡片提供每道菜的用餐记录次数和全部反馈加权评分，避免前端分页拉取后计算不完整。
+* 没有用餐记录的菜品不显示未吃状态标签。
+* 编辑、新增、记录已吃等已有功能应继续可用。
+
+## Acceptance Criteria (evolving)
+
+* [ ] 菜品管理页中，启用状态使用开关交互，切换后仍调用现有更新逻辑并刷新推荐状态。
+* [ ] 有图片的菜品展示封面/图库缩略图；无图片时不显示图片占位。
+* [ ] 图库可在卡片内横向滚动查看。
+* [ ] 做法可在卡片内展开/收起，加载失败和空状态有反馈。
+* [ ] 有用餐记录时显示次数数字和加权评分；无用餐记录时不显示未吃标签。
+* [ ] 评分按全部反馈汇总加权计算：好吃=5，一般=3，不好吃=1。
+* [ ] 评分统计来自后端聚合字段/接口，不能只用前端单页历史记录近似计算。
+* [ ] 卡片操作区域比原来的按钮网格更紧凑、更美观。
+* [ ] 前端 typecheck/build 通过。
+
+## Definition of Done
+
+* Tests added/updated when appropriate.
+* Lint / typecheck / build green for touched package.
+* UI 不破坏现有「新增菜品 / 编辑菜品 / 记录已吃 / 推荐刷新」流程。
+* 如产生新的前端约定，更新 Trellis spec。
+
+## Out of Scope (explicit)
+
+* 暂不重做整个首页信息架构。
+* 暂不修改推荐算法。
+* 不重做后端推荐算法；本任务仅允许为卡片展示扩展必要的统计字段/接口。
+
+## Technical Notes
+
+* 已检查 `frontend/src/pages/home-page.tsx`：`DishCard` 当前使用按钮网格，图库和做法通过全局面板打开。
+* 已检查 `frontend/src/components/dish-image-panel.tsx`：图片列表已有上传、设封面、删除能力。
+* 已检查 `frontend/src/components/recipe-panel.tsx`：做法列表已有查看、编辑、新增能力。
+* 已检查 `frontend/src/api/types.ts`：`Dish` 不含 `hasEaten` / `mealRecordCount` 字段。
+* 已检查 `frontend/src/hooks/use-meal-records.ts`：`useMealRecords` 支持按 `dishId` 查询，返回分页 `total`，可用于显示已吃次数。
+* 已检查 `frontend/src/index.css` 与 `frontend/src/components/ui.tsx`：当前视觉主题为暖色手账纸张风，可继续沿用并强化。

@@ -23,6 +23,22 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface DishImage {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  storageKey: string;
+  mimeType: string;
+  size: number;
+  width: number;
+  height: number;
+  sortOrder: number;
+  isCover: boolean;
+  fileUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Dish {
   id: string;
   workspaceId: string;
@@ -30,6 +46,7 @@ export interface Dish {
   description: string | null;
   mealTypes: MealType[];
   isActive: boolean;
+  coverImage: DishImage | null;
   createdAt: string;
   updatedAt: string;
 }

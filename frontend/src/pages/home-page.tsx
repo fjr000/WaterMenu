@@ -7,6 +7,8 @@ import {
 } from "../hooks/use-recommendations.ts";
 import type { Dish, MealType } from "../api/types.ts";
 import { CreateDishForm } from "../components/create-dish-form.tsx";
+import { DishCoverImage } from "../components/dish-cover-image.tsx";
+import { DishImagePanel } from "../components/dish-image-panel.tsx";
 import { RecommendationPanel } from "../components/recommendation-panel.tsx";
 import { RecipePanel } from "../components/recipe-panel.tsx";
 import { MealRecordForm } from "../components/meal-record-form.tsx";
@@ -34,6 +36,7 @@ export function HomePage() {
   );
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
   const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
+  const [imageDish, setImageDish] = useState<Dish | null>(null);
 
   const handleRecommend = () => {
     recommendMutation.mutate(
@@ -52,12 +55,20 @@ export function HomePage() {
 
   const handleRecordDish = (dish: Dish) => {
     setRecipeDish(null);
+    setImageDish(null);
     setRecordDish(dish);
   };
 
   const handleViewRecipe = (dish: Dish) => {
     setRecordDish(null);
+    setImageDish(null);
     setRecipeDish(dish);
+  };
+
+  const handleManageImages = (dish: Dish) => {
+    setRecordDish(null);
+    setRecipeDish(null);
+    setImageDish(dish);
   };
 
   const handleRecordSuccess = () => {
@@ -146,6 +157,16 @@ export function HomePage() {
           </div>
         )}
 
+        {imageDish && (
+          <div className="mt-4">
+            <DishImagePanel
+              key={imageDish.id}
+              dish={imageDish}
+              onClose={() => setImageDish(null)}
+            />
+          </div>
+        )}
+
         {activeTab === "dishes" && (
           <div className="mt-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -192,6 +213,7 @@ export function HomePage() {
                   dish={dish}
                   onRecordDish={handleRecordDish}
                   onViewRecipe={handleViewRecipe}
+                  onManageImages={handleManageImages}
                 />
               ))}
           </div>
@@ -212,14 +234,16 @@ function DishCard({
   dish,
   onRecordDish,
   onViewRecipe,
+  onManageImages,
 }: {
   dish: Dish;
   onRecordDish: (dish: Dish) => void;
   onViewRecipe: (dish: Dish) => void;
+  onManageImages: (dish: Dish) => void;
 }) {
   return (
     <Card>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-slate-900">
             {dish.name}
@@ -229,12 +253,13 @@ function DishCard({
               {dish.description}
             </p>
           )}
+          {!dish.isActive && (
+            <span className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+              已停用
+            </span>
+          )}
         </div>
-        {!dish.isActive && (
-          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-            已停用
-          </span>
-        )}
+        <DishCoverImage dish={dish} />
       </div>
       <div className="mt-2 flex flex-wrap gap-1">
         {dish.mealTypes.map((mt) => (
@@ -242,6 +267,12 @@ function DishCard({
         ))}
       </div>
       <div className="mt-3 flex gap-2">
+        <SecondaryButton
+          className="flex-1 px-3 py-2 text-xs"
+          onClick={() => onManageImages(dish)}
+        >
+          图库
+        </SecondaryButton>
         <SecondaryButton
           className="flex-1 px-3 py-2 text-xs"
           onClick={() => onViewRecipe(dish)}

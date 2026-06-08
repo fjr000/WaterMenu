@@ -1,4 +1,5 @@
 import type { Dish, MealType, RecommendationCandidate } from "../api/types.ts";
+import { DishCoverImage } from "./dish-cover-image.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import {
   Button,
@@ -158,8 +159,8 @@ function CandidateCard({
     <Card
       className={highlight ? "border-amber-300 bg-amber-50" : undefined}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-900">
             {candidate.dish.name}
           </p>
@@ -168,17 +169,18 @@ function CandidateCard({
               {candidate.dish.description}
             </p>
           )}
+          <div className="mt-2 flex flex-wrap gap-1">
+            {candidate.dish.mealTypes.map((mt) => (
+              <span
+                key={mt}
+                className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+              >
+                {mealLabel(mt as MealType)}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-1">
-          {candidate.dish.mealTypes.map((mt) => (
-            <span
-              key={mt}
-              className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-            >
-              {mealLabel(mt as MealType)}
-            </span>
-          ))}
-        </div>
+        <DishCoverImage dish={candidate.dish} />
       </div>
 
       {candidate.reasons.length > 0 && (

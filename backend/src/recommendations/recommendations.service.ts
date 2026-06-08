@@ -9,8 +9,18 @@ const BAD_SCORE = -15;
 const MIN_WEIGHT = 10;
 const RECENT_DAYS = 3;
 const RECOMMENDATION_LIMIT = 5;
+const coverImageInclude = {
+  images: {
+    where: { isCover: true },
+    orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'asc' as const }],
+    take: 1,
+  },
+};
 
-type DishCandidate = Prisma.DishGetPayload<object>;
+type DishWithCoverImage = Prisma.DishGetPayload<{ include: typeof coverImageInclude }>;
+type DishCandidate = Omit<DishWithCoverImage, 'images'> & {
+  coverImage: (DishWithCoverImage['images'][number] & { fileUrl: string }) | null;
+};
 type MealRecordWithFeedbacks = Prisma.MealRecordGetPayload<{
   include: { feedbacks: { select: { rating: true } } };
 }>;
@@ -57,6 +67,7 @@ export class RecommendationsService {
     const candidateDishes = relaxedRecentLimit ? dishes : recentFilteredDishes;
 
     return candidateDishes
+      .map((dish) => this.withCoverImage(dish))
       .map((dish) => this.scoreDish(dish, mealRecords, recentDishIds, relaxedRecentLimit, body.mealType))
       .sort((left, right) => right.score - left.score || left.dish.name.localeCompare(right.dish.name));
   }
@@ -71,7 +82,25 @@ export class RecommendationsService {
       where.mealTypes = { has: mealType };
     }
 
-    return this.prisma.dish.findMany({ where });
+    return this.prisma.dish.findMany({
+      where,
+      include: coverImageInclude,
+    });
+  }
+
+  private withCoverImage(dish: DishWithCoverImage): DishCandidate {
+    const { images, ...data } = dish;
+    const coverImage = images?.[0] ?? null;
+
+    return {
+      ...data,
+      coverImage: coverImage
+        ? {
+            ...coverImage,
+            fileUrl: `/api/dish-images/${coverImage.id}/file`,
+          }
+        : null,
+    };
   }
 
   private findMealRecords(workspaceId: string, dishIds: string[]) {

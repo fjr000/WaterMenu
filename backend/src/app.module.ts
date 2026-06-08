@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { DishImagesModule } from './dish-images/dish-images.module';
 import { DishesModule } from './dishes/dishes.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { MealRecordsModule } from './meal-records/meal-records.module';
@@ -14,6 +15,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     PrismaModule,
     AuthModule,
     DishesModule,
+    DishImagesModule,
     MealRecordsModule,
     FeedbackModule,
     RecipesModule,

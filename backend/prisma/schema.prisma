@@ -12,6 +12,7 @@ model Workspace {
   name        String
   users       User[]
   dishes      Dish[]
+  dishImages  DishImage[]
   recipes     Recipe[]
   mealRecords MealRecord[]
   feedbacks   Feedback[]
@@ -57,6 +58,7 @@ model Dish {
   mealTypes   MealType[]   @default([LUNCH, DINNER])
   isActive    Boolean      @default(true)
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  images      DishImage[]
   recipes     Recipe[]
   mealRecords MealRecord[]
   createdAt   DateTime     @default(now())
@@ -65,6 +67,27 @@ model Dish {
   @@unique([workspaceId, name])
   @@index([workspaceId])
   @@map("dishes")
+}
+
+model DishImage {
+  id          String    @id @default(cuid())
+  workspaceId String
+  dishId      String
+  storageKey  String
+  mimeType    String
+  size        Int
+  width       Int
+  height      Int
+  sortOrder   Int       @default(0)
+  isCover     Boolean   @default(false)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  dish        Dish      @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([dishId])
+  @@map("dish_images")
 }
 
 model Recipe {

@@ -625,3 +625,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 19: 手动新增用餐记录入口
+
+**Date**: 2026-06-08
+**Task**: 手动新增用餐记录入口
+**Branch**: `feature/manual-meal-record`
+
+### Summary
+
+在历史记录页顶部新增手动记录入口和内联表单，支持创建非关联用餐记录；成功后清空筛选、回到第 1 页并重置推荐状态。验证通过 frontend typecheck/build。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7a7c93a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -124,14 +124,9 @@ export class MealRecordsService {
       throw new NotFoundException();
     }
 
-    if (body.dishId !== undefined) {
-      await this.assertDishInWorkspace(workspaceId, body.dishId);
-    }
-
     return this.prisma.mealRecord.update({
       where: { id },
       data: {
-        dishId: body.dishId === undefined ? undefined : body.dishId,
         title: body.title,
         mealType: body.mealType,
         eatenAt: body.eatenAt ? new Date(body.eatenAt) : undefined,
@@ -139,6 +134,22 @@ export class MealRecordsService {
       },
       include: getMealRecordInclude(workspaceId),
     });
+  }
+
+  async delete(userId: string, id: string) {
+    const workspaceId = await this.getWorkspaceId(userId);
+    const mealRecord = await this.prisma.mealRecord.findFirst({
+      where: { id, workspaceId },
+      select: { id: true },
+    });
+
+    if (!mealRecord) {
+      throw new NotFoundException();
+    }
+
+    await this.prisma.mealRecord.delete({ where: { id } });
+
+    return { ok: true };
   }
 
   private async assertDishInWorkspace(workspaceId: string, dishId?: string | null) {

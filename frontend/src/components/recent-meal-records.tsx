@@ -1,7 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { FeedbackRating, MealRecord } from "../api/types.ts";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import type { FeedbackRating, MealRecord, MealType } from "../api/types.ts";
 import {
+  useDeleteMealRecord,
   useMealRecords,
+  useUpdateMealRecord,
   useUpsertFeedback,
 } from "../hooks/use-meal-records.ts";
 import { mealLabel } from "./meal-tag.tsx";
@@ -12,8 +17,16 @@ import {
   ErrorBanner,
   Input,
   SecondaryButton,
+  Select,
   Spinner,
 } from "./ui.tsx";
+
+const mealOptions: { value: MealType; label: string }[] = [
+  { value: "BREAKFAST", label: "早餐" },
+  { value: "LUNCH", label: "午餐" },
+  { value: "DINNER", label: "晚餐" },
+  { value: "SNACK", label: "加餐" },
+];
 
 const ratingOptions: { value: FeedbackRating; label: string }[] = [
   { value: "GOOD", label: "好吃" },
@@ -21,12 +34,26 @@ const ratingOptions: { value: FeedbackRating; label: string }[] = [
   { value: "BAD", label: "不好吃" },
 ];
 
+const editSchema = z.object({
+  title: z.string().trim().min(1, "请输入记录标题"),
+  mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
+  eatenAt: z
+    .string()
+    .min(1, "请选择用餐时间")
+    .refine((value) => !Number.isNaN(new Date(value).getTime()), {
+      message: "请选择有效的用餐时间",
+    }),
+  note: z.string().optional(),
+});
+
+type EditFormValues = z.infer<typeof editSchema>;
+
 export function RecentMealRecords({
   userId,
-  onFeedbackSuccess,
+  onRecordChange,
 }: {
   userId: string;
-  onFeedbackSuccess?: () => void;
+  onRecordChange?: () => void;
 }) {
   const mealRecordsQuery = useMealRecords({ page: 1, pageSize: 5 });
   const records = mealRecordsQuery.data?.items ?? [];
@@ -60,7 +87,7 @@ export function RecentMealRecords({
           key={record.id}
           record={record}
           userId={userId}
-          onFeedbackSuccess={onFeedbackSuccess}
+          onRecordChange={onRecordChange}
         />
       ))}
     </section>
@@ -70,18 +97,21 @@ export function RecentMealRecords({
 export function MealRecordCard({
   record,
   userId,
-  onFeedbackSuccess,
+  onRecordChange,
 }: {
   record: MealRecord;
   userId: string;
-  onFeedbackSuccess?: () => void;
+  onRecordChange?: () => void;
 }) {
   const upsertFeedback = useUpsertFeedback();
+  const deleteMealRecord = useDeleteMealRecord();
   const serverFeedback = record.feedbacks.find(
     (feedback) => feedback.userId === userId,
   );
   const [currentFeedback, setCurrentFeedback] = useState(serverFeedback);
   const [showNote, setShowNote] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [note, setNote] = useState(serverFeedback?.note ?? "");
   const [selectedRating, setSelectedRating] = useState<
     FeedbackRating | undefined
@@ -103,7 +133,7 @@ export function MealRecordCard({
       {
         onSuccess: (feedback) => {
           setCurrentFeedback(feedback);
-          onFeedbackSuccess?.();
+          onRecordChange?.();
         },
         onError: () => setSelectedRating(currentFeedback?.rating),
       },
@@ -125,10 +155,19 @@ export function MealRecordCard({
         onSuccess: (feedback) => {
           setCurrentFeedback(feedback);
           setShowNote(false);
-          onFeedbackSuccess?.();
+          onRecordChange?.();
         },
       },
     );
+  };
+
+  const handleDelete = () => {
+    deleteMealRecord.mutate(record.id, {
+      onSuccess: () => {
+        setDeleteConfirming(false);
+        onRecordChange?.();
+      },
+    });
   };
 
   return (
@@ -145,12 +184,85 @@ export function MealRecordCard({
             <p className="mt-1 text-xs text-slate-500">备注：{record.note}</p>
           )}
         </div>
-        {record.dishId && (
-          <span className="shrink-0 rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-            已关联菜品
-          </span>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {record.dishId && (
+            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              已关联菜品
+            </span>
+          )}
+          <div className="flex gap-1">
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-amber-200 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => {
+                setIsEditing((value) => !value);
+                setDeleteConfirming(false);
+                setShowNote(false);
+              }}
+              disabled={deleteMealRecord.isPending}
+            >
+              {isEditing ? "收起" : "编辑"}
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-red-100 bg-red-50/80 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => {
+                setDeleteConfirming(true);
+                setIsEditing(false);
+              }}
+              disabled={deleteMealRecord.isPending}
+            >
+              删除
+            </button>
+          </div>
+        </div>
       </div>
+
+      {isEditing && (
+        <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50/55 p-3">
+          <EditMealRecordForm
+            key={`${record.id}-${record.updatedAt}`}
+            record={record}
+            onCancel={() => setIsEditing(false)}
+            onSuccess={() => {
+              setIsEditing(false);
+              onRecordChange?.();
+            }}
+          />
+        </div>
+      )}
+
+      {deleteConfirming && (
+        <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
+          <p className="text-sm font-semibold text-red-700">确认删除这条用餐记录？</p>
+          <p className="mt-1 text-xs leading-5 text-red-600">
+            删除后对应反馈也会一起移除，无法恢复。
+          </p>
+          <div className="mt-3 flex gap-2">
+            <SecondaryButton
+              type="button"
+              className="flex-1 px-3 py-1.5 text-xs"
+              onClick={() => setDeleteConfirming(false)}
+              disabled={deleteMealRecord.isPending}
+            >
+              取消
+            </SecondaryButton>
+            <Button
+              type="button"
+              className="flex-1 px-3 py-1.5 text-xs"
+              onClick={handleDelete}
+              disabled={deleteMealRecord.isPending}
+            >
+              {deleteMealRecord.isPending ? "删除中…" : "确认删除"}
+            </Button>
+          </div>
+          {deleteMealRecord.isError && (
+            <p className="mt-2 text-center text-xs text-red-700">
+              删除失败，请重试
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2">
         {ratingOptions.map((option) => {
@@ -229,6 +341,139 @@ export function MealRecordCard({
   );
 }
 
+function EditMealRecordForm({
+  record,
+  onCancel,
+  onSuccess,
+}: {
+  record: MealRecord;
+  onCancel: () => void;
+  onSuccess: () => void;
+}) {
+  const updateMealRecord = useUpdateMealRecord();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EditFormValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      title: record.title,
+      mealType: record.mealType,
+      eatenAt: toLocalInputValue(new Date(record.eatenAt)),
+      note: record.note ?? "",
+    },
+  });
+
+  const submit = handleSubmit((values) => {
+    const trimmedNote = values.note?.trim();
+
+    updateMealRecord.mutate(
+      {
+        id: record.id,
+        body: {
+          title: values.title.trim(),
+          mealType: values.mealType,
+          eatenAt: new Date(values.eatenAt).toISOString(),
+          note: trimmedNote || null,
+        },
+      },
+      { onSuccess },
+    );
+  });
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3">
+      <div>
+        <label
+          htmlFor={`meal-record-title-${record.id}`}
+          className="mb-1 block text-sm font-semibold text-slate-700"
+        >
+          标题
+        </label>
+        <Input id={`meal-record-title-${record.id}`} {...register("title")} />
+        {errors.title && (
+          <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor={`meal-record-meal-type-${record.id}`}
+            className="mb-1 block text-sm font-semibold text-slate-700"
+          >
+            餐次
+          </label>
+          <Select
+            id={`meal-record-meal-type-${record.id}`}
+            {...register("mealType")}
+          >
+            {mealOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div>
+          <label
+            htmlFor={`meal-record-eaten-at-${record.id}`}
+            className="mb-1 block text-sm font-semibold text-slate-700"
+          >
+            用餐时间
+          </label>
+          <Input
+            id={`meal-record-eaten-at-${record.id}`}
+            type="datetime-local"
+            {...register("eatenAt")}
+          />
+          {errors.eatenAt && (
+            <p className="mt-1 text-xs text-red-600">
+              {errors.eatenAt.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label
+          htmlFor={`meal-record-note-${record.id}`}
+          className="mb-1 block text-sm font-semibold text-slate-700"
+        >
+          备注（可选）
+        </label>
+        <Input id={`meal-record-note-${record.id}`} {...register("note")} />
+      </div>
+
+      {updateMealRecord.isError && (
+        <p className="rounded-xl border border-red-200 bg-red-50 p-2 text-center text-xs text-red-700">
+          保存失败，请重试
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <SecondaryButton
+          type="button"
+          className="flex-1 px-3 py-1.5 text-xs"
+          onClick={onCancel}
+          disabled={updateMealRecord.isPending}
+        >
+          取消
+        </SecondaryButton>
+        <Button
+          type="submit"
+          className="flex-1 px-3 py-1.5 text-xs"
+          disabled={updateMealRecord.isPending}
+        >
+          {updateMealRecord.isPending ? "保存中…" : "保存"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("zh-CN", {
     month: "numeric",
@@ -236,4 +481,9 @@ function formatDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function toLocalInputValue(date: Date) {
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

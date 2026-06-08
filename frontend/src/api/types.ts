@@ -128,6 +128,13 @@ export interface CreateMealRecordRequest {
   note?: string;
 }
 
+export interface UpdateMealRecordRequest {
+  title?: string;
+  mealType?: MealType;
+  eatenAt?: string;
+  note?: string | null;
+}
+
 export interface UpsertFeedbackRequest {
   mealRecordId: string;
   rating: FeedbackRating;

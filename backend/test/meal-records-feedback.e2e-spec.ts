@@ -74,6 +74,7 @@ describe('Meal records and feedback API', () => {
       create: jest.Mock;
       findFirst: jest.Mock;
       update: jest.Mock;
+      delete: jest.Mock;
     };
     feedback: { upsert: jest.Mock };
     $transaction: jest.Mock;
@@ -153,6 +154,16 @@ describe('Meal records and feedback API', () => {
           });
 
           return Promise.resolve(withFeedbacks(mealRecord));
+        }),
+        delete: jest.fn(({ where }: { where: { id: string } }) => {
+          const index = mealRecords.findIndex((item) => item.id === where.id);
+          if (index < 0) {
+            return Promise.resolve(null);
+          }
+
+          const [deleted] = mealRecords.splice(index, 1);
+          feedbacks = feedbacks.filter((item) => item.mealRecordId !== deleted.id);
+          return Promise.resolve(deleted);
         }),
       },
       feedback: {
@@ -284,6 +295,7 @@ describe('Meal records and feedback API', () => {
       get: (url: string) => request(server).get(url).set('x-test-user-id', userId),
       post: (url: string) => request(server).post(url).set('x-test-user-id', userId),
       patch: (url: string) => request(server).patch(url).set('x-test-user-id', userId),
+      delete: (url: string) => request(server).delete(url).set('x-test-user-id', userId),
     };
   }
 
@@ -313,7 +325,7 @@ describe('Meal records and feedback API', () => {
       });
   });
 
-  it('不能用其他 workspace 的 dishId 创建或更新用餐记录', async () => {
+  it('不能用其他 workspace 的 dishId 创建记录，且更新时拒绝 dishId 字段', async () => {
     const agent = loginAs(user.id);
     const createRes = await agent
       .post('/api/meal-records')
@@ -324,7 +336,7 @@ describe('Meal records and feedback API', () => {
       .post('/api/meal-records')
       .send({ dishId: 'other-dish-1', title: '越界菜品', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
       .expect(404);
-    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: 'other-dish-1' }).expect(404);
+    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: 'other-dish-1' }).expect(400);
   });
 
   it('列表与详情只返回当前 workspace 记录，并包含反馈基础信息', async () => {
@@ -367,23 +379,70 @@ describe('Meal records and feedback API', () => {
     await otherAgent.get(`/api/meal-records/${createRes.body.id}`).expect(404);
   });
 
-  it('更新用餐记录支持修改、解除和保持 dishId', async () => {
+  it('更新用餐记录支持修改基础字段并保持 dishId', async () => {
+    const agent = loginAs(user.id);
+    const createRes = await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', title: '午餐', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z', note: '少油' })
+      .expect(201);
+
+    await agent
+      .patch(`/api/meal-records/${createRes.body.id}`)
+      .send({ title: '改名午餐', mealType: MealType.DINNER, eatenAt: '2026-06-08T10:30:00.000Z', note: null })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.dishId).toBe('dish-1');
+        expect(body.title).toBe('改名午餐');
+        expect(body.mealType).toBe(MealType.DINNER);
+        expect(body.eatenAt).toBe('2026-06-08T10:30:00.000Z');
+        expect(body.note).toBeNull();
+      });
+  });
+
+  it('更新用餐记录拒绝修改或解除 dishId', async () => {
     const agent = loginAs(user.id);
     const createRes = await agent
       .post('/api/meal-records')
       .send({ dishId: 'dish-1', title: '午餐', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
       .expect(201);
 
-    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: 'dish-2' }).expect(200).expect(({ body }) => {
-      expect(body.dishId).toBe('dish-2');
+    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: 'dish-2' }).expect(400);
+    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: null }).expect(400);
+
+    await agent.get(`/api/meal-records/${createRes.body.id}`).expect(200).expect(({ body }) => {
+      expect(body.dishId).toBe('dish-1');
+      expect(body.title).toBe('午餐');
     });
-    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ title: '改名午餐' }).expect(200).expect(({ body }) => {
-      expect(body.dishId).toBe('dish-2');
-      expect(body.title).toBe('改名午餐');
+  });
+
+  it('删除用餐记录会永久删除记录和对应反馈', async () => {
+    const agent = loginAs(user.id);
+    const createRes = await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', title: '午餐', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(201);
+    await agent.post('/api/feedback').send({ mealRecordId: createRes.body.id, rating: FeedbackRating.GOOD }).expect(201);
+
+    await agent.delete(`/api/meal-records/${createRes.body.id}`).expect(200).expect({ ok: true });
+
+    await agent.get(`/api/meal-records/${createRes.body.id}`).expect(404);
+    await agent.get('/api/meal-records').expect(200).expect(({ body }) => {
+      expect(body.total).toBe(0);
+      expect(body.items).toHaveLength(0);
     });
-    await agent.patch(`/api/meal-records/${createRes.body.id}`).send({ dishId: null }).expect(200).expect(({ body }) => {
-      expect(body.dishId).toBeNull();
-    });
+    expect(feedbacks).toHaveLength(0);
+  });
+
+  it('不能删除其他 workspace 的用餐记录', async () => {
+    const agent = loginAs(user.id);
+    const otherAgent = loginAs(otherUser.id);
+    const otherCreateRes = await otherAgent
+      .post('/api/meal-records')
+      .send({ title: '他人晚餐', mealType: MealType.DINNER, eatenAt: '2026-06-07T10:00:00.000Z' })
+      .expect(201);
+
+    await agent.delete(`/api/meal-records/${otherCreateRes.body.id}`).expect(404);
+    await otherAgent.get(`/api/meal-records/${otherCreateRes.body.id}`).expect(200);
   });
 
   it('反馈按当前用户与用餐记录 upsert，且不能提交到其他 workspace 记录', async () => {

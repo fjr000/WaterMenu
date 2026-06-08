@@ -260,14 +260,14 @@ export function HomePage() {
         {activeTab === "history" && auth.user && (
           <HistoryRecordsPanel
             userId={auth.user.id}
-            onFeedbackSuccess={resetRecommendationState}
+            onRecordChange={resetRecommendationState}
           />
         )}
 
         {activeTab === "recommend" && auth.user && (
           <RecentMealRecords
             userId={auth.user.id}
-            onFeedbackSuccess={resetRecommendationState}
+            onRecordChange={resetRecommendationState}
           />
         )}
       </div>

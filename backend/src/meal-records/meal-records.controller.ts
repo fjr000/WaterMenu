@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateMealRecordDto } from './dto/create-meal-record.dto';
@@ -35,5 +35,10 @@ export class MealRecordsController {
   @Patch(':id')
   update(@Req() request: SessionRequest, @Param('id') id: string, @Body() body: UpdateMealRecordDto) {
     return this.mealRecordsService.update(request.session.userId, id, body);
+  }
+
+  @Delete(':id')
+  delete(@Req() request: SessionRequest, @Param('id') id: string) {
+    return this.mealRecordsService.delete(request.session.userId, id);
   }
 }

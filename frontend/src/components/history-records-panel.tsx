@@ -26,10 +26,10 @@ const ratingOptions: { value: FeedbackRating; label: string }[] = [
 
 export function HistoryRecordsPanel({
   userId,
-  onFeedbackSuccess,
+  onRecordChange,
 }: {
   userId: string;
-  onFeedbackSuccess?: () => void;
+  onRecordChange?: () => void;
 }) {
   const dishesQuery = useDishes();
   const [page, setPage] = useState(1);
@@ -203,7 +203,10 @@ export function HistoryRecordsPanel({
           key={record.id}
           record={record}
           userId={userId}
-          onFeedbackSuccess={onFeedbackSuccess}
+          onRecordChange={() => {
+            resetPage();
+            onRecordChange?.();
+          }}
         />
       ))}
 

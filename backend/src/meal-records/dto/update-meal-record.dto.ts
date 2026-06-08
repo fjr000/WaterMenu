@@ -5,11 +5,6 @@ export class UpdateMealRecordDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
-  dishId?: string | null;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
   title?: string;
 
   @IsEnum(MealType)

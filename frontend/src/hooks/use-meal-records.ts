@@ -2,6 +2,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
 import { apiFetch } from "../api/client.ts";
@@ -11,6 +12,7 @@ import type {
   MealRecord,
   MealRecordsPage,
   MealRecordsQuery,
+  UpdateMealRecordRequest,
   UpsertFeedbackRequest,
 } from "../api/types.ts";
 
@@ -32,6 +34,11 @@ function normalizeQuery(query: MealRecordsQuery = {}) {
 
 function mealRecordsQueryKey(query: MealRecordsQuery = {}): QueryKey {
   return ["meal-records", normalizeQuery(query)];
+}
+
+function invalidateMealRecordDependencies(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: mealRecordsKey });
+  void queryClient.invalidateQueries({ queryKey: ["dishes"] });
 }
 
 export function useMealRecords(query: MealRecordsQuery = {}) {
@@ -61,8 +68,42 @@ export function useCreateMealRecord() {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: mealRecordsKey });
-      void queryClient.invalidateQueries({ queryKey: ["dishes"] });
+      invalidateMealRecordDependencies(queryClient);
+    },
+  });
+}
+
+export function useUpdateMealRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: UpdateMealRecordRequest;
+    }) =>
+      apiFetch<MealRecord>(`/meal-records/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      invalidateMealRecordDependencies(queryClient);
+    },
+  });
+}
+
+export function useDeleteMealRecord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<{ ok: boolean }>(`/meal-records/${id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      invalidateMealRecordDependencies(queryClient);
     },
   });
 }

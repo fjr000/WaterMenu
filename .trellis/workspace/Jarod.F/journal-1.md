@@ -419,3 +419,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: 菜品多图图库与封面展示
+
+**Date**: 2026-06-08
+**Task**: 菜品多图图库与封面展示
+**Branch**: `main`
+
+### Summary
+
+完成菜品多图图库第一版：新增 DishImage 模型、受保护图片上传/读取/设封面/删除 API、封面随菜品和推荐返回，前端接入图库管理与推荐封面展示，并记录图片存储、权限和备份契约。验证通过后端 prisma:generate/typecheck/lint/test/build 与前端 typecheck/build。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9bba880` | (see git log) |
+| `91efcb0` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

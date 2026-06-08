@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 12
+- **Total Sessions**: 13
 - **Last Active**: 2026-06-08
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~421 | Active |
+| `journal-1.md` | ~455 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 13 | 2026-06-08 | 菜品多图图库与封面展示 | `9bba880`, `91efcb0` | `main` |
 | 12 | 2026-06-08 | 完成生产部署与备份闭环 | `d0d9b26`, `e6a34d6`, `8a5721f` | `main` |
 | 11 | 2026-06-07 | 实现食谱做法记录 | `ab5cd64`, `efd00ef`, `8de5739` | `main` |
 | 10 | 2026-06-07 | 前端用餐记录与反馈闭环 | `95ae5f3`, `6346b7f`, `17cfeb1`, `7fe9ebb` | `master` |

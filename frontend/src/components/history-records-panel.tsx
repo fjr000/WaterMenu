@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { FeedbackRating, MealRecord, MealType } from "../api/types.ts";
 import { useDishes } from "../hooks/use-dishes.ts";
 import { useMealRecords } from "../hooks/use-meal-records.ts";
+import { ManualMealRecordForm } from "./manual-meal-record-form.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import { MealRecordCard } from "./recent-meal-records.tsx";
 import {
+  Button,
   Card,
   EmptyState,
   ErrorBanner,
@@ -42,6 +44,7 @@ export function HistoryRecordsPanel({
   const [range, setRange] = useState<RangeValue>("all");
   const [q, setQ] = useState("");
   const [records, setRecords] = useState<MealRecord[]>([]);
+  const [showManualForm, setShowManualForm] = useState(false);
 
   const from = useMemo(() => buildFrom(range), [range]);
   const mealRecordsQuery = useMealRecords({
@@ -84,14 +87,49 @@ export function HistoryRecordsPanel({
     setRecords([]);
   };
 
+  const resetFilters = () => {
+    setPage(1);
+    setMealType("");
+    setDishId("");
+    setRating("");
+    setRatingScope("mine");
+    setRange("all");
+    setQ("");
+    setRecords([]);
+  };
+
+  const handleManualRecordSuccess = () => {
+    setShowManualForm(false);
+    resetFilters();
+    onRecordChange?.();
+  };
+
   return (
     <section className="mt-4 flex flex-col gap-3">
-      <div>
-        <h2 className="font-serif text-lg font-semibold text-slate-900">历史记录</h2>
-        <p className="mt-0.5 text-xs text-slate-500">
-          按菜、餐次、反馈和关键词找回吃过什么
-        </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-lg font-semibold text-slate-900">
+            历史记录
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            按菜、餐次、反馈和关键词找回吃过什么
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="shrink-0 px-3 py-2 text-xs sm:px-4 sm:text-sm"
+          onClick={() => setShowManualForm((value) => !value)}
+        >
+          {showManualForm ? "收起" : "手动记录"}
+        </Button>
       </div>
+
+      {showManualForm && (
+        <ManualMealRecordForm
+          onCancel={() => setShowManualForm(false)}
+          onSuccess={handleManualRecordSuccess}
+        />
+      )}
 
       <Card className="flex flex-col gap-3">
         <Input

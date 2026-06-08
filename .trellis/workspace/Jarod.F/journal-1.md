@@ -556,3 +556,38 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 17: 优化菜品管理卡片界面
+
+**Date**: 2026-06-08
+**Task**: 优化菜品管理卡片界面
+**Branch**: `main`
+
+### Summary
+
+优化菜品管理页卡片与导航视觉层级；为菜品响应补充用餐次数和加权评分统计；完成前后端验证、MCP 移动端/桌面验收，并归档任务。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7f56040` | (see git log) |
+| `c1a4fb1` | (see git log) |
+| `b7ea86c` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

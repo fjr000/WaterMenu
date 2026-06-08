@@ -317,35 +317,51 @@ function handleUnauthorizedError(error: unknown) {
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
-  --color-red-500: #ef4444;
-  --color-red-600: #dc2626;
-  --color-amber-500: #f59e0b;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", "Songti SC", "SimSun", serif;
+  --color-slate-50: #fff8ec;
+  --color-slate-900: #25170f;
+  --color-emerald-500: #77933c;
+  --color-red-500: #d94b35;
+  --color-amber-500: #d9931f;
 }
 
 :root {
   color-scheme: light;
+  --paper: #fff8ec;
+  --ink: #25170f;
+  --tomato: #d94b35;
+  --olive: #637f2f;
+  --soy: #6f5238;
+  --focus-ring: rgba(217, 75, 53, 0.35);
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   font-family: var(--font-sans);
-  background: var(--color-slate-50);
-  color: var(--color-slate-900);
+  background: var(--paper); /* 实际可叠加 CSS 渐变纹理，不使用外部图片 */
+  color: var(--ink);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+契约：
+
+```text
+前端主题不依赖在线字体、字体包、外部纹理图片或动画库。
+全局主题色可以覆盖 Tailwind 默认 slate/red/emerald/amber token，但要保持语义一致：red=主行动/危险，emerald=正向标签，amber=强调/盲盒，slate=暖中性色。
+轻量动效只能作为视觉增强，不能承载业务状态；所有动画必须支持 `prefers-reduced-motion` 降级。
 ```
 
 ---

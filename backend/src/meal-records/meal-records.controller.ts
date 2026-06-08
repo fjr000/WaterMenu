@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateMealRecordDto } from './dto/create-meal-record.dto';
+import { ListMealRecordsQueryDto } from './dto/list-meal-records-query.dto';
 import { UpdateMealRecordDto } from './dto/update-meal-record.dto';
 import { MealRecordsService } from './meal-records.service';
 
@@ -17,8 +18,8 @@ export class MealRecordsController {
   constructor(private readonly mealRecordsService: MealRecordsService) {}
 
   @Get()
-  list(@Req() request: SessionRequest) {
-    return this.mealRecordsService.list(request.session.userId);
+  list(@Req() request: SessionRequest, @Query() query: ListMealRecordsQueryDto) {
+    return this.mealRecordsService.list(request.session.userId, query);
   }
 
   @Post()

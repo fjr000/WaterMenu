@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMealRecordDto } from './dto/create-meal-record.dto';
+import { ListMealRecordsQueryDto } from './dto/list-meal-records-query.dto';
 import { UpdateMealRecordDto } from './dto/update-meal-record.dto';
 
 function getMealRecordInclude(workspaceId: string): Prisma.MealRecordInclude {
@@ -25,14 +26,60 @@ function getMealRecordInclude(workspaceId: string): Prisma.MealRecordInclude {
 export class MealRecordsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string) {
+  async list(userId: string, query: ListMealRecordsQueryDto = {}) {
     const workspaceId = await this.getWorkspaceId(userId);
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const where: Prisma.MealRecordWhereInput = { workspaceId };
 
-    return this.prisma.mealRecord.findMany({
-      where: { workspaceId },
-      include: getMealRecordInclude(workspaceId),
-      orderBy: { eatenAt: 'desc' },
-    });
+    if (query.mealType) {
+      where.mealType = query.mealType;
+    }
+
+    if (query.dishId) {
+      where.dishId = query.dishId;
+    }
+
+    if (query.rating) {
+      where.feedbacks = {
+        some: {
+          workspaceId,
+          rating: query.rating,
+          ...(query.ratingScope === 'workspace' ? {} : { userId }),
+        },
+      };
+    }
+
+    const eatenAt: Prisma.DateTimeFilter = {};
+    if (query.from) {
+      eatenAt.gte = new Date(query.from);
+    }
+    if (query.to) {
+      eatenAt.lte = new Date(query.to);
+    }
+    if (Object.keys(eatenAt).length > 0) {
+      where.eatenAt = eatenAt;
+    }
+
+    if (query.q) {
+      where.OR = [
+        { title: { contains: query.q, mode: 'insensitive' } },
+        { note: { contains: query.q, mode: 'insensitive' } },
+      ];
+    }
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.mealRecord.findMany({
+        where,
+        include: getMealRecordInclude(workspaceId),
+        orderBy: [{ eatenAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.mealRecord.count({ where }),
+    ]);
+
+    return { items, total, page, pageSize };
   }
 
   async create(userId: string, body: CreateMealRecordDto) {

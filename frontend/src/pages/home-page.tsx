@@ -11,6 +11,7 @@ import { DishCoverImage } from "../components/dish-cover-image.tsx";
 import { DishImagePanel } from "../components/dish-image-panel.tsx";
 import { RecommendationPanel } from "../components/recommendation-panel.tsx";
 import { RecipePanel } from "../components/recipe-panel.tsx";
+import { HistoryRecordsPanel } from "../components/history-records-panel.tsx";
 import { MealRecordForm } from "../components/meal-record-form.tsx";
 import { MealTag } from "../components/meal-tag.tsx";
 import { RecentMealRecords } from "../components/recent-meal-records.tsx";
@@ -31,7 +32,7 @@ export function HomePage() {
   const recommendMutation = useRecommend();
   const blindBoxMutation = useBlindBox();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"recommend" | "dishes">(
+  const [activeTab, setActiveTab] = useState<"recommend" | "dishes" | "history">(
     "recommend",
   );
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
@@ -110,6 +111,16 @@ export function HomePage() {
             onClick={() => setActiveTab("dishes")}
           >
             菜品管理
+          </button>
+          <button
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              activeTab === "history"
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+            onClick={() => setActiveTab("history")}
+          >
+            历史记录
           </button>
         </div>
 
@@ -219,7 +230,14 @@ export function HomePage() {
           </div>
         )}
 
-        {auth.user && (
+        {activeTab === "history" && auth.user && (
+          <HistoryRecordsPanel
+            userId={auth.user.id}
+            onFeedbackSuccess={resetRecommendationState}
+          />
+        )}
+
+        {activeTab === "recommend" && auth.user && (
           <RecentMealRecords
             userId={auth.user.id}
             onFeedbackSuccess={resetRecommendationState}

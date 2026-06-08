@@ -75,6 +75,25 @@ export interface MealRecord {
   feedbacks: Feedback[];
 }
 
+export interface MealRecordsQuery {
+  page?: number;
+  pageSize?: number;
+  mealType?: MealType;
+  dishId?: string;
+  rating?: FeedbackRating;
+  ratingScope?: "mine" | "workspace";
+  from?: string;
+  to?: string;
+  q?: string;
+}
+
+export interface MealRecordsPage {
+  items: MealRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface Recipe {
   id: string;
   workspaceId: string;

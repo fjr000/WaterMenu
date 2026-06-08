@@ -43,6 +43,23 @@ type Feedback = {
   updatedAt: Date;
 };
 
+type MealRecordWhere = {
+  workspaceId: string;
+  mealType?: MealType;
+  dishId?: string;
+  eatenAt?: { gte?: Date; lte?: Date };
+  feedbacks?: { some: { workspaceId: string; rating: FeedbackRating; userId?: string } };
+  OR?: ({ title: { contains: string; mode: string } } | { note: { contains: string; mode: string } })[];
+};
+
+function sortMealRecords(left: MealRecord, right: MealRecord) {
+  return (
+    right.eatenAt.getTime() - left.eatenAt.getTime() ||
+    right.createdAt.getTime() - left.createdAt.getTime() ||
+    right.id.localeCompare(left.id)
+  );
+}
+
 describe('Meal records and feedback API', () => {
   let app: INestApplication;
   let dishes: Dish[];
@@ -53,11 +70,13 @@ describe('Meal records and feedback API', () => {
     dish: { findFirst: jest.Mock };
     mealRecord: {
       findMany: jest.Mock;
+      count: jest.Mock;
       create: jest.Mock;
       findFirst: jest.Mock;
       update: jest.Mock;
     };
     feedback: { upsert: jest.Mock };
+    $transaction: jest.Mock;
   };
 
   beforeAll(async () => {
@@ -87,14 +106,11 @@ describe('Meal records and feedback API', () => {
         }),
       },
       mealRecord: {
-        findMany: jest.fn(({ where }: { where: { workspaceId: string } }) => {
-          return Promise.resolve(
-            mealRecords
-              .filter((item) => item.workspaceId === where.workspaceId)
-              .sort((left, right) => right.eatenAt.getTime() - left.eatenAt.getTime())
-              .map(withFeedbacks),
-          );
+        findMany: jest.fn(({ where, skip = 0, take }: { where: MealRecordWhere; skip?: number; take?: number }) => {
+          const filtered = filterMealRecords(where).sort(sortMealRecords);
+          return Promise.resolve(filtered.slice(skip, take === undefined ? undefined : skip + take).map(withFeedbacks));
         }),
+        count: jest.fn(({ where }: { where: MealRecordWhere }) => Promise.resolve(filterMealRecords(where).length)),
         create: jest.fn(({ data }: { data: Omit<MealRecord, 'id' | 'createdAt' | 'updatedAt'> }) => {
           const now = new Date();
           const mealRecord = {
@@ -164,6 +180,7 @@ describe('Meal records and feedback API', () => {
           return Promise.resolve(feedback);
         }),
       },
+      $transaction: jest.fn((promises: Promise<unknown>[]) => Promise.all(promises)),
     };
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -207,6 +224,49 @@ describe('Meal records and feedback API', () => {
   afterAll(async () => {
     await app.close();
   });
+
+  function filterMealRecords(where: MealRecordWhere) {
+    return mealRecords.filter((mealRecord) => {
+      if (mealRecord.workspaceId !== where.workspaceId) {
+        return false;
+      }
+      if (where.mealType && mealRecord.mealType !== where.mealType) {
+        return false;
+      }
+      if (where.dishId && mealRecord.dishId !== where.dishId) {
+        return false;
+      }
+      if (where.eatenAt?.gte && mealRecord.eatenAt < where.eatenAt.gte) {
+        return false;
+      }
+      if (where.eatenAt?.lte && mealRecord.eatenAt > where.eatenAt.lte) {
+        return false;
+      }
+      if (where.feedbacks) {
+        const feedbackWhere = where.feedbacks.some;
+        const matchedFeedback = feedbacks.some(
+          (feedback) =>
+            feedback.mealRecordId === mealRecord.id &&
+            feedback.workspaceId === feedbackWhere.workspaceId &&
+            feedback.rating === feedbackWhere.rating &&
+            (feedbackWhere.userId === undefined || feedback.userId === feedbackWhere.userId),
+        );
+        if (!matchedFeedback) {
+          return false;
+        }
+      }
+      if (where.OR?.length) {
+        const keyword = 'title' in where.OR[0] ? where.OR[0].title.contains : where.OR[0].note.contains;
+        const loweredKeyword = keyword.toLowerCase();
+        const titleMatched = mealRecord.title.toLowerCase().includes(loweredKeyword);
+        const noteMatched = mealRecord.note?.toLowerCase().includes(loweredKeyword) ?? false;
+        if (!titleMatched && !noteMatched) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
 
   function withFeedbacks(mealRecord: MealRecord) {
     return {
@@ -289,12 +349,13 @@ describe('Meal records and feedback API', () => {
       .get('/api/meal-records')
       .expect(200)
       .expect(({ body }) => {
-        expect(body).toHaveLength(1);
-        expect(body[0].id).toBe(createRes.body.id);
-        expect(body[0].feedbacks).toHaveLength(1);
-        expect(body[0].feedbacks[0]).toMatchObject({ userId: secondUser.id, rating: FeedbackRating.GOOD, note: '好吃' });
-        expect(body[0].feedbacks[0]).not.toHaveProperty('workspaceId');
-        expect(body[0].feedbacks[0]).not.toHaveProperty('mealRecordId');
+        expect(body).toMatchObject({ total: 1, page: 1, pageSize: 20 });
+        expect(body.items).toHaveLength(1);
+        expect(body.items[0].id).toBe(createRes.body.id);
+        expect(body.items[0].feedbacks).toHaveLength(1);
+        expect(body.items[0].feedbacks[0]).toMatchObject({ userId: secondUser.id, rating: FeedbackRating.GOOD, note: '好吃' });
+        expect(body.items[0].feedbacks[0]).not.toHaveProperty('workspaceId');
+        expect(body.items[0].feedbacks[0]).not.toHaveProperty('mealRecordId');
       });
 
     await agent
@@ -347,6 +408,109 @@ describe('Meal records and feedback API', () => {
 
     expect(feedbacks).toHaveLength(1);
     await otherAgent.post('/api/feedback').send({ mealRecordId: createRes.body.id, rating: FeedbackRating.GOOD }).expect(404);
+  });
+
+  it('用餐记录列表支持分页、排序和基础筛选', async () => {
+    const agent = loginAs(user.id);
+    const otherAgent = loginAs(otherUser.id);
+
+    await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', title: '早餐米粉', mealType: MealType.BREAKFAST, eatenAt: '2026-06-06T00:00:00.000Z', note: '清淡' })
+      .expect(201);
+    const lunchRes = await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', title: '午餐番茄炒蛋', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z', note: '少油' })
+      .expect(201);
+    const dinnerRes = await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-2', title: '晚餐青椒肉丝', mealType: MealType.DINNER, eatenAt: '2026-06-08T10:00:00.000Z', note: '微辣' })
+      .expect(201);
+    await otherAgent
+      .post('/api/meal-records')
+      .send({ title: '他人午餐', mealType: MealType.LUNCH, eatenAt: '2026-06-09T04:00:00.000Z' })
+      .expect(201);
+
+    await agent
+      .get('/api/meal-records?page=1&pageSize=2')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({ total: 3, page: 1, pageSize: 2 });
+        expect(body.items.map((item: MealRecord) => item.id)).toEqual([dinnerRes.body.id, lunchRes.body.id]);
+      });
+
+    await agent
+      .get('/api/meal-records?mealType=LUNCH&dishId=dish-1')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.total).toBe(1);
+        expect(body.items[0].id).toBe(lunchRes.body.id);
+      });
+
+    await agent
+      .get('/api/meal-records?from=2026-06-07T00:00:00.000Z&to=2026-06-08T23:59:59.999Z')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.items.map((item: MealRecord) => item.id)).toEqual([dinnerRes.body.id, lunchRes.body.id]);
+      });
+  });
+
+  it('用餐记录列表支持关键词搜索和反馈范围筛选', async () => {
+    const agent = loginAs(user.id);
+    const secondAgent = loginAs(secondUser.id);
+
+    const mineGoodRes = await agent
+      .post('/api/meal-records')
+      .send({ title: '番茄炒蛋', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z', note: '家常少油' })
+      .expect(201);
+    const memberGoodRes = await agent
+      .post('/api/meal-records')
+      .send({ title: '青椒肉丝', mealType: MealType.DINNER, eatenAt: '2026-06-08T10:00:00.000Z', note: '适合晚餐' })
+      .expect(201);
+
+    await agent.post('/api/feedback').send({ mealRecordId: mineGoodRes.body.id, rating: FeedbackRating.GOOD }).expect(201);
+    await secondAgent.post('/api/feedback').send({ mealRecordId: memberGoodRes.body.id, rating: FeedbackRating.GOOD }).expect(201);
+
+    await agent
+      .get('/api/meal-records?q=少油')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.total).toBe(1);
+        expect(body.items[0].id).toBe(mineGoodRes.body.id);
+      });
+
+    await agent
+      .get(`/api/meal-records?q=${encodeURIComponent('  番茄  ')}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.total).toBe(1);
+        expect(body.items[0].id).toBe(mineGoodRes.body.id);
+      });
+
+    await agent
+      .get('/api/meal-records?rating=GOOD')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.items.map((item: MealRecord) => item.id)).toEqual([mineGoodRes.body.id]);
+      });
+
+    await agent
+      .get('/api/meal-records?rating=GOOD&ratingScope=workspace')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.items.map((item: MealRecord) => item.id)).toEqual([memberGoodRes.body.id, mineGoodRes.body.id]);
+      });
+  });
+
+  it('非法列表 query 由 DTO 校验拒绝', async () => {
+    const agent = loginAs(user.id);
+
+    await agent.get('/api/meal-records?page=0').expect(400);
+    await agent.get('/api/meal-records?pageSize=100').expect(400);
+    await agent.get('/api/meal-records?mealType=ALL').expect(400);
+    await agent.get('/api/meal-records?rating=DELICIOUS').expect(400);
+    await agent.get('/api/meal-records?ratingScope=team').expect(400);
+    await agent.get('/api/meal-records?from=not-a-date').expect(400);
   });
 
   it('非法 mealType 与非法反馈值由 DTO 校验拒绝', async () => {

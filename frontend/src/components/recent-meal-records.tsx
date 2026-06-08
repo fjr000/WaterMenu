@@ -28,8 +28,8 @@ export function RecentMealRecords({
   userId: string;
   onFeedbackSuccess?: () => void;
 }) {
-  const mealRecordsQuery = useMealRecords();
-  const records = (mealRecordsQuery.data ?? []).slice(0, 5);
+  const mealRecordsQuery = useMealRecords({ page: 1, pageSize: 5 });
+  const records = mealRecordsQuery.data?.items ?? [];
 
   return (
     <section className="mt-6 flex flex-col gap-3">
@@ -67,7 +67,7 @@ export function RecentMealRecords({
   );
 }
 
-function MealRecordCard({
+export function MealRecordCard({
   record,
   userId,
   onFeedbackSuccess,
@@ -77,18 +77,20 @@ function MealRecordCard({
   onFeedbackSuccess?: () => void;
 }) {
   const upsertFeedback = useUpsertFeedback();
-  const currentFeedback = record.feedbacks.find(
+  const serverFeedback = record.feedbacks.find(
     (feedback) => feedback.userId === userId,
   );
+  const [currentFeedback, setCurrentFeedback] = useState(serverFeedback);
   const [showNote, setShowNote] = useState(false);
-  const [note, setNote] = useState(currentFeedback?.note ?? "");
+  const [note, setNote] = useState(serverFeedback?.note ?? "");
   const [selectedRating, setSelectedRating] = useState<
     FeedbackRating | undefined
-  >(currentFeedback?.rating);
+  >(serverFeedback?.rating);
 
   useEffect(() => {
-    setSelectedRating(currentFeedback?.rating);
-  }, [currentFeedback?.rating]);
+    setCurrentFeedback(serverFeedback);
+    setSelectedRating(serverFeedback?.rating);
+  }, [serverFeedback]);
 
   const submitRating = (rating: FeedbackRating) => {
     setSelectedRating(rating);
@@ -99,7 +101,10 @@ function MealRecordCard({
         note: currentFeedback?.note || undefined,
       },
       {
-        onSuccess: onFeedbackSuccess,
+        onSuccess: (feedback) => {
+          setCurrentFeedback(feedback);
+          onFeedbackSuccess?.();
+        },
         onError: () => setSelectedRating(currentFeedback?.rating),
       },
     );
@@ -117,7 +122,8 @@ function MealRecordCard({
         note: note.trim() || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (feedback) => {
+          setCurrentFeedback(feedback);
           setShowNote(false);
           onFeedbackSuccess?.();
         },

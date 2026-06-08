@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   MutationCache,
@@ -14,6 +14,7 @@ import {
 } from "./hooks/use-auth.tsx";
 import { LoginPage } from "./pages/login-page.tsx";
 import { HomePage } from "./pages/home-page.tsx";
+import { InvitePage } from "./pages/invite-page.tsx";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -42,6 +43,8 @@ function handleUnauthorizedError(error: unknown) {
 
 function AppRoutes() {
   const auth = useAuth();
+  const pathname = usePathname();
+  const inviteToken = getInviteToken(pathname);
 
   if (auth.isLoading) {
     return (
@@ -51,11 +54,32 @@ function AppRoutes() {
     );
   }
 
+  if (inviteToken) {
+    return <InvitePage token={inviteToken} />;
+  }
+
   if (!auth.user) {
     return <LoginPage />;
   }
 
   return <HomePage />;
+}
+
+function usePathname() {
+  const [pathname, setPathname] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  return pathname;
+}
+
+function getInviteToken(pathname: string) {
+  const match = /^\/invite\/([^/]+)$/.exec(pathname);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 function App() {

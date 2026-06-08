@@ -2,10 +2,13 @@ export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 
 export type FeedbackRating = "GOOD" | "OK" | "BAD";
 
+export type UserRole = "ADMIN" | "MEMBER";
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  role: UserRole;
 }
 
 export interface Workspace {
@@ -168,6 +171,43 @@ export interface BlindBoxResponse {
 
 export interface RecommendationRequest {
   mealType?: MealType;
+}
+
+export interface Member {
+  id: string;
+  email?: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface WorkspaceInvite {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface CreateInviteResponse extends WorkspaceInvite {
+  inviteLink: string;
+}
+
+export type InvitePreviewReason = "EXPIRED" | "USED" | "REVOKED" | "UNAVAILABLE";
+
+export type InvitePreviewResponse =
+  | {
+      canAccept: true;
+      workspaceName: string;
+      expiresAt: string;
+    }
+  | {
+      canAccept: false;
+      reason: InvitePreviewReason;
+    };
+
+export interface AcceptInviteRequest {
+  name: string;
+  email: string;
+  password: string;
 }
 
 export class ApiError extends Error {

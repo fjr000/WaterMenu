@@ -18,6 +18,7 @@ import { RecipePanel } from "../components/recipe-panel.tsx";
 import { HistoryRecordsPanel } from "../components/history-records-panel.tsx";
 import { MealRecordForm } from "../components/meal-record-form.tsx";
 import { MealTag } from "../components/meal-tag.tsx";
+import { MembersPanel } from "../components/members-panel.tsx";
 import { RecentMealRecords } from "../components/recent-meal-records.tsx";
 import {
   Button,
@@ -29,7 +30,7 @@ import {
   Spinner,
 } from "../components/ui.tsx";
 
-type HomeTab = "recommend" | "dishes" | "history";
+type HomeTab = "recommend" | "dishes" | "history" | "members";
 
 const homeTabs: Array<{
   key: HomeTab;
@@ -58,6 +59,13 @@ const homeTabs: Array<{
     shortLabel: "历史",
     eyebrow: "回看",
     mark: "历",
+  },
+  {
+    key: "members",
+    label: "成员",
+    shortLabel: "成员",
+    eyebrow: "共用",
+    mark: "员",
   },
 ];
 
@@ -264,6 +272,10 @@ export function HomePage() {
           />
         )}
 
+        {activeTab === "members" && auth.user && (
+          <MembersPanel isAdmin={auth.user.role === "ADMIN"} />
+        )}
+
         {activeTab === "recommend" && auth.user && (
           <RecentMealRecords
             userId={auth.user.id}
@@ -285,7 +297,7 @@ function DesktopTabNav({
   onChange: (tab: HomeTab) => void;
 }) {
   return (
-    <nav className="mt-6 hidden grid-cols-3 gap-3 md:grid" aria-label="首页栏目">
+    <nav className="mt-6 hidden grid-cols-4 gap-3 md:grid" aria-label="首页栏目">
       {homeTabs.map((tab) => {
         const active = activeTab === tab.key;
 
@@ -342,7 +354,7 @@ function MobileTabBar({
       className="fixed inset-x-3 bottom-3 z-30 rounded-[1.75rem] border border-slate-200 bg-white/90 p-2 shadow-[0_18px_44px_rgba(111,82,56,0.22)] backdrop-blur md:hidden"
       aria-label="首页栏目"
     >
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-4 gap-1">
         {homeTabs.map((tab) => {
           const active = activeTab === tab.key;
 

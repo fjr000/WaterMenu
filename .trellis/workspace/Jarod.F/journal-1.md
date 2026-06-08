@@ -488,3 +488,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: 完善菜品编辑与启停用管理
+
+**Date**: 2026-06-08
+**Task**: 完善菜品编辑与启停用管理
+**Branch**: `main`
+
+### Summary
+
+完成菜品编辑与启停用前端闭环：新增 UpdateDishRequest 与 useUpdateDish，创建/编辑复用 DishForm，菜品卡片支持编辑和启停用，更新后刷新菜品并重置推荐/盲盒旧结果；同步前端技术契约并通过 typecheck/build/check。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2127785` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

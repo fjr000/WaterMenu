@@ -23,27 +23,24 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+interface Props {
+  onCancel: () => void;
+  onSuccess: () => void;
+}
+
 export function ManualMealRecordForm({
   onCancel,
   onSuccess,
-}: {
-  onCancel: () => void;
-  onSuccess: () => void;
-}) {
+}: Props) {
   const createMealRecord = useCreateMealRecord();
-  const initialDate = useMemo(() => new Date(), []);
+  const defaultValues = useMemo(buildDefaultValues, []);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      title: "",
-      mealType: inferMealType(initialDate),
-      eatenAt: toLocalInputValue(initialDate),
-      note: "",
-    },
+    defaultValues,
   });
 
   const submit = handleSubmit((values) => {
@@ -169,6 +166,17 @@ export function ManualMealRecordForm({
   );
 }
 
+function buildDefaultValues(): FormValues {
+  const date = new Date();
+
+  return {
+    title: "",
+    mealType: inferMealType(date),
+    eatenAt: toLocalInputValue(date),
+    note: "",
+  };
+}
+
 function inferMealType(date: Date): MealType {
   const hour = date.getHours();
 
@@ -187,7 +195,7 @@ function inferMealType(date: Date): MealType {
   return "SNACK";
 }
 
-function toLocalInputValue(date: Date) {
+function toLocalInputValue(date: Date): string {
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

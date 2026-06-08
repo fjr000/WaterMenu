@@ -88,14 +88,13 @@ export function HistoryRecordsPanel({
   };
 
   const resetFilters = () => {
-    setPage(1);
+    resetPage();
     setMealType("");
     setDishId("");
     setRating("");
     setRatingScope("mine");
     setRange("all");
     setQ("");
-    setRecords([]);
   };
 
   const handleManualRecordSuccess = () => {

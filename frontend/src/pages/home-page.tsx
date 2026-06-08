@@ -98,7 +98,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="min-h-dvh bg-slate-50">
+    <div className="min-h-dvh">
       <div className="mx-auto max-w-lg px-4 pb-8 pt-4">
         <PageHeader
           title={auth.workspace?.name ?? "WaterMenu"}
@@ -111,37 +111,24 @@ export function HomePage() {
         />
 
         {/* 标签栏 */}
-        <div className="mt-6 flex gap-1 rounded-lg bg-slate-100 p-1">
-          <button
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-              activeTab === "recommend"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-            onClick={() => setActiveTab("recommend")}
-          >
-            今天吃什么
-          </button>
-          <button
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-              activeTab === "dishes"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-            onClick={() => setActiveTab("dishes")}
-          >
-            菜品管理
-          </button>
-          <button
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-              activeTab === "history"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-            onClick={() => setActiveTab("history")}
-          >
-            历史记录
-          </button>
+        <div className="mt-6 flex gap-1 rounded-full border border-slate-200 bg-white/55 p-1 shadow-inner">
+          {[
+            ["recommend", "今天吃什么"],
+            ["dishes", "菜品管理"],
+            ["history", "历史记录"],
+          ].map(([tab, label]) => (
+            <button
+              key={tab}
+              className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
+                activeTab === tab
+                  ? "bg-red-500 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-amber-50 hover:text-slate-700"
+              }`}
+              onClick={() => setActiveTab(tab as typeof activeTab)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {activeTab === "recommend" && (
@@ -201,9 +188,12 @@ export function HomePage() {
         {activeTab === "dishes" && (
           <div className="mt-4 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-700">
-                菜品列表
-              </h2>
+              <div>
+                <h2 className="font-serif text-lg font-semibold text-slate-900">
+                  菜品列表
+                </h2>
+                <p className="text-xs text-slate-500">管理家里的常吃菜单</p>
+              </div>
               <Button
                 className="px-3 py-1.5 text-xs"
                 onClick={() => setShowCreateForm((v) => !v)}
@@ -312,7 +302,7 @@ function DishCard({
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-900">
+          <p className="truncate font-serif text-lg font-semibold text-slate-900">
             {dish.name}
           </p>
           {dish.description && (
@@ -321,7 +311,7 @@ function DishCard({
             </p>
           )}
           {!dish.isActive && (
-            <span className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+            <span className="mt-2 inline-flex rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
               已停用
             </span>
           )}
@@ -335,7 +325,7 @@ function DishCard({
       </div>
 
       {isEditing && (
-        <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-3">
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
           <EditDishForm
             dish={dish}
             onCancel={onCancelEdit}
@@ -345,7 +335,7 @@ function DishCard({
       )}
 
       {updateDish.isError && (
-        <p className="mt-3 rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+        <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
           更新失败，请重试
         </p>
       )}

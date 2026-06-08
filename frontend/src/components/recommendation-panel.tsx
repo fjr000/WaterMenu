@@ -1,6 +1,6 @@
 import type { Dish, MealType, RecommendationCandidate } from "../api/types.ts";
 import { DishCoverImage } from "./dish-cover-image.tsx";
-import { mealLabel } from "./meal-tag.tsx";
+import { MealTag } from "./meal-tag.tsx";
 import {
   Button,
   Card,
@@ -47,9 +47,12 @@ export function RecommendationPanel({
       <Card>
         <div className="flex flex-col gap-3">
           <div>
+            <p className="mb-3 font-serif text-lg font-semibold text-slate-900">
+              今天菜单
+            </p>
             <label
               htmlFor="meal-select"
-              className="mb-1 block text-sm font-medium text-slate-700"
+              className="mb-1 block text-sm font-semibold text-slate-700"
             >
               餐次筛选
             </label>
@@ -98,7 +101,7 @@ export function RecommendationPanel({
       {/* 推荐结果 */}
       {recommendResult && recommendResult.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-slate-700">推荐结果</h2>
+          <h2 className="font-serif text-lg font-semibold text-slate-900">推荐结果</h2>
           {recommendResult.map((candidate) => (
             <CandidateCard
               key={candidate.dish.id}
@@ -121,7 +124,7 @@ export function RecommendationPanel({
       {/* 盲盒结果 */}
       {blindBoxFired && !blindBoxPending && !blindBoxError && (
         <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-slate-700">
+          <h2 className="font-serif text-lg font-semibold text-slate-900">
             🎲 盲盒结果
           </h2>
           {blindBoxResult ? (
@@ -157,11 +160,11 @@ function CandidateCard({
 }) {
   return (
     <Card
-      className={highlight ? "border-amber-300 bg-amber-50" : undefined}
+      className={highlight ? "border-amber-300 bg-amber-50/80" : undefined}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-slate-900">
+          <p className="truncate font-serif text-lg font-semibold text-slate-900">
             {candidate.dish.name}
           </p>
           {candidate.dish.description && (
@@ -171,12 +174,7 @@ function CandidateCard({
           )}
           <div className="mt-2 flex flex-wrap gap-1">
             {candidate.dish.mealTypes.map((mt) => (
-              <span
-                key={mt}
-                className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-              >
-                {mealLabel(mt as MealType)}
-              </span>
+              <MealTag key={mt} mealType={mt} />
             ))}
           </div>
         </div>
@@ -188,7 +186,7 @@ function CandidateCard({
           {candidate.reasons.map((reason, i) => (
             <span
               key={i}
-              className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700"
+              className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
             >
               {reason}
             </span>

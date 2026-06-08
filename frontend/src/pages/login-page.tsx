@@ -51,22 +51,24 @@ export function LoginPage() {
   });
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-dvh items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="text-3xl">🍽️</p>
-          <h1 className="mt-2 text-xl font-semibold text-slate-900">
+          <div className="mx-auto flex h-16 w-16 rotate-[-6deg] items-center justify-center rounded-3xl border border-amber-200 bg-amber-50 text-4xl shadow-[0_8px_0_rgba(111,82,56,0.12)]">
+            🍽️
+          </div>
+          <h1 className="mt-4 font-serif text-3xl font-semibold text-slate-900">
             WaterMenu
           </h1>
-          <p className="mt-1 text-sm text-slate-500">今天吃什么？</p>
+          <p className="mt-1 text-sm text-slate-500">把今天吃什么写进厨房手账</p>
         </div>
 
-        <Card>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <Card className="relative overflow-hidden before:absolute before:left-8 before:top-0 before:h-3 before:w-20 before:-translate-y-1/2 before:rounded-full before:bg-red-200 before:opacity-70">
+          <form onSubmit={onSubmit} className="relative flex flex-col gap-4">
             <div>
               <label
                 htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
               >
                 邮箱
               </label>
@@ -87,7 +89,7 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
               >
                 密码
               </label>
@@ -106,7 +108,7 @@ export function LoginPage() {
             </div>
 
             {serverError && (
-              <p className="rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+              <p className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
                 {serverError}
               </p>
             )}
@@ -117,7 +119,7 @@ export function LoginPage() {
           </form>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
+        <p className="mt-6 text-center text-xs text-slate-500">
           暂不支持注册，请联系管理员创建账号
         </p>
       </div>

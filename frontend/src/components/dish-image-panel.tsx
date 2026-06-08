@@ -46,10 +46,10 @@ export function DishImagePanel({ dish, onClose }: Props) {
   };
 
   return (
-    <Card className="border-amber-200 bg-amber-50/40">
+    <Card className="border-amber-200 bg-amber-50/55">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-900">菜品图库</p>
+          <p className="font-serif text-lg font-semibold text-slate-900">菜品图库</p>
           <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
         </div>
         <SecondaryButton className="px-3 py-1.5 text-xs" onClick={onClose}>
@@ -58,10 +58,10 @@ export function DishImagePanel({ dish, onClose }: Props) {
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
           <label
             htmlFor={`dish-image-${dish.id}`}
-            className="mb-1 block text-sm font-medium text-slate-700"
+            className="mb-1 block text-sm font-semibold text-slate-700"
           >
             上传图片
           </label>
@@ -71,13 +71,13 @@ export function DishImagePanel({ dish, onClose }: Props) {
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={handleFileChange}
-            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-500 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
           />
           <p className="mt-2 text-xs text-slate-500">
             支持 JPEG / PNG / WebP，单张最大 5MB，最多 9 张。
           </p>
           {uploadImage.isError && (
-            <p className="mt-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+            <p className="mt-2 rounded-xl border border-red-200 bg-red-50 p-2 text-sm text-red-700">
               上传失败，请确认格式和大小后重试
             </p>
           )}
@@ -125,8 +125,8 @@ function DishImageItem({ dishId, image }: { dishId: string; image: DishImage }) 
   const isPending = setCover.isPending || deleteImage.isPending;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-2">
-      <div className="relative overflow-hidden rounded-lg bg-slate-100">
+    <div className="rounded-2xl border border-slate-200 bg-white/85 p-2 shadow-sm">
+      <div className="relative overflow-hidden rounded-xl bg-slate-100">
         <img
           src={image.fileUrl}
           alt={image.isCover ? "菜品封面" : "菜品图片"}
@@ -134,7 +134,7 @@ function DishImageItem({ dishId, image }: { dishId: string; image: DishImage }) 
           loading="lazy"
         />
         {image.isCover && (
-          <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white">
             封面
           </span>
         )}

@@ -34,8 +34,8 @@ export function RecentMealRecords({
   return (
     <section className="mt-6 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">最近用餐</h2>
-        <span className="text-xs text-slate-400">最近 5 条</span>
+        <h2 className="font-serif text-lg font-semibold text-slate-900">最近用餐</h2>
+        <span className="rounded-full bg-white/60 px-2 py-1 text-xs text-slate-500">最近 5 条</span>
       </div>
 
       {mealRecordsQuery.isLoading && <Spinner />}
@@ -135,7 +135,7 @@ export function MealRecordCard({
     <Card>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-900">
+          <p className="truncate font-serif text-lg font-semibold text-slate-900">
             {record.title}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -146,7 +146,7 @@ export function MealRecordCard({
           )}
         </div>
         {record.dishId && (
-          <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+          <span className="shrink-0 rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
             已关联菜品
           </span>
         )}
@@ -161,10 +161,10 @@ export function MealRecordCard({
               type="button"
               onClick={() => submitRating(option.value)}
               disabled={upsertFeedback.isPending}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 active
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"
+                  ? "border-red-600 bg-red-500 text-white"
+                  : "border-slate-300 bg-white/85 text-slate-600 hover:border-red-200 hover:bg-red-50"
               }`}
             >
               {option.label}
@@ -182,7 +182,7 @@ export function MealRecordCard({
       <div className="mt-3">
         <button
           type="button"
-          className="text-xs font-medium text-slate-600 underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-xs font-semibold text-slate-600 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => {
             setNote(currentFeedback?.note ?? "");
             setShowNote((value) => !value);
@@ -221,7 +221,7 @@ export function MealRecordCard({
       )}
 
       {upsertFeedback.isError && (
-        <p className="mt-2 rounded-lg bg-red-50 p-2 text-center text-xs text-red-700">
+        <p className="mt-2 rounded-xl border border-red-200 bg-red-50 p-2 text-center text-xs text-red-700">
           反馈提交失败，请重试
         </p>
       )}

@@ -13,7 +13,7 @@ export function mealLabel(mt: MealType): string {
 
 export function MealTag({ mealType }: { mealType: MealType }) {
   return (
-    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+    <span className="rounded-full border border-slate-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-slate-600">
       {mealLabel(mealType)}
     </span>
   );

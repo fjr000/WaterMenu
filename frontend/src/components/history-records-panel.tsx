@@ -87,8 +87,8 @@ export function HistoryRecordsPanel({
   return (
     <section className="mt-4 flex flex-col gap-3">
       <div>
-        <h2 className="text-sm font-semibold text-slate-700">历史记录</h2>
-        <p className="mt-0.5 text-xs text-slate-400">
+        <h2 className="font-serif text-lg font-semibold text-slate-900">历史记录</h2>
+        <p className="mt-0.5 text-xs text-slate-500">
           按菜、餐次、反馈和关键词找回吃过什么
         </p>
       </div>
@@ -209,7 +209,7 @@ export function HistoryRecordsPanel({
 
       {mealRecordsQuery.data && records.length > 0 && (
         <div className="flex flex-col items-center gap-2 py-2">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             已显示 {records.length} / {total} 条
           </p>
           {hasMore && (

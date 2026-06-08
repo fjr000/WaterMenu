@@ -36,10 +36,10 @@ export function RecipePanel({ dish, onClose }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
-    <Card className="border-emerald-200 bg-emerald-50/40">
+    <Card className="border-emerald-200 bg-emerald-50/55">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-900">做法记录</p>
+          <p className="font-serif text-lg font-semibold text-slate-900">做法记录</p>
           <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
         </div>
         <SecondaryButton className="px-3 py-1.5 text-xs" onClick={onClose}>
@@ -114,9 +114,9 @@ export function RecipePanel({ dish, onClose }: Props) {
 
 function RecipeItem({ recipe, onEdit }: { recipe: Recipe; onEdit: () => void }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="rounded-2xl border border-slate-200 bg-white/85 p-3 shadow-sm">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-slate-900">{recipe.title}</p>
+        <p className="font-serif text-base font-semibold text-slate-900">{recipe.title}</p>
         <SecondaryButton className="px-2.5 py-1 text-xs" onClick={onEdit}>
           编辑
         </SecondaryButton>
@@ -175,12 +175,12 @@ function RecipeForm({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3"
+      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/85 p-3 shadow-sm"
     >
       <div>
         <label
           htmlFor={`${formId}-title`}
-          className="mb-1 block text-sm font-medium text-slate-700"
+          className="mb-1 block text-sm font-semibold text-slate-700"
         >
           标题
         </label>
@@ -197,7 +197,7 @@ function RecipeForm({
       <div>
         <label
           htmlFor={`${formId}-content`}
-          className="mb-1 block text-sm font-medium text-slate-700"
+          className="mb-1 block text-sm font-semibold text-slate-700"
         >
           做法正文
         </label>
@@ -205,7 +205,7 @@ function RecipeForm({
           id={`${formId}-content`}
           rows={6}
           placeholder="写下步骤、火候、注意事项等"
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder-slate-400 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
           {...register("content")}
         />
         {errors.content && (
@@ -214,7 +214,7 @@ function RecipeForm({
       </div>
 
       {isError && (
-        <p className="rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+        <p className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
           保存失败，请重试
         </p>
       )}

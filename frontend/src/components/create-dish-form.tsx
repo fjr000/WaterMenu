@@ -78,10 +78,10 @@ function DishForm({
     }
     setMealError(null);
 
-    const description = values.description?.trim();
+    const description = values.description?.trim() ?? "";
     onSubmit({
       name: values.name.trim(),
-      description: allowEmptyDescription ? (description ?? "") : description || undefined,
+      description: allowEmptyDescription ? description : description || undefined,
       mealTypes: selectedMeals,
     });
   });
@@ -97,7 +97,7 @@ function DishForm({
       <div>
         <label
           htmlFor={`${idPrefix}-name`}
-          className="mb-1 block text-sm font-medium text-slate-700"
+          className="mb-1 block text-sm font-semibold text-slate-700"
         >
           菜品名称
         </label>
@@ -114,7 +114,7 @@ function DishForm({
       <div>
         <label
           htmlFor={`${idPrefix}-desc`}
-          className="mb-1 block text-sm font-medium text-slate-700"
+          className="mb-1 block text-sm font-semibold text-slate-700"
         >
           简介（可选）
         </label>
@@ -126,17 +126,17 @@ function DishForm({
       </div>
 
       <div>
-        <p className="mb-1.5 text-sm font-medium text-slate-700">适用餐次</p>
+        <p className="mb-1.5 text-sm font-semibold text-slate-700">适用餐次</p>
         <div className="flex flex-wrap gap-2">
           {mealOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => toggleMeal(opt.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                 selectedMeals.includes(opt.value)
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-600 hover:border-slate-400"
+                  ? "border-red-600 bg-red-500 text-white"
+                  : "border-slate-300 bg-white/85 text-slate-600 hover:border-red-200 hover:bg-red-50"
               }`}
             >
               {opt.label}
@@ -149,7 +149,7 @@ function DishForm({
       </div>
 
       {isError && (
-        <p className="rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+        <p className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
           {errorMessage}
         </p>
       )}

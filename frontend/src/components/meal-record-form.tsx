@@ -73,17 +73,17 @@ export function MealRecordForm({
   });
 
   return (
-    <Card className="border-slate-300 bg-slate-50">
+    <Card className="border-red-200 bg-red-50/45">
       <form onSubmit={submit} className="flex flex-col gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-900">记录已吃</p>
+          <p className="font-serif text-lg font-semibold text-slate-900">记录已吃</p>
           <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
         </div>
 
         <div>
           <label
             htmlFor="meal-record-type"
-            className="mb-1 block text-sm font-medium text-slate-700"
+            className="mb-1 block text-sm font-semibold text-slate-700"
           >
             餐次
           </label>
@@ -104,7 +104,7 @@ export function MealRecordForm({
         <div>
           <label
             htmlFor="meal-record-eaten-at"
-            className="mb-1 block text-sm font-medium text-slate-700"
+            className="mb-1 block text-sm font-semibold text-slate-700"
           >
             用餐时间
           </label>
@@ -124,7 +124,7 @@ export function MealRecordForm({
         <div>
           <label
             htmlFor="meal-record-note"
-            className="mb-1 block text-sm font-medium text-slate-700"
+            className="mb-1 block text-sm font-semibold text-slate-700"
           >
             备注（可选）
           </label>
@@ -136,7 +136,7 @@ export function MealRecordForm({
         </div>
 
         {createMealRecord.isError && (
-          <p className="rounded-lg bg-red-50 p-2.5 text-center text-sm text-red-700">
+          <p className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
             记录失败，请重试
           </p>
         )}

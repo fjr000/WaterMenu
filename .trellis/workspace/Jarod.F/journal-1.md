@@ -591,3 +591,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: 用餐记录编辑与删除
+
+**Date**: 2026-06-08
+**Task**: 用餐记录编辑与删除
+**Branch**: `main`
+
+### Summary
+
+实现用餐记录标题、餐次、用餐时间、备注编辑；新增永久删除接口和前端确认删除；PATCH 拒绝 dishId 更新；补充 e2e 覆盖、前后端契约和任务 PRD，并完成 simplify 收敛。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0fbc6ca` | (see git log) |
+| `fc7b16e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

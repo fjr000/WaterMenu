@@ -354,9 +354,9 @@ body {
 
 ### 1. 范围 / 触发
 
-- 触发：前端接入后端 `meal-records` 与 `feedback` API，让推荐 / 盲盒、菜品列表、最近用餐记录形成真实使用闭环。
-- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-meal-records.ts`、`frontend/src/components/meal-record-form.tsx`、`frontend/src/components/recent-meal-records.tsx`、`frontend/src/components/recommendation-panel.tsx`、`frontend/src/pages/home-page.tsx`。
-- 不包含：Recipe / 做法记录、复杂日历、历史统计、删除记录、离线同步、后端推荐算法调整。
+- 触发：前端接入后端 `meal-records` 与 `feedback` API，让推荐 / 盲盒、菜品列表、最近用餐记录、完整历史记录形成真实使用闭环。
+- 范围：`frontend/src/api/types.ts`、`frontend/src/hooks/use-meal-records.ts`、`frontend/src/components/meal-record-form.tsx`、`frontend/src/components/recent-meal-records.tsx`、`frontend/src/components/history-records-panel.tsx`、`frontend/src/components/recommendation-panel.tsx`、`frontend/src/pages/home-page.tsx`。
+- 不包含：Recipe / 做法记录、复杂日历、历史统计图表、删除记录、离线同步、后端推荐算法调整。
 
 ### 2. 签名
 
@@ -391,12 +391,31 @@ export interface UpsertFeedbackRequest {
   rating: FeedbackRating;
   note?: string;
 }
+
+export interface MealRecordsQuery {
+  page?: number;
+  pageSize?: number;
+  mealType?: MealType;
+  dishId?: string;
+  rating?: FeedbackRating;
+  ratingScope?: "mine" | "workspace";
+  from?: string;
+  to?: string;
+  q?: string;
+}
+
+export interface MealRecordsPage {
+  items: MealRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 ```
 
 Hook 签名：
 
 ```typescript
-useMealRecords();
+useMealRecords(query?: MealRecordsQuery);
 useCreateMealRecord();
 useUpsertFeedback();
 ```
@@ -404,7 +423,7 @@ useUpsertFeedback();
 API 路径：
 
 ```text
-GET  /api/meal-records
+GET  /api/meal-records?page=1&pageSize=20&mealType=LUNCH&dishId=...&rating=GOOD&ratingScope=mine&from=...&to=...&q=...
 POST /api/meal-records
 POST /api/feedback
 ```
@@ -425,9 +444,23 @@ POST /api/feedback
 ```text
 首页展示最近用餐记录区域。
 默认只展示最近 5 条记录。
+必须请求 useMealRecords({ page: 1, pageSize: 5 })，不再前端全量拉取后 slice。
 记录按后端返回顺序消费；当前后端按 eatenAt desc 返回。
 每条记录展示好吃 / 一般 / 不好吃反馈按钮。
 当前登录用户已有反馈时高亮对应按钮。
+```
+
+历史记录：
+
+```text
+HomePage 提供“历史记录”tab。
+历史页使用 useMealRecords(query) 请求分页对象。
+支持关键词 q、餐次、菜品、反馈、反馈范围、时间快捷项筛选。
+反馈范围 UI 必须明确区分“我的反馈”和“全部成员反馈”；传 rating 未传 ratingScope 时后端默认 mine。
+时间范围第一版使用快捷项：全部 / 最近 7 天 / 最近 30 天 / 最近 90 天；前端计算 from，不必传 to。
+分页交互使用“加载更多”，前端累加展示 items。
+筛选条件变化时重置到第一页并清空累加列表。
+历史页必须展示 loading / error retry / empty / list / loading more 状态。
 ```
 
 反馈：
@@ -454,12 +487,16 @@ MVP 优先 reset，不自动重跑盲盒。
 | 未登录访问首页 | 认证层显示登录页或清理当前用户状态 |
 | 用餐记录列表加载中 | 显示加载状态 |
 | 用餐记录列表加载失败 | 显示错误提示并允许重试 |
+| 历史筛选条件变化 | 重置到第一页并清空已累加记录 |
+| 历史页加载更多失败 | 保留已加载记录并允许重试当前查询 |
+| 历史页提交反馈后查询失效重拉 | 不能重复追加同一页记录；按 `record.id` 合并更新 |
 | 点击记录入口 | 打开确认表单，不直接创建 |
 | 餐次为空 | Zod / 表单校验阻止提交 |
 | 时间为空或非法 | Zod / 表单校验阻止提交 |
 | 创建记录成功 | 关闭表单，刷新 `meal-records`，reset 推荐 / 盲盒结果 |
 | 创建记录失败 | 保留表单，显示错误提示 |
 | 反馈提交中 | 禁用对应重复操作或展示 pending 状态 |
+| 反馈提交成功 | 立即同步本地当前反馈状态，同时等待 `meal-records` 查询失效刷新 |
 | 反馈提交失败 | 保留原状态或回滚本地高亮，显示错误提示 |
 | 已有反馈备注 | 展开备注时预填当前备注 |
 
@@ -468,9 +505,13 @@ MVP 优先 reset，不自动重跑盲盒。
 - Good：用餐记录和反馈 API 调用集中在 `use-meal-records.ts`，组件不直接调用 `apiFetch`。
 - Good：用餐记录确认表单使用 React Hook Form + Zod，后端 DTO 仍是最终校验防线。
 - Good：记录创建和反馈成功后刷新 `meal-records`，并处理推荐 / 盲盒 mutation 结果陈旧问题。
-- Base：最近用餐记录区域前端取前 5 条展示，后续历史页或分页单独设计。
+- Good：最近 5 条通过后端 `pageSize=5` 获取；历史页通过分页对象和“加载更多”累加展示。
+- Good：最近记录与历史记录复用同一反馈卡片交互，避免按钮、高亮、备注行为漂移。
+- Good：首次提交反馈成功后，反馈卡片应立即用 mutation 返回值同步本地当前反馈状态，避免备注入口在查询刷新前仍不可用。
 - Base：最近记录只显示 `title`，不强依赖后端 include `dish`。
 - Bad：点击“记录已吃”直接创建记录，导致误点产生脏数据。
+- Bad：历史页继续使用全量 `useMealRecords()` 后在前端 `.slice()`、`.filter()`、搜索。
+- Bad：历史页加载更多后，查询失效重拉当前页时直接追加 items，导致重复记录；应按 `record.id` 合并更新。
 - Bad：把反馈直接挂在 Dish 上，丢失具体用餐事件语义。
 - Bad：只 invalidate `meal-records`，但页面继续展示旧推荐 / 盲盒结果。
 
@@ -480,6 +521,9 @@ MVP 前端至少验证：
 
 - `pnpm frontend:typecheck` 通过。
 - `pnpm frontend:build` 通过。
+- 手动检查：历史记录 tab 首屏只加载第一页，点击“加载更多”继续累加展示。
+- 手动检查：关键词、餐次、菜品、反馈范围、时间快捷项变化会重置列表并重新查询。
+- 手动检查：历史页提交 / 修改反馈后不会出现重复记录。
 - 手动检查：登录 → 推荐 / 盲盒 → 记录已吃 → 最近用餐出现记录 → 提交 / 修改反馈 → 刷新后记录仍存在。
 - 手动检查：创建用餐记录成功后旧推荐 / 盲盒结果不继续误导用户。
 - 手动检查：反馈备注按需展开，且无 rating 时不允许提交单独备注。
@@ -501,6 +545,24 @@ POST /api/meal-records 成功 -> invalidate meal-records -> reset recommendMutat
 ```
 
 原因：历史数据变化会影响推荐候选池，MVP 先清空旧结果，避免展示明显陈旧状态；用户可手动重新推荐。
+
+#### Wrong
+
+```text
+const records = useMealRecords().data.slice(0, 5);
+const filtered = records.filter(...);
+```
+
+问题：前端全量拉取后过滤会绕过后端分页 / 筛选契约，数据增长后不可持续。
+
+#### Correct
+
+```text
+useMealRecords({ page: 1, pageSize: 5 })        // 最近用餐
+useMealRecords({ page, pageSize: 20, q, rating, ratingScope }) // 历史页
+```
+
+原因：查询参数进入 TanStack Query key，后端负责真实查询，前端只负责展示和加载更多。
 
 ---
 

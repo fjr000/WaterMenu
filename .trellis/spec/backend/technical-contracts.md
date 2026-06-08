@@ -548,9 +548,9 @@ PATCH /api/recipes/:id -> 先解析 workspaceId -> findFirst({ id, workspaceId }
 
 ### 1. Scope / Trigger
 
-- 触发:新增推荐闭环所需的用餐历史与用户反馈数据来源。
-- 范围:`backend/src/meal-records/`、`backend/src/feedback/`、`backend/prisma/schema.prisma` 的 `MealRecord` / `Feedback` / `FeedbackRating`、Prisma migration、后端 e2e 测试。
-- 不包含:前端页面、Recipe、Recommendation、BlindBox、统计报表、搜索、分页、删除接口。
+- 触发:新增推荐闭环所需的用餐历史、用户反馈数据来源，以及完整历史记录浏览查询契约。
+- 范围:`backend/src/meal-records/`、`backend/src/feedback/`、`backend/prisma/schema.prisma` 的 `MealRecord` / `Feedback` / `FeedbackRating`、历史列表分页 / 筛选 / 搜索、Prisma migration、后端 e2e 测试。
+- 不包含:前端页面、Recipe、Recommendation、BlindBox、统计报表、删除接口。
 
 ### 2. Signatures
 
@@ -576,14 +576,52 @@ Feedback 同一用户同一用餐记录唯一:@@unique([mealRecordId, userId])
 API:
 
 ```text
-GET   /api/meal-records
+GET   /api/meal-records?page=1&pageSize=20&mealType=LUNCH&dishId=...&rating=GOOD&ratingScope=mine&from=...&to=...&q=...
 POST  /api/meal-records
 GET   /api/meal-records/:id
 PATCH /api/meal-records/:id
 POST  /api/feedback
 ```
 
+历史列表分页响应:
+
+```ts
+{
+  items: MealRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+```
+
 ### 3. Contracts
+
+历史列表查询参数:
+
+```text
+page?: number              默认 1,最小 1
+pageSize?: number          默认 20,最小 1,最大 50
+mealType?: MealType
+dishId?: string
+rating?: FeedbackRating
+ratingScope?: mine | workspace
+from?: ISO date string
+to?: ISO date string
+q?: string
+```
+
+历史列表约束:
+
+- 列表响应固定返回分页对象,不再返回裸数组。
+- 排序固定为 `eatenAt desc`,并使用 `createdAt desc` / `id desc` 做稳定补充排序。
+- 所有列表查询必须在数据库层完成分页、筛选和搜索,不能由前端全量拉取后过滤。
+- 列表基础边界永远包含当前用户 `workspaceId`。
+- `dishId` 列表筛选只作为 `workspaceId + dishId` 条件返回匹配记录;不存在或其他 workspace 的 `dishId` 返回空列表,不单独泄露菜品存在性。
+- `rating` 通过 `feedbacks.some` 筛选,并且 feedback 条件必须包含当前 `workspaceId`。
+- `ratingScope=mine` 时,反馈筛选同时限定当前 `userId`;`ratingScope=workspace` 时,匹配当前 workspace 内任意成员反馈。
+- 传 `rating` 但不传 `ratingScope` 时默认按 `mine` 处理;未传 `rating` 时 `ratingScope` 不生效。
+- `q` 必须 trim;trim 后为空视为未传;非空时只匹配 `MealRecord.title` 与 `MealRecord.note`,不搜索反馈备注或菜品名。
+- `from` / `to` 映射到 `eatenAt.gte` / `eatenAt.lte`。
 
 创建用餐记录请求:
 
@@ -642,6 +680,9 @@ POST  /api/feedback
 | 创建 / 更新用餐记录时 `title` 缺失或为空 | DTO 校验拒绝 |
 | `mealType` 非法 | DTO 校验拒绝 |
 | `rating` 非法 | DTO 校验拒绝 |
+| `ratingScope` 非 `mine` / `workspace` | DTO 校验拒绝 |
+| `page` / `pageSize` 非整数或越界 | DTO 校验拒绝 |
+| `from` / `to` 非 ISO date string | DTO 校验拒绝 |
 | 创建 / 更新用餐记录传入其他 workspace 的 `dishId` | 返回不存在,不泄露菜品存在性 |
 | 读取 / 更新其他 workspace 的用餐记录 id | 返回不存在,不泄露记录存在性 |
 | 为其他 workspace 的用餐记录提交反馈 | 返回不存在,不泄露记录存在性 |
@@ -651,11 +692,15 @@ POST  /api/feedback
 ### 5. Good / Base / Bad Cases
 
 - Good:所有用餐记录查询都先解析当前 `session.userId` 的 `workspaceId`,再用 `id + workspaceId` 或 `workspaceId` 过滤。
+- Good:历史列表分页、筛选、搜索都放在 Prisma `where + skip/take + count` 中完成,并返回分页对象。
 - Good:用餐记录返回的 `feedbacks` include 也显式带 `workspaceId` 过滤,避免依赖关系数据天然一致。
+- Good:反馈筛选支持 `ratingScope=mine|workspace`,且默认 `mine` 与当前用户反馈展示语义一致。
 - Good:反馈 upsert 前先确认 `mealRecordId` 属于当前 workspace,再用 `mealRecordId + userId` 唯一键写入。
 - Base:只写文本的用餐记录 `dishId=null`,仍可保存历史和反馈,但暂不参与菜品推荐权重。
 - Base:关联菜品的用餐记录可被后续推荐逻辑用来计算近期吃过和反馈权重。
 - Bad:只用 `dishId`、`mealRecordId` 或 `feedbackId` 全局查询后再判断 workspace,容易泄露存在性或漏掉隔离。
+- Bad:列表接口继续返回全量数组,再让前端 `.slice()`、搜索或筛选;数据增长后会变慢,也容易造成跨层语义漂移。
+- Bad:筛选 `rating` 时忘记 feedback 的 `workspaceId`,或把 `ratingScope=workspace` 错实现成跨 workspace 任意反馈。
 - Bad:把反馈直接挂在 `Dish` 上;这会丢失具体吃饭事件和多用户反馈语义。
 - Bad:重复 `POST /api/feedback` 创建多条反馈;应更新当前用户原反馈。
 
@@ -668,6 +713,11 @@ POST  /api/feedback
 - 登录后创建关联当前 workspace 菜品的用餐记录。
 - 不能用其他 workspace 的 `dishId` 创建 / 更新用餐记录。
 - 列表和详情只返回当前 workspace 的用餐记录,并包含反馈基础信息。
+- 列表分页返回 `items`、`total`、`page`、`pageSize`,默认按 `eatenAt desc` 排序。
+- 列表按 `mealType`、`dishId`、`rating + ratingScope`、`from/to`、`q` 筛选。
+- `rating` 未传 `ratingScope` 时按 `mine` 筛选;`workspace` 范围匹配当前 workspace 任意成员反馈。
+- `q` 只匹配记录标题和记录备注,纯空白 `q` 视为未传。
+- 非法分页、非法 `ratingScope`、非法日期 query 被 DTO 校验拒绝。
 - 更新用餐记录只能影响当前 workspace,且覆盖 `dishId` 新值、`null`、省略三种语义。
 - `POST /api/feedback` 可创建反馈,也可更新当前用户已有反馈,且不会产生重复记录。
 - 不能为其他 workspace 的用餐记录提交反馈。
@@ -690,6 +740,24 @@ POST /api/feedback -> 先用 mealRecordId + workspaceId 校验记录 -> 按 meal
 ```
 
 原因:先隔离 workspace,避免存在性泄露;再用唯一键保证同一用户同一记录只有一条反馈,同时支持修改。
+
+#### Wrong
+
+```text
+GET /api/meal-records -> 返回全量数组 -> 前端 slice / filter / search
+```
+
+问题:历史记录增长后性能退化,分页总数不可知,筛选语义分散在前后端。
+
+#### Correct
+
+```text
+GET /api/meal-records?page=1&pageSize=20&rating=GOOD&ratingScope=mine&q=番茄
+-> Prisma where(workspaceId + filters) + skip/take + count
+-> { items, total, page, pageSize }
+```
+
+原因:查询契约集中在后端,workspace 隔离和筛选语义可由 e2e 测试覆盖,前端只负责展示和加载更多。
 
 ---
 

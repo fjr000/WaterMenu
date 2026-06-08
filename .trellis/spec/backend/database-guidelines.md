@@ -168,6 +168,96 @@ Docker Compose 只提供 PostgreSQL；backend/.env 使用 postgresql://postgres:
 
 ---
 
+## 场景：成员角色与邀请数据模型
+
+### 1. Scope / Trigger
+
+- Trigger：新增或修改 workspace 成员、用户角色、邀请 token、加入 workspace 数据模型。
+- 任何涉及邀请加入、角色字段、成员归属的 migration 都必须遵守本节。
+
+### 2. Signatures
+
+```prisma
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  role UserRole @default(MEMBER)
+}
+
+model WorkspaceInvite {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  tokenHash       String    @unique
+  createdByUserId String
+  expiresAt       DateTime
+  usedAt          DateTime?
+  usedByUserId    String?
+  revokedAt       DateTime?
+}
+```
+
+### 3. Contracts
+
+- 既有用户 migration 必须设置为 `ADMIN`，避免升级后没有管理员。
+- seed 初始用户必须写入 `role = ADMIN`。
+- 邀请 token 禁止明文入库；只能保存哈希。
+- `tokenHash` 必须唯一。
+- `WorkspaceInvite` 必须关联 `workspaceId`，所有查询必须带 workspace 约束或由 token 哈希定位后校验状态。
+- 邀请状态由时间字段表达，不新增易漂移的 status 字符串字段：
+  - 未使用：`usedAt = null`
+  - 未撤销：`revokedAt = null`
+  - 未过期：`expiresAt > now`
+- 接受邀请写入 `usedAt` 与 `usedByUserId`，不要删除邀请记录。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 数据层要求 |
+|---|---|
+| token 泄漏数据库 | 不能直接使用，因为只存哈希 |
+| 用户升级后无角色 | migration 必须回填 `ADMIN` |
+| 同一 token 多条记录 | `tokenHash @unique` 防止重复 |
+| 邀请已使用/撤销/过期 | 查询逻辑必须排除或拒绝 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：创建邀请生成随机 token，保存哈希，明文只返回给调用方一次。
+- Base：过期邀请保留在数据库，查询待处理邀请时过滤掉。
+- Bad：保存可直接访问的邀请 token 明文。
+
+### 6. Tests Required
+
+- migration/seed 后初始用户是 `ADMIN`。
+- 创建邀请后数据库没有明文 token。
+- 待处理邀请只包含未使用、未撤销、未过期记录。
+- 接受邀请后记录 `usedAt` 和 `usedByUserId`。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```prisma
+model WorkspaceInvite {
+  token String @unique // 错：明文 token 入库
+  status String        // 错：和 usedAt/revokedAt/expiresAt 容易漂移
+}
+```
+
+#### Correct
+
+```prisma
+model WorkspaceInvite {
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  revokedAt DateTime?
+}
+```
+
+---
+
 ## 源码示例
 
 实际参考路径：

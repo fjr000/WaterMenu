@@ -1084,6 +1084,82 @@ HomePage 只维护一个 editingDish: Dish | null。
 
 原因：空字符串是明确的更新意图；创建场景仍可把空简介省略。
 
+## 场景：前端成员邀请与接受邀请
+
+### 1. 范围 / 触发
+
+- Trigger：新增成员列表、邀请管理、接受邀请页、当前用户角色字段。
+- 任何前端成员、邀请、workspace 加入、角色可见性 UI 都必须遵守本节。
+
+### 2. 签名
+
+```text
+GET    /api/members
+GET    /api/invites
+POST   /api/invites
+DELETE /api/invites/:id
+GET    /api/invites/:token/preview
+POST   /api/invites/:token/accept
+
+route-like path: /invite/<token> 由 main.tsx/top-level pathname 判断，不引入路由库。
+```
+
+### 3. 契约
+
+- `MeResponse.user` 必须包含 `role`，前端用它判断是否展示邀请管理区。
+- 主应用新增 `成员` Tab；所有成员可查看成员列表。
+- `MEMBER` 不显示创建邀请、待处理邀请、撤销邀请入口。
+- `ADMIN` 显示成员邮箱、待处理邀请、创建邀请和撤销按钮。
+- 创建邀请成功后完整链接只显示在当前成功状态中；刷新后不能再次显示完整链接。
+- 复制链接失败时，必须保留链接文本并提示手动复制；不能自动再创建一个邀请。
+- `/invite/<token>` 是独立页面，未登录可访问，不放进主应用 Tab。
+- 接受邀请页先 preview；有效才展示姓名、邮箱、密码、确认密码表单。
+- 接受邀请成功后刷新当前用户状态并进入主应用。
+- 已登录用户打开邀请链接时提示先退出，不能提交接受邀请。
+
+### 4. 校验与错误矩阵
+
+| 条件 | 前端处理 |
+|---|---|
+| preview 有效 | 展示 workspace 名称、过期时间、接受表单 |
+| preview 已过期 | 显示已过期，不展示表单 |
+| preview 已使用 | 显示已使用，不展示表单 |
+| preview 已撤销 | 显示已撤销，不展示表单 |
+| preview 不存在 token | 显示邀请不可用，不展示表单 |
+| 密码少于 8 个字符 | Zod/表单校验阻止提交 |
+| 两次密码不一致 | 前端阻止提交 |
+| 复制失败 | 展示手动复制提示，保留链接文本 |
+| `MEMBER` 访问邀请管理 | UI 不显示入口；后端 403 时显示错误提示 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：`ADMIN` 创建邀请后立即看到链接，可复制；复制失败仍可手动复制。
+- Base：`MEMBER` 看到成员列表，但没有邀请管理区。
+- Bad：把完整邀请链接存进 React Query 的长期列表数据，导致刷新后仍可再次复制。
+
+### 6. 测试要求
+
+- `pnpm frontend:typecheck` 必须通过。
+- 手动检查：ADMIN 成员页、MEMBER 成员页、未登录邀请页、已登录邀请页。
+- 手动检查：有效/过期/已使用/已撤销/不存在邀请文案。
+- 手动检查：复制链接失败降级路径。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```tsx
+// 错：所有成员都看到邀请管理入口，只依赖后端拒绝。
+<InviteAdminPanel />
+```
+
+#### Correct
+
+```tsx
+// 对：前端按 role 隐藏入口，后端仍做权限校验。
+{currentUser.role === 'ADMIN' ? <InviteAdminPanel /> : null}
+```
+
 ## 校验与错误矩阵
 
 | 条件 | 前端处理 |

@@ -1,0 +1,16 @@
+{"file":".trellis/spec/backend/index.md","reason":"后端入口规范：NestJS/Prisma/Session/API 实现需遵守"}
+{"file":".trellis/spec/backend/directory-structure.md","reason":"新增 members/invites 模块、DTO、controller、service 时遵守目录约束"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"新增 UserRole、WorkspaceInvite、migration、seed 时遵守数据库规范"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"邀请无效、权限不足、重复邮箱等错误返回需保持一致"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"后端 lint/typecheck/e2e 验证命令与测试策略"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"Session Cookie、workspace 隔离、API 契约和部署约束"}
+{"file":".trellis/spec/frontend/index.md","reason":"前端入口规范：React/Vite/TanStack Query/RHF/Zod 实现需遵守"}
+{"file":".trellis/spec/frontend/directory-structure.md","reason":"新增成员页、邀请页、hooks、types 时遵守目录约束"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"新增成员面板、邀请表单、状态提示时保持组件风格一致"}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"新增 useMembers/useInvites hooks 时遵守 Query/Mutation 模式"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"新增成员与邀请状态时使用 TanStack Query + 本地 UI 状态"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"新增 API 类型、Zod 表单校验和角色类型时保持类型安全"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"前端 typecheck/build 验证约束"}
+{"file":".trellis/spec/frontend/technical-contracts.md","reason":"前端登录态、Session Cookie、PWA 与 API 调用契约"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"本功能跨数据库、后端 API、前端页面和登录态，需要检查数据流一致性"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"新增模块前需复用既有 auth、workspace 查询、hook 和 UI 模式"}

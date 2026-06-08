@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
-- **Last Active**: 2026-06-08
+- **Total Sessions**: 21
+- **Last Active**: 2026-06-09
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~693 | Active |
+| `journal-1.md` | ~727 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-06-09 | 完成成员邀请与 workspace 加入 | `d5ea273`, `7118d73` | `feature/members-invite` |
 | 20 | 2026-06-08 | 精简手动记录入口代码 | `e19e7c6` | `feature/manual-meal-record` |
 | 19 | 2026-06-08 | 手动新增用餐记录入口 | `7a7c93a` | `feature/manual-meal-record` |
 | 18 | 2026-06-08 | 用餐记录编辑与删除 | `0fbc6ca`, `fc7b16e` | `main` |

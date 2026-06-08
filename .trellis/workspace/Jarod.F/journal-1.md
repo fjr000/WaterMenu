@@ -691,3 +691,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 完成成员邀请与 workspace 加入
+
+**Date**: 2026-06-09
+**Task**: 完成成员邀请与 workspace 加入
+**Branch**: `feature/members-invite`
+
+### Summary
+
+在 feature/members-invite worktree 完成成员邀请第一版：新增 ADMIN/MEMBER 角色、WorkspaceInvite、成员与邀请 API、邀请接受页、成员 Tab、完整后端 e2e 覆盖；补充后端/前端跨层契约 spec。验证通过 backend lint/typecheck/test 与 frontend typecheck。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d5ea273` | (see git log) |
+| `7118d73` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

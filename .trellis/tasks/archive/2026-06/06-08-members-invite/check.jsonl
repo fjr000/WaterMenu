@@ -1,0 +1,14 @@
+{"file":".trellis/spec/backend/index.md","reason":"检查后端规范入口"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查 migration、schema、seed、workspace 隔离"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"检查权限、邀请失效、重复邮箱等错误处理"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查后端质量门禁"}
+{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查 Session、API、workspace 隔离契约"}
+{"file":".trellis/spec/frontend/index.md","reason":"检查前端规范入口"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查成员与邀请 UI 是否符合组件规范"}
+{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"检查新增 hooks 是否符合 TanStack Query 模式"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"检查服务端状态与本地 UI 状态边界"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"检查 API 类型与表单校验类型安全"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查前端质量门禁"}
+{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查前端登录态与 API 契约"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查数据库到前端的跨层一致性"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查是否复用既有模式，避免重复实现"}

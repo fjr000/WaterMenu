@@ -11,6 +11,7 @@ model Workspace {
   id          String       @id @default(cuid())
   name        String
   users       User[]
+  invites     WorkspaceInvite[]
   dishes      Dish[]
   dishImages  DishImage[]
   recipes     Recipe[]
@@ -23,18 +24,47 @@ model Workspace {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  workspaceId  String
-  email        String     @unique
-  name         String
-  passwordHash String
-  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  feedbacks    Feedback[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id             String            @id @default(cuid())
+  workspaceId    String
+  email          String            @unique
+  name           String
+  passwordHash   String
+  role           UserRole          @default(MEMBER)
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  feedbacks      Feedback[]
+  createdInvites WorkspaceInvite[] @relation("InviteCreator")
+  usedInvites    WorkspaceInvite[] @relation("InviteUser")
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([workspaceId])
   @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+model WorkspaceInvite {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  tokenHash       String    @unique
+  createdByUserId String
+  expiresAt       DateTime
+  usedAt          DateTime?
+  usedByUserId    String?
+  revokedAt       DateTime?
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  createdByUser   User      @relation("InviteCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  usedByUser      User?     @relation("InviteUser", fields: [usedByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([workspaceId])
+  @@index([createdByUserId])
+  @@index([usedByUserId])
+  @@map("workspace_invites")
 }
 
 enum MealType {

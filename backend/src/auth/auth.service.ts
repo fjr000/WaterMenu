@@ -42,6 +42,7 @@ export class AuthService {
     id: string;
     email: string;
     name: string;
+    role: string;
     workspace: { id: string; name: string };
   }) {
     return {
@@ -49,6 +50,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
       workspace: {
         id: user.workspace.id,

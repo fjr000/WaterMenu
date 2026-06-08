@@ -1245,6 +1245,102 @@ seed: 部署文档中的一次性手动命令
 
 原因:迁移应随部署自动执行,但 seed 是初始化动作;启动入口必须匹配真实 Nest build 产物。
 
+## 场景：成员邀请与 workspace 加入 API
+
+### 1. Scope / Trigger
+
+- Trigger：新增 `UserRole`、`WorkspaceInvite`、成员列表接口、邀请创建/撤销/预览/接受接口。
+- 任何新增成员、邀请、角色、注册入口、workspace 加入流程，都必须遵守本契约。
+- 本场景是跨层契约：Prisma schema、NestJS API、Session、前端类型和页面必须一致。
+
+### 2. Signatures
+
+```text
+DB enum: UserRole = ADMIN | MEMBER
+DB model: User.role UserRole @default(MEMBER)
+DB model: WorkspaceInvite(workspaceId, tokenHash, createdByUserId, expiresAt, usedAt, usedByUserId, revokedAt)
+
+GET    /api/members
+GET    /api/invites              ADMIN only
+POST   /api/invites              ADMIN only
+DELETE /api/invites/:id          ADMIN only
+GET    /api/invites/:token/preview  public, no session required
+POST   /api/invites/:token/accept   public, rejects existing logged-in session
+```
+
+### 3. Contracts
+
+- 既有用户迁移后必须是 `ADMIN`；seed 初始用户必须写入 `role = ADMIN`。
+- 通过邀请接受创建的新用户固定为 `MEMBER`，第一版不允许选择邀请角色。
+- 邀请 token 明文只在 `POST /api/invites` 响应中返回一次；数据库只保存哈希。
+- 待处理邀请定义：`usedAt IS NULL`、`revokedAt IS NULL`、`expiresAt > now`。
+- 每个 workspace 最多 10 个待处理邀请；过期、已使用、已撤销不计入限制。
+- 成员列表必须按当前用户 workspace 过滤。
+- 成员列表响应字段必须按当前用户角色裁剪：`MEMBER` 不返回邮箱，`ADMIN` 返回邮箱。
+- 接受邀请必须在事务中完成：校验邀请有效、创建用户、标记邀请已使用、写入 session。
+- 接受邀请接口如果当前 request 已有登录 session，必须拒绝，不能把邀请绑定到当前账号。
+- 不引入后台任务清理过期邀请；查询和校验时判断过期。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 |
+|---|---|
+| 未登录访问成员列表 / 邀请管理接口 | 401 |
+| `MEMBER` 创建、列表查看、撤销邀请 | 403 |
+| 待处理邀请达到 10 个后继续创建 | 409 或明确 4xx |
+| token 不存在 | preview/accept 返回“邀请不可用”语义 |
+| token 已过期 | preview/accept 返回“已过期”语义 |
+| token 已使用 | preview/accept 返回“已使用”语义 |
+| token 已撤销 | preview/accept 返回“已撤销”语义 |
+| 接受邀请邮箱已存在 | 409 |
+| 接受邀请密码少于 8 个字符 | 400 |
+| 已登录用户接受邀请 | 400 或 409，必须拒绝 |
+| 跨 workspace 查看/撤销邀请 | 404 或无结果，不暴露其他 workspace 数据 |
+
+### 5. Good / Base / Bad Cases
+
+- Good：`ADMIN` 创建邀请，复制链接，新用户通过 `/invite/<token>` 加入，自动登录后能访问同一 workspace 数据。
+- Base：`MEMBER` 能查看成员列表，但响应不包含邮箱，且不能创建/撤销邀请。
+- Bad：同一邀请被并发接受时，只允许一个事务成功；后续请求必须失败。
+
+### 6. Tests Required
+
+- E2E：既有 seed / 迁移用户为 `ADMIN`。
+- E2E：`ADMIN` 与 `MEMBER` 成员列表字段差异。
+- E2E：`MEMBER` 创建/撤销邀请被拒绝。
+- E2E：创建邀请只保存 token 哈希，列表不返回完整链接。
+- E2E：待处理邀请数量上限。
+- E2E：preview 覆盖有效、过期、已使用、已撤销、不存在。
+- E2E：accept 创建 `MEMBER`、哈希密码、写入 session、拒绝重复邮箱、拒绝短密码、拒绝已登录用户。
+- E2E：并发或重复接受同一邀请时不能创建多个用户。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```ts
+// 错：先查有效邀请，再普通 update；并发请求可能都通过校验。
+const invite = await prisma.workspaceInvite.findFirst({ where: { tokenHash } });
+await prisma.user.create({ data: userData });
+await prisma.workspaceInvite.update({ where: { id: invite.id }, data: { usedAt: new Date() } });
+```
+
+#### Correct
+
+```ts
+// 对：事务内用状态条件标记 used，updateMany count 必须为 1。
+await prisma.$transaction(async (tx) => {
+  const updated = await tx.workspaceInvite.updateMany({
+    where: { id, workspaceId, usedAt: null, revokedAt: null, expiresAt: { gt: now } },
+    data: { usedAt: now, usedByUserId: user.id },
+  });
+
+  if (updated.count !== 1) {
+    throw new BadRequestException('邀请不可用');
+  }
+});
+```
+
 ## 备份契约
 
 单服务器部署必须配置备份:

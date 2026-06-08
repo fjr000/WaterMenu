@@ -564,9 +564,9 @@ PATCH /api/recipes/:id -> 先解析 workspaceId -> findFirst({ id, workspaceId }
 
 ### 1. Scope / Trigger
 
-- 触发:新增推荐闭环所需的用餐历史、用户反馈数据来源，以及完整历史记录浏览查询契约。
+- 触发:新增推荐闭环所需的用餐历史、用户反馈数据来源、完整历史记录浏览查询契约，以及用餐记录纠错删除能力。
 - 范围:`backend/src/meal-records/`、`backend/src/feedback/`、`backend/prisma/schema.prisma` 的 `MealRecord` / `Feedback` / `FeedbackRating`、历史列表分页 / 筛选 / 搜索、Prisma migration、后端 e2e 测试。
-- 不包含:前端页面、Recipe、Recommendation、BlindBox、统计报表、删除接口。
+- 不包含:前端页面、Recipe、Recommendation、BlindBox、统计报表、软删除 / 回收站。
 
 ### 2. Signatures
 
@@ -596,6 +596,7 @@ GET   /api/meal-records?page=1&pageSize=20&mealType=LUNCH&dishId=...&rating=GOOD
 POST  /api/meal-records
 GET   /api/meal-records/:id
 PATCH /api/meal-records/:id
+DELETE /api/meal-records/:id
 POST  /api/feedback
 ```
 
@@ -658,16 +659,17 @@ q?: string
   "title": "番茄炒蛋",
   "mealType": "DINNER",
   "eatenAt": "2026-06-07T18:00:00.000Z",
-  "note": "改成晚餐记录",
-  "dishId": null
+  "note": "改成晚餐记录"
 }
 ```
 
 约束:
 
 - `title` 必填创建字段,提供 `dishId` 时后端也不自动用菜品名称填充标题。
-- `dishId` 创建 / 更新时如为字符串,必须属于当前用户 workspace。
-- `PATCH /api/meal-records/:id` 中 `dishId: null` 表示解除菜品关联;不传 `dishId` 表示保持原关联。
+- `dishId` 创建时如为字符串,必须属于当前用户 workspace。
+- `PATCH /api/meal-records/:id` 只允许更新 `title`、`mealType`、`eatenAt`、`note`;不允许修改或解除关联菜品。
+- 更新请求包含 `dishId` 时由 DTO 白名单校验拒绝,返回 400;如果记错菜品,应删除后重新记录。
+- `DELETE /api/meal-records/:id` 采用永久删除,返回 `{ "ok": true }`;对应 `Feedback` 依赖数据库级联删除,不继续参与历史、推荐或菜品统计。
 - `mealType` 复用 `MealType`,只能是 `BREAKFAST`、`LUNCH`、`DINNER`、`SNACK`。
 - 用餐记录列表和详情必须包含当前 workspace 内该记录的反馈基础信息:`id`、`userId`、`rating`、`note`、`createdAt`、`updatedAt`。
 
@@ -699,8 +701,9 @@ q?: string
 | `ratingScope` 非 `mine` / `workspace` | DTO 校验拒绝 |
 | `page` / `pageSize` 非整数或越界 | DTO 校验拒绝 |
 | `from` / `to` 非 ISO date string | DTO 校验拒绝 |
-| 创建 / 更新用餐记录传入其他 workspace 的 `dishId` | 返回不存在,不泄露菜品存在性 |
-| 读取 / 更新其他 workspace 的用餐记录 id | 返回不存在,不泄露记录存在性 |
+| 创建用餐记录传入其他 workspace 的 `dishId` | 返回不存在,不泄露菜品存在性 |
+| 更新用餐记录传入任意 `dishId` 字段 | DTO 校验拒绝,返回 400 |
+| 读取 / 更新 / 删除其他 workspace 的用餐记录 id | 返回不存在,不泄露记录存在性 |
 | 为其他 workspace 的用餐记录提交反馈 | 返回不存在,不泄露记录存在性 |
 | 重复提交同一用户同一用餐记录反馈 | 更新原反馈,不创建重复记录 |
 | session 中 userId 对应用户不存在 | 返回 401 |
@@ -712,6 +715,7 @@ q?: string
 - Good:用餐记录返回的 `feedbacks` include 也显式带 `workspaceId` 过滤,避免依赖关系数据天然一致。
 - Good:反馈筛选支持 `ratingScope=mine|workspace`,且默认 `mine` 与当前用户反馈展示语义一致。
 - Good:反馈 upsert 前先确认 `mealRecordId` 属于当前 workspace,再用 `mealRecordId + userId` 唯一键写入。
+- Good:用餐记录删除前先用 `id + workspaceId` 查找,找不到统一返回 404;找到后永久删除并让反馈级联清理。
 - Base:只写文本的用餐记录 `dishId=null`,仍可保存历史和反馈,但暂不参与菜品推荐权重。
 - Base:关联菜品的用餐记录可被后续推荐逻辑用来计算近期吃过和反馈权重。
 - Bad:只用 `dishId`、`mealRecordId` 或 `feedbackId` 全局查询后再判断 workspace,容易泄露存在性或漏掉隔离。
@@ -719,6 +723,8 @@ q?: string
 - Bad:筛选 `rating` 时忘记 feedback 的 `workspaceId`,或把 `ratingScope=workspace` 错实现成跨 workspace 任意反馈。
 - Bad:把反馈直接挂在 `Dish` 上;这会丢失具体吃饭事件和多用户反馈语义。
 - Bad:重复 `POST /api/feedback` 创建多条反馈;应更新当前用户原反馈。
+- Bad:通过 PATCH 修改或解除用餐记录的 `dishId`;第一版纠错只允许改标题、餐次、时间和备注。
+- Bad:删除接口返回 204;前端 `apiFetch` 当前按 JSON 响应解析,删除应返回 `{ ok: true }`。
 
 ### 6. Tests Required
 
@@ -727,14 +733,17 @@ q?: string
 - 未登录访问 meal-records / feedback API 返回 401。
 - 登录后创建不关联菜品的用餐记录。
 - 登录后创建关联当前 workspace 菜品的用餐记录。
-- 不能用其他 workspace 的 `dishId` 创建 / 更新用餐记录。
+- 不能用其他 workspace 的 `dishId` 创建用餐记录。
+- 更新用餐记录时传入 `dishId` 返回 400,且原关联保持不变。
 - 列表和详情只返回当前 workspace 的用餐记录,并包含反馈基础信息。
 - 列表分页返回 `items`、`total`、`page`、`pageSize`,默认按 `eatenAt desc` 排序。
 - 列表按 `mealType`、`dishId`、`rating + ratingScope`、`from/to`、`q` 筛选。
 - `rating` 未传 `ratingScope` 时按 `mine` 筛选;`workspace` 范围匹配当前 workspace 任意成员反馈。
 - `q` 只匹配记录标题和记录备注,纯空白 `q` 视为未传。
 - 非法分页、非法 `ratingScope`、非法日期 query 被 DTO 校验拒绝。
-- 更新用餐记录只能影响当前 workspace,且覆盖 `dishId` 新值、`null`、省略三种语义。
+- 更新用餐记录只能影响当前 workspace,且只覆盖标题、餐次、用餐时间和备注。
+- 删除当前 workspace 用餐记录返回 `{ ok: true }`,删除后详情 / 列表不再返回该记录,对应反馈被级联清理。
+- 删除其他 workspace 用餐记录返回 404。
 - `POST /api/feedback` 可创建反馈,也可更新当前用户已有反馈,且不会产生重复记录。
 - 不能为其他 workspace 的用餐记录提交反馈。
 - 非法 `mealType` 与非法 `rating` 被 DTO 校验拒绝。

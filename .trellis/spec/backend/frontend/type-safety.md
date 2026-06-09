@@ -1,131 +1,89 @@
-# Backend-to-Frontend Type Safety
+# Type Safety
 
-> Keeping backend DTOs, Prisma enums, and frontend API types aligned.
+> 前端类型集中在 `api/types.ts`，表单校验使用 Zod，表单状态管理使用 React Hook Form。
 
-## Frontend Type Mirror
+## Overview
 
-`frontend/src/api/types.ts` mirrors backend contracts manually. Update it whenever backend changes:
+当前类型体系分成两层：
 
-- Prisma enum values such as `MealType`, `FeedbackRating`, and `UserRole`.
-- Request DTO shapes such as create/update dish, meal records, feedback, recipes, recommendations, and invite accept.
-- Response shapes such as `MeResponse`, `Dish`, `DishImage`, `MealRecord`, `Member`, invite preview, and recommendations.
-- Nullable vs optional semantics.
+- API 类型层：`frontend/src/api/types.ts`
+- 组件表单层：Zod schema + `react-hook-form` infer 类型
 
-## Source of Truth
+Reference files:
+- `frontend/src/api/types.ts`
+- `frontend/src/components/create-dish-form.tsx`
+- `frontend/src/pages/invite-page.tsx`
 
-Backend sources to check:
+## Type Organization
 
-- Prisma schema/enums: `backend/prisma/schema.prisma`.
-- DTOs: `backend/src/*/dto/*.dto.ts`.
-- Controller routes/statuses: `backend/src/*/*.controller.ts`.
-- Service return shapes and derived fields: `backend/src/*/*.service.ts`.
+所有后端接口字段先定义到 `api/types.ts`，hooks 再引用这些类型。组件不应自己临时定义整个 response shape。
 
-Frontend consumers to check:
+当前已有的核心类型包括：
 
-- `frontend/src/api/types.ts`.
-- `frontend/src/hooks/`.
-- `frontend/src/components/` and `frontend/src/pages/`.
+- `Dish`
+- `MealRecord`
+- `Recipe`
+- `Feedback`
+- `Member`
+- `WorkspaceInvite`
+- `RecommendationCandidate`
 
-## Null vs Undefined
+Reference files:
+- `frontend/src/api/types.ts`
 
-Backend database nullable fields are represented as `null` in responses. Omitted update fields are represented as optional properties in request types.
+## Validation
 
-Examples:
-- `Dish.description: string | null` in responses, but `UpdateDishRequest.description?: string` for updates.
-- `MealRecord.dishId: string | null` and `note: string | null` in responses.
-- `UpdateMealRecordRequest.note?: string | null` because the UI can omit a change or explicitly clear the note.
+当前前端校验用 Zod，常见模式是：
 
-Do not collapse these distinctions in frontend types.
+- `z.object(...)` 定义输入结构
+- `.trim().min(1, ...)` 处理空字符串
+- `.refine(...)` 处理跨字段规则，例如确认密码
+- `zodResolver(schema)` 接入 `react-hook-form`
 
-## Scenario: Backend API Contract Change
+Reference files:
+- `frontend/src/pages/invite-page.tsx`
+- `frontend/src/components/create-dish-form.tsx`
 
-### 1. Scope / Trigger
+当业务字段需要下拉或多选时，当前做法是组件内维护可选值数组，再在提交前做额外检查，例如至少选择一个餐次。
 
-Use this checklist whenever a backend change modifies any frontend-visible API contract: route path, HTTP method, request DTO, query DTO, response field, enum value, status code, auth/session behavior, or JSON-vs-non-JSON response shape.
+Reference files:
+- `frontend/src/components/create-dish-form.tsx`
 
-### 2. Signatures
+## Common Patterns
 
-Backend signatures to inspect and update together:
+稳定模式是：
 
-- Controller route: `@Controller(...)`, `@Get`, `@Post`, `@Patch`, `@Delete`, `@HttpCode`, `@UseGuards` in `backend/src/*/*.controller.ts`.
-- DTO class: request body/query params in `backend/src/*/dto/*.dto.ts`.
-- Service return object: response body and derived fields in `backend/src/*/*.service.ts`.
-- Prisma enum/model fields when persisted values change in `backend/prisma/schema.prisma`.
-- Frontend mirror: `frontend/src/api/types.ts`, matching hook in `frontend/src/hooks/`, and consuming page/component.
+- API 类型用于请求/响应
+- Zod schema 用于表单输入校验
+- TypeScript 推导 `z.infer<typeof schema>` 避免重复声明
 
-### 3. Contracts
+Reference files:
+- `frontend/src/pages/invite-page.tsx`
+- `frontend/src/components/create-dish-form.tsx`
 
-For every changed endpoint, record and verify:
+## Forbidden Patterns
 
-- Request fields: name, type, optional vs required, nullable vs omitted, enum domain, and validation decorators.
-- Response fields: name, type, nullable fields, optional fields, arrays/pages, and derived fields such as `fileUrl`, `coverImage`, `mealRecordCount`, and `feedbackRatingAverage`.
-- Auth behavior: public, session-required 401, role-required 403, or workspace-scoped 404.
-- Success body: `apiFetch` expects JSON for successful responses; keep `{ ok: true }` for empty-style mutations unless the hook/client is changed.
+### Don't: 使用 `as any` 处理 API 返回
 
-### 4. Validation & Error Matrix
+当类型不对时，应去改 `api/types.ts`，而不是临时压制类型错误。
 
-| Condition | Backend response | Frontend expectation |
-|---|---|---|
-| Missing/expired session | 401 | `main.tsx` clears auth and non-auth query cache |
-| Authenticated but not allowed | 403 | UI stays logged in and shows operation failure |
-| Cross-workspace resource | 404 | UI does not learn the resource exists |
-| DTO validation failure | 400 | Form/panel shows user-friendly Chinese copy |
-| Duplicate/capped business conflict | 409 | UI maps conflict to domain-specific Chinese copy |
-| Successful delete/revoke/logout | 200 JSON `{ ok: true }` | Hook calls `apiFetch<{ ok: boolean }>` |
+### Don't: 把 Zod schema 和 API schema 混为一谈
 
-### 5. Good/Base/Bad Cases
+Zod schema 当前用于表单校验，不等于后端返回结构。两者可以重叠，但不要假设完全一致。
 
-- Good: backend adds a new response field, `frontend/src/api/types.ts` is updated, hooks keep typed `apiFetch<T>`, and components handle loading/error/empty/success states.
-- Base: backend-only internal query refactor preserves route, DTO, status, and response shape; frontend files do not need changes.
-- Bad: backend returns `204 No Content` from an endpoint whose hook still calls `apiFetch<{ ok: boolean }>`; successful response parsing fails because `apiFetch` calls `response.json()`.
+Reference files:
+- `frontend/src/api/types.ts`
+- `frontend/src/pages/invite-page.tsx`
 
-### 6. Tests Required
+## Common Mistakes
 
-Backend route tests should assert frontend-observed behavior:
+### 新增字段时只改后端，不改前端类型
 
-- Status codes for 400/401/403/404/409 where relevant.
-- Response fields consumed by `frontend/src/api/types.ts` and components.
-- Workspace isolation returns 404, not leaked data.
-- Session-affecting flows (`login`, `logout`, invite accept) update or clear session as expected.
+当前前端类型是手写维护的。一旦后端增加字段或改名，前端需要同步更新 `api/types.ts`、相关 hook 和组件。
 
-Frontend verification required when the contract changed:
+## Verification
 
 ```bash
 pnpm frontend:typecheck
 pnpm frontend:build
 ```
-
-### 7. Wrong vs Correct
-
-#### Wrong
-
-```ts
-// Backend changed a mutation to no body, but the frontend hook still parses JSON.
-@Delete(':id')
-@HttpCode(204)
-delete(@Param('id') id: string) {
-  return this.service.delete(id);
-}
-```
-
-#### Correct
-
-```ts
-// Keep the local JSON success contract unless apiFetch and hooks are changed too.
-@Delete(':id')
-@HttpCode(200)
-delete(@Param('id') id: string) {
-  return this.service.delete(id); // { ok: true }
-}
-```
-
-## Rule
-
-After backend contract changes, run:
-
-```bash
-pnpm backend:typecheck
-pnpm frontend:typecheck
-```
-
-Run `pnpm frontend:build` when component behavior or route rendering changed.

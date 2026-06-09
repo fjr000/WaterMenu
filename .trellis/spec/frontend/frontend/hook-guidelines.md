@@ -1,102 +1,81 @@
-# Frontend Hook Guidelines
+# Hook Guidelines
 
-> TanStack Query, API hook, auth, and mutation patterns.
+> 前端使用 React Query 管理 server-state，hooks 是数据层核心。
 
-## API Fetch Wrapper
+## Overview
 
-All API calls should use `apiFetch<T>` from `frontend/src/api/client.ts`.
+当前数据访问规则一致：
 
-Current behavior:
+- GET 请求用 `useQuery`
+- POST/PATCH/DELETE 用 `useMutation`
+- mutation 成功后 invalidate 相关 query
+- 401 统一清缓存
 
-- Prepends `/api` to the path.
-- Sends `credentials: "same-origin"` for session-cookie auth.
-- Adds `Content-Type: application/json` only when the body is a string and no content type is already set.
-- Throws `ApiError(status, message)` for non-2xx responses.
-- Parses successful responses with `response.json()`.
+Reference files:
+- `frontend/src/hooks/use-dishes.ts`
+- `frontend/src/hooks/use-meal-records.ts`
+- `frontend/src/hooks/use-auth.tsx`
+- `frontend/src/main.tsx`
 
-This lets JSON requests and `FormData` uploads share one client. Do not manually set `Content-Type` for `FormData`; the browser must add the multipart boundary.
+## Custom Hook Patterns
 
-## Query Keys
+当前 hook 分两类：
 
-Use small array query keys with stable domain prefixes:
+- 数据 hook：封装 `apiFetch`、query key、失效逻辑
+- 状态 hook：封装 auth context 或公共 UI 判断
 
-- `authMeKey = ["auth", "me"] as const` in `use-auth.tsx`.
-- `dishesKey(mealType) = ["dishes", mealType ?? null]` in `use-dishes.ts`.
-- `dishImagesKey(dishId) = ["dish-images", dishId]` in `use-dish-images.ts`.
-- `useMembers` uses `["members"]`.
-- `useInvites` uses `["invites"]`.
-- `useInvitePreview` uses `["invite-preview", token]`.
+新 hook 应保持一个文件一个职责，不把页面状态和 server-state 混在一起。
 
-When adding a query, choose a prefix that can be invalidated by domain.
+Reference files:
+- `frontend/src/hooks/use-auth.tsx`
+- `frontend/src/hooks/use-recommendations.ts`
 
-## Query Defaults and Unauthorized Handling
+## Data Fetching
 
-`frontend/src/main.tsx` creates one `QueryClient` with:
+当前稳定模式是：
 
-- global query and mutation `onError` handlers that clear auth state on 401.
-- `queries.retry = false`.
-- `queries.refetchOnWindowFocus = false`.
+- 请求和返回类型来自 `api/types.ts`
+- query key 经过 normalize，避免无意义缓存不命中
+- mutation 成功后连带失效依赖缓存
 
-Use `isUnauthorized(error)` from `use-auth.tsx` for auth-specific error checks. On 401, `handleUnauthorizedError` sets `authMeKey` to `null` and removes all non-auth queries.
+Reference files:
+- `frontend/src/hooks/use-meal-records.ts`
+- `frontend/src/hooks/use-dishes.ts`
 
-Do not add per-query retry behavior unless a task explicitly needs it.
+401 处理分两层：
 
-## Hook Shape
+- React Query cache/mutation cache 捕获异常
+- auth hook 负责维护登录态
 
-Keep domain server-state hooks in `frontend/src/hooks/` and expose simple functions:
+Reference files:
+- `frontend/src/main.tsx`
+- `frontend/src/hooks/use-auth.tsx`
 
-- `useDishes(mealType?)`, `useCreateDish()`, `useUpdateDish()`.
-- `useDishImages(dishId, enabled?)`, `useUploadDishImage(dishId)`, `useSetDishImageCover(dishId)`, `useDeleteDishImage(dishId)`.
-- `useMembers()`.
-- `useInvites(enabled)`, `useCreateInvite()`, `useRevokeInvite()`, `useInvitePreview(token)`, `useAcceptInvite(token)`.
+## Naming Conventions
 
-Hooks should hide URL construction, HTTP methods, request serialization, and cache invalidation from components.
+当前命名约定是：
 
-## Mutations and Invalidation
+- 读取型：`use<Feature>`
+- mutation 型：`useCreate<Feature>`、`useUpdate<Feature>`、`useDelete<Feature>`
+- key 常量：`<feature>Key`
 
-Invalidate every query family affected by a mutation:
+Reference files:
+- `frontend/src/hooks/use-dishes.ts`
+- `frontend/src/hooks/use-meal-records.ts`
 
-- Creating/updating a dish invalidates `queryKey: ["dishes"]`.
-- Uploading, setting cover, or deleting a dish image invalidates both `dishImagesKey(dishId)` and `queryKey: ["dishes"]` because dish cover fields can change.
-- Creating/revoking invites invalidates `queryKey: ["invites"]`.
-- Logout sets auth to `null` and removes all non-auth queries.
+## Common Mistakes
 
-Use `void queryClient.invalidateQueries(...)` when the promise is intentionally not awaited, matching existing hooks.
+### Don't: 在组件里手拼缓存 key
 
-For mutations that need component-specific behavior, pass `onSuccess` callbacks from the component:
+当前 hook 已封装 key 与失效策略。组件手拼 key 时，通常说明逻辑应下沉到 hook。
 
-- `CreateDishForm` closes after create succeeds.
-- `EditDishForm` closes after update succeeds.
-- `MembersPanel` stores the newly returned one-time invite link.
-- `InvitePage` sets auth data and redirects after accept.
+### Don't: 忽略 loading/error
 
-## Enabled Queries
+当前 hook 返回的 `isLoading`、`isPending`、`isError` 都要被页面消费。
 
-Use `enabled` for conditional server calls:
+## Verification
 
-- `useInvites(isAdmin)` avoids invite-list requests for non-admin users.
-- `useDishImages(dish.id, Boolean(dish.coverImage))` in `DishCard` avoids extra image-list requests when no cover exists.
-- `useRecipes(dish.id, recipesOpen)` loads recipes only when the section is expanded.
-
-## URL Parameters
-
-Build query strings with `URLSearchParams`, as in `useDishes`. Add params only when values are present. This avoids manual string bugs and empty filters.
-
-## Uploads
-
-For file uploads:
-
-- Build `FormData` inside the mutation function.
-- Use `formData.set("file", file)` to match the backend's `FileInterceptor('file')`.
-- Do not JSON-stringify file uploads.
-- Invalidate both image and dish queries after success.
-
-Reference: `frontend/src/hooks/use-dish-images.ts` and `frontend/src/components/dish-image-panel.tsx`.
-
-## Avoid
-
-- Do not call `fetch` directly outside `api/client.ts`.
-- Do not duplicate mutation invalidation in many components; put shared invalidation in the hook.
-- Do not forget to invalidate parent list/card queries when a detail mutation changes card-visible fields.
-- Do not put UI-only state in query cache.
-- Do not make admin-only requests when `auth.user.role !== "ADMIN"`; use `enabled`.
+```bash
+pnpm frontend:typecheck
+pnpm frontend:build
+```

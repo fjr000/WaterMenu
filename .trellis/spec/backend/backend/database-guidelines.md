@@ -1,208 +1,112 @@
 # Database Guidelines
 
-> Prisma, PostgreSQL, migrations, and workspace scoping patterns for the backend.
+> 后端使用 Prisma 操作 PostgreSQL，所有业务数据按 workspace 隔离。
 
-## Prisma Ownership
+## Overview
 
-The Prisma schema lives in `backend/prisma/schema.prisma`. Database access in application code goes through `PrismaService` from `backend/src/prisma/prisma.service.ts`, which extends `PrismaClient` and connects/disconnects on Nest module lifecycle hooks.
+当前数据库访问通过 `PrismaService` 完成，模型定义在 `backend/prisma/schema.prisma`。Session 表不在 Prisma schema 中，而是由 `connect-pg-simple` 自动创建。
 
 Reference files:
 - `backend/prisma/schema.prisma`
+- `backend/prisma/prisma.config.ts`
 - `backend/src/prisma/prisma.service.ts`
-- `backend/src/prisma/prisma.module.ts`
+- `backend/README.md`
 
-Use dependency injection in services:
+## Query Patterns
 
-```ts
-constructor(private readonly prisma: PrismaService) {}
+所有业务查询必须先解析当前用户所属 `workspaceId`，再把该字段加入查询条件。当前服务层的稳定模式是：
+
+1. `userId -> workspaceId`
+2. 创建时写入 `workspaceId`
+3. 列表/详情/更新/删除都加 `workspaceId`
+4. 跨 workspace 资源统一视为不存在或无权访问
+
+Reference files:
+- `backend/src/dishes/dishes.service.ts`
+- `backend/src/meal-records/meal-records.service.ts`
+- `backend/src/dish-images/dish-images.service.ts`
+
+当前列表查询优先使用明确排序，而不是依赖数据库默认顺序。例如菜品按 `updatedAt`、`createdAt`、`id` 稳定排序。
+
+Reference files:
+- `backend/src/dishes/dishes.service.ts`
+- `backend/src/meal-records/meal-records.service.ts`
+
+## Migrations
+
+Migration 由 Prisma 管理，本地使用：
+
+```bash
+pnpm backend:prisma:migrate
 ```
 
-Do not instantiate `PrismaClient` inside feature services.
+部署目标使用：
 
-## Workspace Scoping Is Mandatory
+```bash
+pnpm --filter @watermenu/backend prisma:deploy
+```
 
-Most business data is scoped by `workspaceId`. Services should derive `workspaceId` from the authenticated `userId`, then include it in every query touching workspace data.
+`backend/prisma.config.ts` 中还配置了 seed 命令，因此本地初始化常用链路为：
 
-Local pattern:
+```bash
+pnpm backend:prisma:generate
+pnpm backend:prisma:migrate
+pnpm backend:prisma:seed
+```
 
-1. Read the current user with `select: { workspaceId: true }` (and role when needed).
-2. Throw `UnauthorizedException` if the session user no longer exists.
-3. Use `workspaceId` in `where` clauses for reads, updates, deletes, relation checks, and counts.
+Reference files:
+- `backend/prisma.config.ts`
+- `backend/prisma/seed.ts`
+- `backend/README.md`
 
-Examples:
-- `backend/src/dishes/dishes.service.ts` uses `getWorkspaceId(userId)` before list/create/get/update and filters dishes by `{ id, workspaceId }`.
-- `backend/src/meal-records/meal-records.service.ts` filters list/search/rating/date queries by `workspaceId` and validates related dishes with `assertDishInWorkspace`.
-- `backend/src/dish-images/dish-images.service.ts` ensures both dish and image belong to the workspace before file operations.
-- `backend/src/members/members.service.ts` only lists users from the current user's workspace.
-- `backend/src/invites/invites.service.ts` scopes pending invite listing, creation, and revocation to the admin's workspace.
+## Naming Conventions
 
-Avoid direct update/delete by ID before a scoped existence check. The common pattern is `findFirst({ where: { id, workspaceId }, select: { id: true } })`, then update/delete by ID after ownership is proven.
+当前 schema 采用以下约定：
 
-## Schema Conventions
+- 表名用 `@@map(...)` 转成 snake_case 复数形式（`workspaces`, `dishes`, `meal_records`）
+- 字段名保持 Prisma camelCase
+- 枚举名用 PascalCase（`MealType`, `FeedbackRating`, `UserRole`）
+- 关系字段保持业务语义（`createdByUserId`, `usedByUserId`）
 
-The schema uses:
-
-- `String @id @default(cuid())` IDs.
-- `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` on business models.
-- Explicit table names with `@@map(...)`, usually snake_case plural names such as `meal_records`, `dish_images`, and `workspace_invites`.
-- `@@index([workspaceId])` on workspace-owned models and indexes for foreign keys such as `dishId`, `userId`, `createdByUserId`, and `usedByUserId`.
-- `onDelete: Restrict` for workspace/user ownership relations; `Cascade` or `SetNull` only where the code expects dependent cleanup or history preservation.
-
-Examples:
-- `Dish` has `@@unique([workspaceId, name])` to allow same dish names in different workspaces.
-- `Feedback` has `@@unique([mealRecordId, userId])` for one feedback per user per meal record.
-- `DishImage` cascades on `dishId` because images belong to a dish.
-- `MealRecord.dishId` uses `onDelete: SetNull` to preserve meal history after deleting a dish.
-
-## Migrations and Session Table
-
-Business tables are created through Prisma migrations under `backend/prisma/migrations/`. Add a migration when `schema.prisma` changes and keep migration SQL committed.
-
-The Express session table is intentionally not a Prisma model. `backend/src/session/session.config.ts` uses `connect-pg-simple` with `createTableIfMissing: true`; `backend/README.md` documents that this infrastructure table is created at runtime.
-
-Do not add a `Session` model to `schema.prisma` unless the session strategy changes.
+Reference files:
+- `backend/prisma/schema.prisma`
 
 ## Transactions
 
-Use `prisma.$transaction` when multiple database changes must succeed together or race conditions need guarding.
+当前项目在以下场景使用事务：
 
-Examples:
-- `backend/src/meal-records/meal-records.service.ts` uses `$transaction([findMany, count])` for paginated list consistency.
-- `backend/src/dish-images/dish-images.service.ts` uses an interactive transaction to count images and create metadata, and another to switch cover images atomically.
-- `backend/src/invites/invites.service.ts` creates a user and marks an invite as used in one transaction; it uses `updateMany` with pending conditions and checks `count === 1` to guard concurrent invite acceptance.
+- 邀请接受：创建用户并标记邀请已使用，要求原子完成
+- 封面图切换：先清除旧封面，再设置新封面
+- 图片创建：先检查图片数量上限，再写入记录；失败时清理已写入文件
 
-When filesystem work is paired with DB writes, clean up external side effects on DB failure. `DishImagesService.upload` writes the file, then deletes it in `catch` if the Prisma transaction fails.
+如果多个写操作需要一致成功或失败，应放在 `$transaction` 内。
 
-## Query and Response Patterns
+Reference files:
+- `backend/src/invites/invites.service.ts`
+- `backend/src/dish-images/dish-images.service.ts`
 
-- Prefer `select` for authorization lookups and narrow list responses.
-- Prefer typed `Prisma.*WhereInput` and `Prisma.*Include` objects for dynamic filters.
-- For reusable include shapes, use constants/functions and derive payload types with `Prisma.<Model>GetPayload`.
+## Common Mistakes
 
-Examples:
-- `backend/src/dishes/dishes.service.ts` defines `dishInclude(workspaceId)` and `DishWithStats` to build dish card fields.
-- `backend/src/recommendations/recommendations.service.ts` defines `coverImageInclude`, `DishWithCoverImage`, and candidate types.
-- `backend/src/meal-records/meal-records.service.ts` defines `getMealRecordInclude(workspaceId)` for feedback selection.
+### Don't: 忘记 workspaceId
 
-Derived frontend fields such as `coverImage.fileUrl`, `mealRecordCount`, and `feedbackRatingAverage` are computed in services before returning responses.
+常见错误是只按 `id` 查询，而不检查资源是否属于当前 workspace。当前代码库统一避免了这种模式。
 
-## Data Normalization and Secrets
+Instead:
+- 创建时写入 `workspaceId`
+- 读写时同时过滤 `id` 与 `workspaceId`
 
-- Lowercase emails before lookup or user creation (`AuthService.validateUser`, `InvitesService.accept`).
-- Hash passwords with `argon2` (`AuthService`, `InvitesService`, `backend/prisma/seed.ts`).
-- Invite tokens are random base64url values returned only in the invite link; only SHA-256 hashes are stored (`InvitesService.hashToken`).
-- Trim names where current service logic requires non-empty display names (`InvitesService.accept`).
+### Don't: 把 Session 当业务模型迁移
 
-## Scenario: Prisma Schema or Migration Change
+Session 数据属于基础设施，当前不进 Prisma schema，而是通过 PostgreSQL session store 自动建表。
 
-### 1. Scope / Trigger
-
-Use this checklist whenever `backend/prisma/schema.prisma` or `backend/prisma/migrations/**` changes. Database schema changes are infra/cross-layer contracts because Prisma Client types, backend services, tests, and often `frontend/src/api/types.ts` may all need updates.
-
-### 2. Signatures
-
-Database signatures to inspect and keep aligned:
-
-- Prisma model fields: `name Type`, `?` nullability, list fields, defaults, relations, and `@updatedAt`.
-- Prisma enum values such as `MealType`, `FeedbackRating`, and `UserRole`.
-- Indexes and constraints: `@@index`, `@@unique`, relation `onDelete` behavior, and `@@map` table names.
-- Migration SQL under `backend/prisma/migrations/<timestamp>_<name>/migration.sql`.
-- Generated Prisma Client types after `pnpm backend:prisma:generate`.
-
-### 3. Contracts
-
-Verify these contracts after schema changes:
-
-- Persistence: required fields have defaults or are supplied by create services.
-- Workspace scope: workspace-owned models include `workspaceId`, relation to `Workspace`, and `@@index([workspaceId])` unless there is a documented reason not to.
-- Deletion semantics: `Restrict`, `Cascade`, or `SetNull` match service behavior and history-preservation requirements.
-- API response: new/changed model fields are either intentionally hidden with `select` or represented in service return objects and frontend types.
-- Seed/local setup: `backend/prisma/seed.ts` and `backend/README.md` stay accurate when required data changes.
-
-### 4. Validation & Error Matrix
-
-| Condition | Expected handling |
-|---|---|
-| New required DB field without service default/input | Typecheck or tests should fail; add DTO/service value or DB default |
-| New unique constraint conflict | Catch Prisma `P2002` where user-facing conflict is expected |
-| New workspace-owned model | Services must derive `workspaceId` from session user and filter every query |
-| Relation deleted by parent | `onDelete` must match product behavior: preserve history with `SetNull`, delete owned children with `Cascade`, or block with `Restrict` |
-| Enum value added/renamed | Update DTO validators, service logic, frontend union types, and UI labels |
-
-### 5. Good/Base/Bad Cases
-
-- Good: adding a workspace-owned model includes `workspaceId`, `@@index([workspaceId])`, a migration, service queries scoped by workspace, tests for cross-workspace 404, and frontend type updates if exposed.
-- Base: adding an internal nullable column not returned by any API includes a migration, generated client update, and backend tests/typecheck.
-- Bad: adding a required Prisma field without a default and forgetting to update `create` calls; runtime create requests fail even though the route shape looked unchanged.
-
-### 6. Tests Required
-
-For schema changes, add/update backend tests that assert:
-
-- Create/update supplies required fields and maps nullable fields correctly.
-- Workspace isolation for new models or relations.
-- Unique constraints map to 409 where applicable.
-- Delete behavior matches the chosen `onDelete` rule.
-- Any frontend-visible field appears in response snapshots/assertions used by route tests.
-
-Run:
-
-```bash
-pnpm backend:prisma:generate
-pnpm backend:typecheck
-pnpm backend:test
-```
-
-Run frontend checks too if exposed API types changed:
-
-```bash
-pnpm frontend:typecheck
-pnpm frontend:build
-```
-
-### 7. Wrong vs Correct
-
-#### Wrong
-
-```prisma
-model NewThing {
-  id   String @id @default(cuid())
-  name String
-}
-```
-
-This omits workspace ownership in a project where business data is workspace-scoped, so services cannot enforce tenant isolation consistently.
-
-#### Correct
-
-```prisma
-model NewThing {
-  id          String    @id @default(cuid())
-  workspaceId String
-  name        String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([workspaceId])
-  @@map("new_things")
-}
-```
-
-Then service queries must use `where: { id, workspaceId }` after deriving `workspaceId` from the session user.
+Reference files:
+- `backend/README.md`
+- `backend/src/session/session.config.ts`
 
 ## Verification
 
-When database code changes, run:
-
 ```bash
 pnpm backend:typecheck
 pnpm backend:test
-```
-
-When `schema.prisma` changes, also run:
-
-```bash
-pnpm backend:prisma:generate
 pnpm backend:prisma:migrate
 ```

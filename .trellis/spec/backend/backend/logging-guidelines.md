@@ -1,40 +1,55 @@
-# Backend Logging Guidelines
+# Logging Guidelines
 
-> Current logging and diagnostic conventions for WaterMenu backend.
+> 当前后端没有统一的结构化日志规范，代码主要通过 HTTP 异常与测试暴露问题。
 
-## Current State
+## Overview
 
-WaterMenu backend does not have an application logging abstraction yet. There is no project logger service, no structured log format, and no request logging middleware in `backend/src/`.
-
-Nest's default startup/error behavior is used. Unknown exceptions are allowed to propagate through Nest's standard exception layer rather than being caught and logged manually.
+当前代码库未建立统一日志层，也未引入自定义 logger 抽象。默认行为依赖 NestJS 内置运行输出与测试失败信息。
 
 Reference files:
 - `backend/src/main.ts`
-- `backend/src/app.setup.ts`
-- `backend/src/session/session.config.ts`
+- `backend/src/app.module.ts`
+- `backend/test/dishes.e2e-spec.ts`
 
-## What To Do Today
+## Current Practice
 
-- Prefer clear exceptions and tests over ad-hoc logging.
-- Let known domain failures become Nest HTTP exceptions (`BadRequestException`, `ConflictException`, `NotFoundException`, etc.).
-- Let unknown failures propagate so they remain visible during tests and runtime diagnostics.
-- Keep operational startup validation as explicit thrown `Error`s when the app cannot safely start, as in `setupSession`.
+当前最稳定的信息传递方式是：
 
-## Comments Instead of Logs
+- 业务失败通过 Nest 异常返回给调用方
+- 开发阶段通过 e2e 测试确认行为
+- 运行状态主要依赖容器进程输出
 
-The only current non-obvious diagnostic-style comment is in cleanup code:
+如果未来添加日志，建议优先围绕这些事件：
 
-- `backend/src/dish-images/dish-images.service.ts` catches `fs.unlink` failure in `deleteFileQuietly` and comments that a missing file should not block the database result.
+- 登录失败
+- 邀请创建/撤销/接受
+- 图片上传失败
+- 资源冲突或权限拦截
 
-This is appropriate for intentionally ignored cleanup failures. If you ignore an error, add a short comment explaining why it is safe.
+Reference files:
+- `backend/src/auth/auth.controller.ts`
+- `backend/src/invites/invites.service.ts`
+- `backend/src/dish-images/dish-images.service.ts`
 
-## Avoid
+## Common Mistakes
 
-- Do not add `console.log`/`console.error` for normal request flow.
-- Do not add one-off logging libraries or logger wrappers until the project adopts a logging strategy.
-- Do not catch errors only to print and rethrow them.
-- Do not log secrets or sensitive values: passwords, password hashes, session secrets, session IDs, raw invite tokens, invite token hashes, or cookies.
+### Don: 记录敏感信息
 
-## If Logging Is Introduced Later
+如果未来补日志，不要记录密码、原始邀请 token、完整 session secret。
 
-If a future task adds structured logging, update this file with the chosen logger, fields, redaction rules, and test expectations. Until then, keep backend code consistent with the current no-custom-logging style.
+Instead:
+- 记录用户 id、workspace id、资源 id、错误类型
+- 保留请求关键字段即可，不要保留完整密钥材料
+
+### Don't: 用 print/debug 代替异常反馈
+
+当前代码库更适合把失败原因通过 Nest 异常带回 API 边界，而不是把错误藏进日志并返回模糊成功。
+
+## Verification
+
+当前没有强制日志检查命令。如果后续引入日志规范，请同步更新这个文件并补充验证方式。
+
+```bash
+pnpm backend:typecheck
+pnpm backend:test
+```

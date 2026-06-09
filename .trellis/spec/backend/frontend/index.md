@@ -1,46 +1,32 @@
-# Backend Package Frontend-Impact Guidelines
+# Frontend Development Guidelines
 
-> Guidance for backend tasks that affect frontend behavior or API contracts.
+> 前端开发规范基于当前 Vite + React + React Query + Tailwind 代码库。
 
-The `backend/` package does not contain React UI code. Frontend implementation lives in `frontend/` and is documented under `.trellis/spec/frontend/frontend/`. This layer exists so backend-focused tasks still check the browser-visible impact of API, auth, session, validation, and response-shape changes.
+## Overview
 
-## Pre-Development Checklist
+本目录记录 `@watermenu/frontend` 在后端包上下文中的前端约定。当前前端没有独立路由库，也没有自动生成类型层，风格以轻量、集中、手写维护为主。
 
-When a backend change affects frontend-visible behavior, read:
+当前前端主线模式是：
 
-1. [Directory Structure](./directory-structure.md) — where frontend-impacting code lives and where not to put UI code.
-2. [Component Guidelines](./component-guidelines.md) — how backend states surface in existing UI components.
-3. [Hook Guidelines](./hook-guidelines.md) — how frontend hooks call backend routes and invalidate data.
-4. [State Management](./state-management.md) — auth/session/cache implications of backend changes.
-5. [Type Safety](./type-safety.md) — updating `frontend/src/api/types.ts` with backend contract changes.
-6. [Quality Guidelines](./quality-guidelines.md) — cross-layer verification rules.
-7. The concrete frontend specs in `.trellis/spec/frontend/frontend/` if you will edit `frontend/` files.
-8. Shared cross-layer guide: `.trellis/spec/guides/cross-layer-thinking-guide.md`.
+- 所有请求经 `apiFetch`
+- API 类型集中在 `api/types.ts`
+- React Query 管理 server-state
+- 页面负责状态组合，hooks 负责数据访问
+- 表单使用 React Hook Form + Zod
 
-## Backend Changes That Require Frontend Review
+Reference files:
+- `frontend/src/api/client.ts`
+- `frontend/src/api/types.ts`
+- `frontend/src/hooks/use-meal-records.ts`
+- `frontend/src/pages/home-page.tsx`
 
-Review frontend impact when changing:
+## Guidelines Index
 
-- API routes, methods, status codes, or response bodies.
-- DTO validation rules or enum values.
-- Auth/session behavior and 401 handling.
-- Workspace/member/invite permissions.
-- Dish, meal record, feedback, image, recipe, or recommendation fields consumed by cards/panels.
-- Upload limits, accepted image types, or error conditions displayed in UI copy.
-
-Reference contract files:
-- Backend controllers/services under `backend/src/**`.
-- Frontend types in `frontend/src/api/types.ts`.
-- Frontend hooks in `frontend/src/hooks/`.
-- Frontend UI consumers in `frontend/src/pages/` and `frontend/src/components/`.
-
-## Verification
-
-For cross-layer backend changes, run backend checks and frontend type/build checks when frontend contracts changed:
-
-```bash
-pnpm backend:typecheck
-pnpm backend:test
-pnpm frontend:typecheck
-pnpm frontend:build
-```
+| Guide | Description | Status |
+|-------|-------------|--------|
+| [Directory Structure](./directory-structure.md) | 页面、组件、hook、api 目录组织 | Filled |
+| [Component Guidelines](./component-guidelines.md) | 组件分层、props、样式、a11y | Filled |
+| [Hook Guidelines](./hook-guidelines.md) | React Query hooks 与缓存失效规则 | Filled |
+| [State Management](./state-management.md) | server-state、auth context、局部 UI 状态 | Filled |
+| [Quality Guidelines](./quality-guidelines.md) | 类型检查、构建验证、禁止行为 | Filled |
+| [Type Safety](./type-safety.md) | API 类型、Zod、React Hook Form 推导 | Filled |

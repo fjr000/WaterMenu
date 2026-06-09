@@ -1,113 +1,89 @@
-# Frontend Type Safety
+# Type Safety
 
-> TypeScript, API typing, Zod, and strictness patterns for WaterMenu frontend.
+> 前端类型集中在 `api/types.ts`，表单校验使用 Zod，表单状态管理使用 React Hook Form。
 
-## Compiler Strictness
+## Overview
 
-The frontend uses strict TypeScript in `frontend/tsconfig.app.json`:
+当前类型体系分两层：
 
-- `strict: true`
-- `noUnusedLocals: true`
-- `noUnusedParameters: true`
-- `noFallthroughCasesInSwitch: true`
-- `noUncheckedSideEffectImports: true`
-- `erasableSyntaxOnly: true`
-- `verbatimModuleSyntax: true`
-- `allowImportingTsExtensions: true`
+- API 类型层：`frontend/src/api/types.ts`
+- 组件表单层：Zod schema + `react-hook-form` 推导类型
 
-Imports include `.ts`/`.tsx` extensions for local modules, matching existing code:
+Reference files:
+- `frontend/src/api/types.ts`
+- `frontend/src/components/create-dish-form.tsx`
+- `frontend/src/pages/invite-page.tsx`
 
-```ts
-import { apiFetch } from "../api/client.ts";
-import { useAuth } from "../hooks/use-auth.tsx";
-```
+## Type Organization
 
-Use double quotes in frontend TypeScript/TSX, matching the current frontend style.
+所有接口字段先定义到 `api/types.ts`，hooks 再引用这些类型。组件不应临时自己定义整个 response shape。
 
-## API Types
+当前已有的核心类型包括：
 
-`frontend/src/api/types.ts` is the central type file for backend-facing data:
+- `Dish`
+- `MealRecord`
+- `Recipe`
+- `Feedback`
+- `Member`
+- `WorkspaceInvite`
+- `RecommendationCandidate`
 
-- Enum-like unions: `MealType`, `FeedbackRating`, `UserRole`, `InvitePreviewReason`.
-- Response interfaces: `MeResponse`, `Dish`, `DishImage`, `MealRecord`, `Recipe`, `RecommendationResponse`, `WorkspaceInvite`, etc.
-- Request interfaces: `LoginRequest`, `CreateDishRequest`, `UpdateDishRequest`, `CreateMealRecordRequest`, `AcceptInviteRequest`, etc.
-- `ApiError` class used by `apiFetch` and UI error mapping.
+Reference files:
+- `frontend/src/api/types.ts`
 
-When backend response shapes change, update this file first, then hooks/components. Do not define duplicate ad-hoc API interfaces inside components.
+## Validation
 
-## Typed API Calls
+当前前端校验用 Zod，常见模式是：
 
-Always pass the expected response type to `apiFetch<T>`:
+- `z.object(...)` 定义输入结构
+- `.trim().min(1, ...)` 处理空输入
+- `.refine(...)` 处理跨字段规则
+- `zodResolver(schema)` 接入 `react-hook-form`
 
-```ts
-apiFetch<Dish[]>("/dishes")
-apiFetch<MeResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) })
-apiFetch<{ ok: boolean }>(`/dish-images/${id}`, { method: "DELETE" })
-```
-
-For mutations, type the mutation input through API request interfaces from `api/types.ts`.
-
-Examples:
-- `useCreateDish` accepts `CreateDishRequest`.
-- `useUpdateDish` accepts `{ id: string; body: UpdateDishRequest }`.
-- `useAcceptInvite` accepts `AcceptInviteRequest`.
-
-## Nullable and Optional Fields
-
-Mirror backend semantics precisely:
-
-- Use `null` for database nullable response fields such as `description`, `note`, `dishId`, `coverImage`, and `feedbackRatingAverage`.
-- Use optional properties for fields that may be omitted in request bodies, such as `description?`, `mealTypes?`, `isActive?`, and `note?`.
-- `Member.email` is optional because backend hides emails from non-admin users.
-- Invite preview is a discriminated union on `canAccept`.
-
-Components should check these fields before rendering. Examples:
-- `DishCard` renders description only if present.
-- `InvitePage` narrows `previewQuery.data` with `canAccept` before reading `workspaceName` or `reason`.
-- `MemberRow` renders email only for admin view and when `member.email` exists.
-
-## Forms and Zod
-
-Use Zod with React Hook Form for form validation:
-
-- Define schema near the form.
-- Use `zodResolver(schema)`.
-- Derive `type FormValues = z.infer<typeof schema>`.
-- Refine multi-field constraints in Zod, as `InvitePage` does for matching passwords.
-- Trim strings before submit when the backend expects normalized values.
-
-Examples:
-- `frontend/src/pages/login-page.tsx`
+Reference files:
 - `frontend/src/pages/invite-page.tsx`
 - `frontend/src/components/create-dish-form.tsx`
 
-## React Types
+当业务字段需要多选时，当前做法是组件内维护可选值数组，并在提交前做额外检查。
 
-Use React types explicitly where needed:
+Reference files:
+- `frontend/src/components/create-dish-form.tsx`
 
-- Import `type ReactNode` for component children.
-- Use native prop types such as `ButtonHTMLAttributes<HTMLInputElement>` and `InputHTMLAttributes<HTMLInputElement>` in `ui.tsx`.
-- Use local prop interfaces/types for feature components.
+## Common Patterns
 
-Examples:
-- `frontend/src/components/ui.tsx`
-- `frontend/src/components/dish-image-panel.tsx`
-- `frontend/src/pages/home-page.tsx`
+稳定模式是：
 
-## Error Typing
+- API 类型用于请求与响应
+- Zod schema 用于表单校验
+- TypeScript 推导 `z.infer<typeof schema>` 避免重复声明
 
-Mutation/query errors are `unknown`. Narrow them before status-specific handling:
+Reference files:
+- `frontend/src/pages/invite-page.tsx`
+- `frontend/src/components/create-dish-form.tsx`
 
-- `isUnauthorized(error)` checks `error instanceof ApiError && error.status === 401`.
-- `MembersPanel.getCreateInviteError` checks `ApiError` status 409.
-- `InvitePage.getAcceptError` checks `ApiError` status 409 and 400.
+## Forbidden Patterns
 
-Do not assume `error` has a `status` property without `instanceof ApiError`.
+### Don't: 使用 `as any`
 
-## Avoid
+当类型不对时，应去改 `api/types.ts`，而不是压制类型错误。
 
-- Do not use `any` for API data or form values.
-- Do not use string enums when local code uses union literal types.
-- Do not widen `MealType`, `UserRole`, or `FeedbackRating` to plain `string` unless the value is untrusted input being validated.
-- Do not ignore `undefined` vs `null`; the backend distinguishes omitted update fields from explicit nullable values.
-- Do not add unused props, imports, or helpers; the compiler rejects them.
+### Don't: 把 Zod schema 当作后端返回结构
+
+Zod schema 当前用于表单校验，不等于 response schema。
+
+Reference files:
+- `frontend/src/api/types.ts`
+- `frontend/src/pages/invite-page.tsx`
+
+## Common Mistakes
+
+### 新增字段时只改后端，不改前端类型
+
+当前前端类型是手写维护的。后端字段变化后，前端需要同步更新 `api/types.ts`、hooks 和组件。
+
+## Verification
+
+```bash
+pnpm frontend:typecheck
+pnpm frontend:build
+```

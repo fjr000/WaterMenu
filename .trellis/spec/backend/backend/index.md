@@ -1,39 +1,30 @@
 # Backend Development Guidelines
 
-> Project-specific rules for the WaterMenu NestJS backend in `backend/`.
+> 后端开发规范基于当前 NestJS + Prisma + PostgreSQL 代码库。
 
-WaterMenu backend is a small NestJS API using Prisma, PostgreSQL, session cookies, and e2e-style Jest/Supertest tests. These specs describe the patterns that exist in the codebase today.
+## Overview
 
-## Pre-Development Checklist
+本目录记录 `@watermenu/backend` 的现有约定，目标是让后续 AI session 按项目真实模式实现代码，而不是使用泛化模板。
 
-Before editing backend code, read:
+当前后端的主线模式是：
 
-1. [Directory Structure](./directory-structure.md) — Nest module layout and where code belongs.
-2. [Database Guidelines](./database-guidelines.md) — Prisma schema, workspace scoping, transactions, and migrations.
-3. [Error Handling](./error-handling.md) — HTTP exceptions, validation, auth failures, and Prisma errors.
-4. [Quality Guidelines](./quality-guidelines.md) — TypeScript, test style, commands, and review checks.
-5. [Logging Guidelines](./logging-guidelines.md) — current logging policy and cleanup comments.
-6. Shared guides in `.trellis/spec/guides/index.md` when a change crosses layers or repeats a pattern.
+- 按 feature module 组织代码
+- controller 保持薄层，service 负责业务规则
+- 所有业务数据按 workspace 隔离
+- 鉴权、唯一冲突、跨 workspace 隔离都通过 Nest 异常表达
 
-## Runtime Shape
+Reference files:
+- `backend/src/app.module.ts`
+- `backend/src/dishes/dishes.service.ts`
+- `backend/src/auth/auth.guard.ts`
+- `backend/test/dishes.e2e-spec.ts`
 
-- API prefix is `/api`; Swagger is mounted at `/api/docs` in `backend/src/app.setup.ts`.
-- Session setup lives in `backend/src/session/session.config.ts` and uses PostgreSQL through `connect-pg-simple`.
-- Business persistence uses Prisma models in `backend/prisma/schema.prisma`; the session table is infrastructure and is not a Prisma model.
-- Tests normally build the real `AppModule`, override `PrismaService`, add an Express session middleware, call `setupApp(app)`, and exercise `/api/...` routes with Supertest.
+## Guidelines Index
 
-## Verification Commands
-
-Use root scripts unless you are already in `backend/`:
-
-```bash
-pnpm backend:typecheck
-pnpm backend:lint
-pnpm backend:test
-```
-
-If Prisma schema or migrations changed, also run:
-
-```bash
-pnpm backend:prisma:generate
-```
+| Guide | Description | Status |
+|-------|-------------|--------|
+| [Directory Structure](./directory-structure.md) | 模块目录结构与职责划分 | Filled |
+| [Database Guidelines](./database-guidelines.md) | Prisma 查询、迁移、workspace 隔离 | Filled |
+| [Error Handling](./error-handling.md) | Nest 异常、状态码、错误映射 | Filled |
+| [Quality Guidelines](./quality-guidelines.md) | 类型检查、Jest e2e 测试、DTO 校验 | Filled |
+| [Logging Guidelines](./logging-guidelines.md) | 当前无统一日志层的现状与后续建议 | Filled |

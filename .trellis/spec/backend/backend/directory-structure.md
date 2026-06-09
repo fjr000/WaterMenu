@@ -1,94 +1,109 @@
-# Backend Directory Structure
+# Directory Structure
 
-> How backend code is organized in WaterMenu.
+> 后端按 NestJS feature module 组织，业务代码集中在 `backend/src/`。
 
-## Package Boundary
+## Overview
 
-The backend package lives in `backend/` and is a NestJS application. Keep backend-only code here: controllers, services, DTOs, Prisma schema/migrations, session setup, and backend tests.
+当前后端没有独立的 `controllers/`、`services/`、`models/` 顶层目录，模块边界按业务域拆分。默认模式是：
+
+- `src/<feature>/` 一个目录对应一个业务模块
+- `src/<feature>/<feature>.module.ts` 定义 Nest module
+- `src/<feature>/<feature>.controller.ts` 定义 HTTP 边界
+- `src/<feature>/<feature>.service.ts` 放业务逻辑
+- `src/<feature>/dto/` 放入参校验对象
 
 Reference files:
-- `backend/package.json`
 - `backend/src/app.module.ts`
-- `backend/src/main.ts`
-- `backend/prisma/schema.prisma`
+- `backend/src/dishes/dishes.module.ts`
+- `backend/src/recipes/recipes.module.ts`
+- `backend/src/invites/invites.module.ts`
 
-## Module Layout
+## Current Layout
 
-Feature code is grouped by domain under `backend/src/<feature>/`:
-
-- `auth/` — login, logout, session user lookup, and `AuthGuard`.
-- `dishes/`, `dish-images/`, `meal-records/`, `feedback/`, `recipes/`, `recommendations/`, `members/`, `invites/` — business feature modules.
-- `prisma/` — shared Prisma client provider.
-- `session/` — Express session configuration and session typing.
-
-Each feature follows the local Nest convention:
-
-```text
-backend/src/<feature>/
-  <feature>.module.ts
-  <feature>.controller.ts
-  <feature>.service.ts
-  dto/*.dto.ts          # when the feature accepts request bodies or query params
+```
+backend/src/
+  main.ts
+  app.module.ts
+  app.setup.ts
+  auth/
+  dishes/
+  dish-images/
+  meal-records/
+  feedback/
+  recipes/
+  recommendations/
+  members/
+  invites/
+  prisma/
+  session/
 ```
 
-Examples:
-- `backend/src/dishes/dishes.module.ts`, `dishes.controller.ts`, `dishes.service.ts`, `dto/create-dish.dto.ts`
-- `backend/src/meal-records/meal-records.controller.ts`, `meal-records.service.ts`, `dto/list-meal-records-query.dto.ts`
-- `backend/src/invites/invites.controller.ts`, `invites.service.ts`, `dto/accept-invite.dto.ts`
+跨模块共享基础设施放在这两个目录：
 
-## App Setup Boundary
-
-Keep bootstrapping concerns separated:
-
-- `backend/src/main.ts` creates the Nest app, applies production trust proxy, calls `setupSession(app)` then `setupApp(app)`, and listens on `PORT`.
-- `backend/src/app.setup.ts` owns global API prefix, validation pipe, and Swagger setup. Tests call this directly after installing their test session middleware.
-- `backend/src/app.module.ts` imports feature modules and global `ConfigModule`/`PrismaModule` only.
-
-Do not add feature-specific behavior to `main.ts` or `app.setup.ts`; add it to the feature module/service/controller instead.
-
-## Controller vs Service Responsibilities
-
-Controllers should stay thin:
-
-- Apply route decorators, guards, `@HttpCode`, params, body, query, and request/session extraction.
-- Delegate business logic to the service.
-- Return service results directly unless response headers or session regeneration/destruction are required.
-
-Examples:
-- `backend/src/dishes/dishes.controller.ts` extracts `request.session.userId`, `@Query()`, `@Body()`, and delegates to `DishesService`.
-- `backend/src/invites/invites.controller.ts` handles session regeneration after accepting an invite, while invite validity and user creation stay in `InvitesService`.
-- `backend/src/dish-images/dish-images.controller.ts` sets file response headers and returns `StreamableFile`; upload/storage rules stay in `DishImagesService`.
-
-Services own:
-
-- Workspace/user lookup and authorization checks.
-- Prisma queries and transactions.
-- DTO-to-database mapping, defaults, derived response fields, and domain-specific validation.
-- Private helpers for repeated local rules, such as `getWorkspaceId`, `ensureDish`, `findImage`, `toResponse`, and `handlePrismaError`.
-
-## DTO Placement
-
-Put request DTOs under `backend/src/<feature>/dto/`. Use class-validator decorators and definite-assignment properties (`!`) to satisfy strict TypeScript.
-
-Examples:
-- `backend/src/dishes/dto/create-dish.dto.ts`
-- `backend/src/meal-records/dto/list-meal-records-query.dto.ts`
-- `backend/src/invites/dto/accept-invite.dto.ts`
-
-Do not inline validation classes in controllers when a feature already has a `dto/` directory.
-
-## Tests
-
-Backend tests live in `backend/test/*.e2e-spec.ts`. They are route-level tests using a mocked `PrismaService`, not unit tests for individual services.
+- `src/prisma/`：共享数据库连接与模块
+- `src/session/`：session cookie 与 express-session 配置
 
 Reference files:
-- `backend/test/auth.e2e-spec.ts`
-- `backend/test/dishes.e2e-spec.ts`
-- `backend/test/dish-images.e2e-spec.ts`
-- `backend/test/members-invites.e2e-spec.ts`
+- `backend/src/prisma/prisma.module.ts`
+- `backend/src/prisma/prisma.service.ts`
+- `backend/src/session/session.config.ts`
 
-## Avoid
+## Module Rules
 
-- Do not create broad `utils/` or `common/` directories for one-off helpers; keep helpers private to the service until multiple real features need them.
-- Do not put request/session type aliases in shared files unless reuse is proven. Current controllers define local `SessionRequest` aliases.
-- Do not bypass `AppModule` in route tests; existing tests build `AppModule` and override providers to keep module wiring covered.
+新功能优先新建 feature 目录，而不是把逻辑塞进现有模块。当前目录已按边界拆分，不要把 controller/service/dto 混进共享目录。
+
+推荐顺序：
+
+1. `controller.ts` 定义路由和入参边界
+2. `service.ts` 封装 Prisma 查询和业务规则
+3. `module.ts` 注册 controller、service、必要 provider
+4. `dto/*.ts` 定义 `class-validator` + `class-transformer` 输入对象
+
+Reference files:
+- `backend/src/dishes/dishes.controller.ts`
+- `backend/src/dishes/dishes.service.ts`
+- `backend/src/dishes/dto/create-dish.dto.ts`
+
+## Naming Conventions
+
+当前命名约定已经统一：
+
+- 文件名用 kebab-case
+- 模块名用 feature 名单数形式（`dishes`, `recipes`, `meal-records`）
+- DTO 以 `create-*`, `update-*`, `list-*`, `upsert-*` 前缀区分用途
+- `AuthGuard` 是全局鉴权常用对象，放入 `auth/auth.guard.ts`
+
+Reference files:
+- `backend/src/auth/auth.guard.ts`
+- `backend/src/meal-records/dto/create-meal-record.dto.ts`
+- `backend/src/meal-records/dto/list-meal-records-query.dto.ts`
+
+## Common Mistakes
+
+### Don't: 把业务规则放进 controller
+
+当前 controller 主要做两件事：
+
+- 从 session 中取 `userId`
+- 转发参数给 service
+
+如果 controller 开始直接查询 Prisma 或拼业务条件，说明拆分失败。
+
+Instead:
+- controller 只负责边界转译
+- service 负责 workspace 校验、查询条件、返回值组装
+
+Reference files:
+- `backend/src/dishes/dishes.controller.ts`
+- `backend/src/dishes/dishes.service.ts`
+
+### Don't: 把数据库逻辑分散到多个地方
+
+当前模式是 service 内部统一查 `workspaceId`，再统一构造 `where`。不要在 controller、module、middleware 中各自重复拼查询条件。
+
+## Verification
+
+```bash
+pnpm backend:typecheck
+pnpm backend:test
+```

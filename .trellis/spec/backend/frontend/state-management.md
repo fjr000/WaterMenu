@@ -1,44 +1,72 @@
-# Backend-to-Frontend State Management
+# State Management
 
-> Session, auth, cache, and route-state implications of backend work.
+> 前端以 React Query 作为 server-state 层，页面局部状态用 React state。
 
-## Session and Auth Contract
+## Overview
 
-The frontend treats `/auth/me` as the source of truth for authenticated state. Backend session behavior must support:
+当前没有引入全局状态管理库。主要状态来源有三个：
 
-- Login regenerates the session and sets `session.userId` before returning `{ user, workspace }`.
-- Logout destroys the session, clears the session cookie, and returns `{ ok: true }`.
-- Invite accept regenerates the session, sets `session.userId`, and returns `{ user, workspace }`.
-- Missing/expired sessions on protected routes return 401.
+1. React Query：API 数据、加载状态、缓存失效
+2. React state：页面 tab、表单展开状态、选中对象
+3. Auth context：当前用户与 workspace
 
-Reference backend files:
-- `backend/src/auth/auth.controller.ts`
-- `backend/src/auth/auth.guard.ts`
-- `backend/src/invites/invites.controller.ts`
-- `backend/src/session/session.config.ts`
+Reference files:
+- `frontend/src/hooks/use-auth.tsx`
+- `frontend/src/hooks/use-dishes.ts`
+- `frontend/src/pages/home-page.tsx`
 
-Reference frontend files:
+## Local State
+
+当前页面局部状态用于 UI 切换，例如：
+
+- 当前 tab
+- 是否展开新建表单
+- 当前正在查看的 dish / recipe / image
+- 筛选条件
+
+Reference files:
+- `frontend/src/pages/home-page.tsx`
+
+这类状态不需要提升到全局，直接放页面即可。
+
+## Global State
+
+当前唯一需要全局共享的是 auth 信息。`AuthProvider` 通过 context 向下传递：
+
+- `user`
+- `workspace`
+- `isLoading`
+- `logout`
+
+Reference files:
 - `frontend/src/hooks/use-auth.tsx`
 - `frontend/src/main.tsx`
-- `frontend/src/pages/login-page.tsx`
-- `frontend/src/pages/invite-page.tsx`
 
-## Cache Clearing Contract
+## Server State
 
-Frontend global QueryClient error handlers clear auth and all non-auth cached data on 401. Backend should use 401 only for unauthenticated/session-invalid cases, not for ordinary permission failures.
+server-state 的原则是：
 
-Use:
+- 不复制到组件局部变量长期保存
+- 用 query key 区分不同条件
+- mutation 成功后通过 `invalidateQueries` 同步最新数据
 
-- 401 for no valid session user.
-- 403 for authenticated user lacking role permissions.
-- 404 for cross-workspace resources.
+Reference files:
+- `frontend/src/hooks/use-meal-records.ts`
+- `frontend/src/hooks/use-dishes.ts`
 
-This keeps frontend state transitions predictable.
+## Common Mistakes
 
-## Invite Route State
+### Don't: 把 server-state 和 UI 状态混在一起
 
-The frontend uses `/invite/:token` path parsing in `main.tsx`. Backend invite links are created in `InvitesService.create` as `${origin}/invite/${token}`. Keep this route shape unless both backend invite link creation and frontend `getInviteToken` are changed together.
+例如不要把 API 结果、筛选条件、弹窗开关全塞进同一个 `useState`。当前代码库的做法是分层存储，便于缓存和重试。
 
-## Rule
+### Don't: 自造全局 store 处理已缓存数据
 
-Any backend change to session cookie name/options, auth endpoints, or invite-link route shape is cross-layer work and must include frontend state/routing verification.
+当前项目已通过 React Query 管理 API 数据。除非有明确跨页面本地状态需求，不应再引入额外 store。
+
+## Verification
+
+```bash
+pnpm frontend:typecheck
+pnpm frontend:build
+```

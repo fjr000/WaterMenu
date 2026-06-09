@@ -1,104 +1,90 @@
-# Frontend Component Guidelines
+# Component Guidelines
 
-> Component, form, accessibility, and styling patterns for WaterMenu frontend.
+> 前端组件以表单、业务面板和 UI 原子组件分层，样式统一使用 Tailwind。
 
-## Component Boundaries
+## Overview
 
-Use pages for top-level orchestration and feature components for panels/forms/cards.
+当前组件分成三类：
 
-- `frontend/src/pages/home-page.tsx` owns tab selection, selected dish state, and composition of recommendation, dishes, history, and members sections.
-- `frontend/src/pages/login-page.tsx` owns the login form and auth cache update.
-- `frontend/src/pages/invite-page.tsx` owns invite preview/accept flow and redirect after success.
-- Feature components such as `DishImagePanel`, `MembersPanel`, `RecommendationPanel`, `RecipePanel`, and `HistoryRecordsPanel` own the UI for one interaction area.
+- `ui.tsx`：通用基础组件
+- 业务组件：表单、面板、成员管理等
+- 页面组件：首页、登录页、邀请页
 
-When a component grows feature-specific state and mutations, keep it in `components/<feature>.tsx` rather than adding more logic to `HomePage`.
+Reference files:
+- `frontend/src/components/ui.tsx`
+- `frontend/src/components/create-dish-form.tsx`
+- `frontend/src/pages/home-page.tsx`
 
-## Shared UI Primitives
+## Component Structure
 
-Use `frontend/src/components/ui.tsx` for repeated primitives:
+当前稳定结构是：
 
-- `Button` for primary red rounded actions.
-- `SecondaryButton` for white/amber secondary actions.
-- `Input` and `Select` for form controls.
-- `Card` for rounded paper-like containers.
-- `PageHeader`, `EmptyState`, `Spinner`, and `ErrorBanner` for recurring page states.
+- 页面组件做状态编排和条件渲染
+- 业务组件做局部交互
+- 通用 UI 组件做最小视觉单元
 
-These components accept `className` extensions and native button/input/select props. Prefer composing these primitives before creating a new button/input style.
+如果一个组件同时负责 API 调用、复杂表单状态、页面布局，说明它承担过多。
 
-Examples:
-- `LoginPage` uses `Card`, `Input`, and `Button`.
-- `MembersPanel` uses `Card`, `Button`, `SecondaryButton`, `EmptyState`, `ErrorBanner`, and `Spinner`.
-- `HomePage` uses `PageHeader`, `Card`, `Button`, `SecondaryButton`, and `ErrorBanner`.
+Reference files:
+- `frontend/src/pages/home-page.tsx`
+- `frontend/src/components/history-records-panel.tsx`
 
-## Styling Direction
+## Props Conventions
 
-The visual language is warm, food/journal themed, rounded, tactile, and Chinese-user-facing:
+当前 props 多采用回调函数，例如：
 
-- Warm paper background and tomato/amber/olive accents from `frontend/src/index.css` `@theme` tokens.
-- Rounded cards (`rounded-2xl`, `rounded-3xl`), soft borders, translucent white/amber backgrounds, and custom shadows.
-- Motion is subtle: small translate-on-hover, `animate-paper-enter`, and `animate-gentle-spin`.
-- Global `prefers-reduced-motion` handling in `index.css` disables animations/transitions.
+- `onSuccess`
+- `onCancel`
+- `onRecordDish`
+- `onRetry`
 
-Use Tailwind utility classes inline in TSX. Do not add CSS modules for component styling under the current pattern.
+表单组件通常接收默认值、错误状态、pending 状态和提交回调，不自己持有路由状态。
 
-## Forms
+Reference files:
+- `frontend/src/components/create-dish-form.tsx`
+- `frontend/src/components/history-records-panel.tsx`
 
-Forms use React Hook Form plus Zod when validation is non-trivial.
+## Styling Patterns
 
-Examples:
-- `frontend/src/pages/login-page.tsx` defines a Zod schema for email/password and maps auth errors to Chinese messages.
-- `frontend/src/pages/invite-page.tsx` validates name/email/password/confirmPassword and refines matching passwords.
-- `frontend/src/components/create-dish-form.tsx` uses a shared internal `DishForm` for create/edit and keeps meal type selection in local state.
+样式统一用 Tailwind：
 
-Form conventions:
+- 通过 `className` 组合
+- 不使用 CSS modules
+- 自定义色板定义在 `frontend/src/index.css`
+- UI 文案保持中文
 
-- Keep schemas near the form component.
-- Derive `FormValues` with `z.infer<typeof schema>`.
-- Trim values before submitting when the backend expects normalized text.
-- Use `Input` and explicit `<label htmlFor=...>` pairs.
-- Show field errors next to the field and mutation/server errors in a red rounded banner.
-- Disable submit buttons while mutations are pending and use Chinese pending labels such as `登录中…`, `创建中…`, `保存中…`.
+Reference files:
+- `frontend/src/index.css`
+- `frontend/vite.config.ts`
+- `frontend/src/components/ui.tsx`
 
-## Loading, Empty, and Error States
+## Accessibility
 
-For queries, render all meaningful states:
+当前已有的 a11y 做法包括：
 
-- `Spinner` while loading.
-- `ErrorBanner` with a retry callback when refetch is possible.
-- `EmptyState` when the query succeeds with no items.
-- Main content when data is present.
+- `label` + `htmlFor`
+- `aria-label`
+- `aria-current`
+- 全局 `prefers-reduced-motion` 处理
 
-Examples:
-- `MembersPanel` handles loading/error/empty/member-list states.
-- `DishImagePanel` handles loading/error/empty/image-grid states.
-- `HomePage` handles dish query loading/error/empty states.
+Reference files:
+- `frontend/src/index.css`
+- `frontend/src/pages/home-page.tsx`
+- `frontend/src/components/create-dish-form.tsx`
 
-## Accessibility and Interaction
+## Common Mistakes
 
-Follow existing accessible patterns:
+### Don't: 在组件里直接写请求逻辑
 
-- Use `type="button"` on non-submit buttons inside forms or interactive panels.
-- Add `aria-label`/`title` for icon-like buttons (`DishToolButton` in `HomePage`).
-- Use `aria-current="page"` for active tab buttons in desktop/mobile tab navs.
-- Use `aria-expanded` and `aria-controls` for collapsible recipe sections.
-- Use `htmlFor`/`id` labels for form fields and switches.
-- Use `loading="lazy"` for dish images.
+请求应放 hook，组件只调用 hook。
 
-## Component State
+### Don't: 忽略 pending / error
 
-Keep purely visual/interaction state local:
+当前 UI 大量使用 `Spinner`、`ErrorBanner`、disabled 按钮，新功能也应保持一致。
 
-- Active tab, selected dish panels, and edit/create toggles in `HomePage`.
-- Selected upload file and input ref in `DishImagePanel`.
-- Copy message and new invite display in `MembersPanel`.
-- Confirmation state for invite revocation in `InviteRow`.
+## Verification
 
-Move state into hooks/context only when it is server state or shared app state.
-
-## Avoid
-
-- Do not introduce a new design language or generic SaaS styling; match the warm WaterMenu theme.
-- Do not hardcode new colors outside Tailwind classes/theme tokens unless a one-off effect already exists nearby.
-- Do not skip loading/error/empty states for server data.
-- Do not expose backend technical messages directly when existing UI maps errors to user-friendly Chinese copy.
-- Do not make icon-only controls inaccessible; provide labels/titles.
+```bash
+pnpm frontend:typecheck
+pnpm frontend:build
+```

@@ -95,4 +95,4 @@ packages:
     path: backend
   frontend:
     path: frontend
-default_package: backend
+default_package: @watermenu/backend

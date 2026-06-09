@@ -16,6 +16,7 @@
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "frontend:dev": "pnpm --filter @watermenu/frontend dev",
     "frontend:build": "pnpm --filter @watermenu/frontend build",
-    "frontend:typecheck": "pnpm --filter @watermenu/frontend typecheck"
+    "frontend:typecheck": "pnpm --filter @watermenu/frontend typecheck",
+    "frontend:test": "pnpm --filter @watermenu/frontend test"
   }
 }

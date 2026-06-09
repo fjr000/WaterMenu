@@ -7,9 +7,10 @@
 当前前端验证命令是：
 
 - `pnpm frontend:typecheck`
+- `pnpm frontend:test`
 - `pnpm frontend:build`
 
-没有独立前端单测套件，质量保障来自类型系统、统一 API 客户端和现有 UI 模式。
+前端单测使用 Vitest + React Testing Library + jsdom，质量保障来自类型系统、统一 API 客户端、hooks 测试、组件测试和现有 UI 模式。
 
 Reference files:
 - `frontend/package.json`
@@ -23,6 +24,7 @@ Reference files:
 - 所有请求走 `apiFetch`
 - API 类型集中在 `api/types.ts`
 - 表单组件保持 pending、error、disabled 处理
+- 前端测试优先验证用户可见行为、hook endpoint/参数、API client 统一请求约定
 - UI 文案使用中文
 
 Reference files:
@@ -60,10 +62,98 @@ Reference files:
 
 当前表单和页面普遍有 pending、error、disabled 处理，新功能也要保持一致。
 
+## Scenario: Frontend Vitest and CI Quality Gate
+
+### 1. Scope / Trigger
+
+- Trigger: 前端新增 Vitest/RTL 测试命令，根目录新增 CI 流水线，属于命令签名与基础设施集成变更。
+- Scope: `@watermenu/frontend` 测试配置、根 `package.json` 脚本、GitHub Actions 质量门禁。
+
+### 2. Signatures
+
+命令签名：
+
+```bash
+pnpm frontend:typecheck
+pnpm frontend:test
+pnpm frontend:build
+pnpm backend:lint
+pnpm backend:typecheck
+pnpm backend:test
+pnpm backend:build
+```
+
+前端测试配置签名：
+
+```ts
+// frontend/vitest.config.ts
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test/setup.ts"],
+    css: true,
+  },
+});
+```
+
+### 3. Contracts
+
+- Test runner: Vitest run mode 通过 `pnpm frontend:test` 执行。
+- DOM environment: React component tests 必须运行在 `jsdom`。
+- Setup file: `frontend/src/test/setup.ts` 负责导入 `@testing-library/jest-dom/vitest`。
+- CI install: 使用 `pnpm install --frozen-lockfile`，依赖变更必须同步提交 `pnpm-lock.yaml`。
+- Prisma: CI 在后端 lint/typecheck/test/build 前必须先执行 `pnpm backend:prisma:generate`。
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected failure |
+|---|---|
+| 修改前端依赖但未提交 lockfile | CI install 在 `--frozen-lockfile` 失败 |
+| 组件测试缺少 jsdom | RTL DOM 查询或浏览器 API 相关测试失败 |
+| 未加载 jest-dom setup | `toBeInTheDocument` 等 matcher 不存在 |
+| 后端构建前未生成 Prisma client | 后端 typecheck/build 可能找不到 Prisma 类型 |
+| 测试绕过 `apiFetch` 约定 | API client 行为变更无法被前端测试及时捕获 |
+
+### 5. Good/Base/Bad Cases
+
+- Good: 新增 hook 或组件行为时，同步添加 Vitest/RTL 测试，并运行 `pnpm frontend:test`。
+- Base: 只改展示文案或 README，至少确认现有 `pnpm frontend:test` 不回归。
+- Bad: 只运行 `pnpm frontend:typecheck`，跳过测试和构建就认为前端质量已通过。
+
+### 6. Tests Required
+
+- API client: 断言 `/api` 前缀、`credentials: "same-origin"`、JSON header、FormData、错误响应。
+- Hooks: 使用 `renderHook` 断言 query 参数正规化、mutation endpoint、缓存相关行为。
+- Components: 使用 RTL 断言用户可见文本、表单提交、pending/error/disabled 分支或回调触发。
+- CI: 流水线至少执行 install、Prisma generate、lint、typecheck、test、build。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```bash
+pnpm frontend:typecheck
+```
+
+只做类型检查就提交前端交互或测试基础设施变更。
+
+#### Correct
+
+```bash
+pnpm frontend:typecheck
+pnpm frontend:test
+pnpm frontend:build
+```
+
+前端变更同时验证类型、行为测试与生产构建。
+
 ## Verification
 
 ```bash
 pnpm frontend:typecheck
+pnpm frontend:test
 pnpm frontend:build
 ```
 

@@ -73,3 +73,37 @@ Fixed Trellis default package config, removed noisy template/hash and permission
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: Improve mobile dish browsing
+
+**Date**: 2026-06-09
+**Task**: Improve mobile dish browsing
+**Package**: backend
+**Branch**: `main`
+
+### Summary
+
+Added backend dish search/filtering, frontend dish filters, and mobile collapsed dish cards; validated backend/frontend checks.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8540daf` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -70,3 +70,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 补 README、前端测试与 CI
+
+**Date**: 2026-06-10
+**Task**: 补 README、前端测试与 CI
+**Branch**: `main`
+
+### Summary
+
+补齐根目录 README、前端 Vitest/React Testing Library 测试、GitHub Actions CI，并将前端测试质量门禁记录到 spec。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0b74fcd` | (see git log) |
+| `bc9e74e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

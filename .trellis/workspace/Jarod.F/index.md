@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
-- **Last Active**: 2026-06-09
+- **Total Sessions**: 3
+- **Last Active**: 2026-06-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~72 | Active |
+| `journal-1.md` | ~106 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-06-10 | 补 README、前端测试与 CI | `0b74fcd`, `bc9e74e` | `main` |
 | 2 | 2026-06-09 | Bootstrap Project Spec | `27acc8e`, `16d93af` | `main` |
 | 1 | 2026-06-09 | Bootstrap Project Spec | - | `main` |
 <!-- @@@/auto:session-history -->

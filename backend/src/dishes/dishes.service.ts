@@ -40,6 +40,13 @@ export class DishesService {
       workspaceId,
     };
 
+    if (query.q) {
+      where.OR = [
+        { name: { contains: query.q, mode: 'insensitive' } },
+        { description: { contains: query.q, mode: 'insensitive' } },
+      ];
+    }
+
     if (query.mealType) {
       where.mealTypes = { has: query.mealType };
     }
@@ -51,6 +58,7 @@ export class DishesService {
     const dishes = await this.prisma.dish.findMany({
       where,
       include: dishInclude(workspaceId),
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
     });
 
     return dishes.map((dish) => this.withCoverImage(dish));

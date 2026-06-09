@@ -40,6 +40,59 @@ type Dish = {
   updatedAt: Date;
 };
 
+type DishListWhere = {
+  workspaceId: string;
+  mealTypes?: { has?: MealType | null };
+  isActive?: boolean;
+  OR?: Array<{
+    name?: { contains?: string };
+    description?: { contains?: string };
+  }>;
+};
+
+function matchesDishWhere(dish: Dish, where: DishListWhere) {
+  if (dish.workspaceId !== where.workspaceId) {
+    return false;
+  }
+  if (where.mealTypes?.has && !dish.mealTypes.includes(where.mealTypes.has)) {
+    return false;
+  }
+  if (where.isActive !== undefined && dish.isActive !== where.isActive) {
+    return false;
+  }
+
+  const query = getDishSearchQuery(where);
+  if (!query) {
+    return true;
+  }
+
+  return (
+    dish.name.toLowerCase().includes(query) ||
+    Boolean(dish.description?.toLowerCase().includes(query))
+  );
+}
+
+function getDishSearchQuery(where: DishListWhere) {
+  return where.OR
+    ?.flatMap((condition) => [condition.name, condition.description])
+    .map((condition) => condition?.contains?.toLowerCase() ?? '')
+    .find(Boolean);
+}
+
+function compareDishesNewestFirst(a: Dish, b: Dish) {
+  const updatedDiff = b.updatedAt.getTime() - a.updatedAt.getTime();
+  if (updatedDiff !== 0) {
+    return updatedDiff;
+  }
+
+  const createdDiff = b.createdAt.getTime() - a.createdAt.getTime();
+  if (createdDiff !== 0) {
+    return createdDiff;
+  }
+
+  return b.id.localeCompare(a.id);
+}
+
 describe('Dishes API', () => {
   let app: INestApplication;
   let dishes: Dish[];
@@ -68,24 +121,11 @@ describe('Dishes API', () => {
         }),
       },
       dish: {
-        findMany: jest.fn(
-          ({ where }: { where: { workspaceId: string; mealTypes?: { has: MealType }; isActive?: boolean } }) => {
-            return Promise.resolve(
-              dishes.filter((dish) => {
-                if (dish.workspaceId !== where.workspaceId) {
-                return false;
-              }
-              if (where.mealTypes?.has && !dish.mealTypes.includes(where.mealTypes.has)) {
-                return false;
-              }
-              if (where.isActive !== undefined && dish.isActive !== where.isActive) {
-                return false;
-              }
-                return true;
-              }),
-            );
-          },
-        ),
+        findMany: jest.fn(({ where }: { where: DishListWhere }) => {
+          const filtered = dishes.filter((dish) => matchesDishWhere(dish, where));
+
+          return Promise.resolve(filtered.sort(compareDishesNewestFirst));
+        }),
         create: jest.fn(({ data }: { data: Pick<Dish, 'workspaceId' | 'name' | 'mealTypes' | 'isActive'> & { description?: string } }) => {
           if (
             dishes.some((dish) => dish.workspaceId === data.workspaceId && dish.name === data.name)
@@ -228,26 +268,64 @@ describe('Dishes API', () => {
     await otherAgent.post('/api/dishes').send({ name: '番茄炒蛋' }).expect(201);
   });
 
-  it('列表只返回当前 workspace 菜品，并支持 mealType 与 isActive 筛选', async () => {
+  it('列表只返回当前 workspace 菜品，并支持 q、mealType 与 isActive 组合筛选', async () => {
     const agent = loginAs(user.id);
     const otherAgent = loginAs(otherUser.id);
 
     await agent
       .post('/api/dishes')
-      .send({ name: '燕麦粥', mealTypes: [MealType.BREAKFAST], isActive: true })
+      .send({ name: '燕麦粥', description: '快手早餐', mealTypes: [MealType.BREAKFAST], isActive: true })
       .expect(201);
     await agent
       .post('/api/dishes')
-      .send({ name: '夜宵面', mealTypes: [MealType.SNACK], isActive: false })
+      .send({ name: '夜宵面', description: '快手加餐', mealTypes: [MealType.SNACK], isActive: false })
       .expect(201);
-    await otherAgent.post('/api/dishes').send({ name: '他人菜品' }).expect(201);
+    await agent
+      .post('/api/dishes')
+      .send({ name: '番茄炒蛋', description: '家常菜', mealTypes: [MealType.LUNCH], isActive: true })
+      .expect(201);
+    await otherAgent.post('/api/dishes').send({ name: '他人快手菜' }).expect(201);
 
     await agent
-      .get(`/api/dishes?mealType=${MealType.BREAKFAST}&isActive=true`)
+      .get(`/api/dishes?q=${encodeURIComponent('快手')}&mealType=${MealType.BREAKFAST}&isActive=true`)
       .expect(200)
       .expect(({ body }) => {
         expect(body).toHaveLength(1);
         expect(body[0]).toMatchObject({ name: '燕麦粥', workspaceId: workspace.id });
+      });
+  });
+
+  it('空关键词不会缩小列表，并按新近更新稳定排序', async () => {
+    const older = new Date('2026-06-01T00:00:00.000Z');
+    const newer = new Date('2026-06-02T00:00:00.000Z');
+    dishes.push(
+      {
+        id: 'dish-old',
+        workspaceId: workspace.id,
+        name: '旧菜',
+        description: null,
+        mealTypes: [MealType.LUNCH],
+        isActive: true,
+        createdAt: older,
+        updatedAt: older,
+      },
+      {
+        id: 'dish-new',
+        workspaceId: workspace.id,
+        name: '新菜',
+        description: null,
+        mealTypes: [MealType.LUNCH],
+        isActive: true,
+        createdAt: newer,
+        updatedAt: newer,
+      },
+    );
+
+    await loginAs(user.id)
+      .get('/api/dishes?q=%20%20')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.map((dish: Dish) => dish.id)).toEqual(['dish-new', 'dish-old']);
       });
   });
 

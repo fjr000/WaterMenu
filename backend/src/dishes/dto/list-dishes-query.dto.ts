@@ -1,8 +1,13 @@
 import { MealType } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ListDishesQueryDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @IsOptional()
+  q?: string;
+
   @IsEnum(MealType)
   @IsOptional()
   mealType?: MealType;

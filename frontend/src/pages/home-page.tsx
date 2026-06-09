@@ -7,7 +7,7 @@ import {
   useRecommend,
   useBlindBox,
 } from "../hooks/use-recommendations.ts";
-import type { Dish, MealType } from "../api/types.ts";
+import type { Dish, DishImage, MealType } from "../api/types.ts";
 import {
   CreateDishForm,
   EditDishForm,
@@ -17,7 +17,7 @@ import { RecommendationPanel } from "../components/recommendation-panel.tsx";
 import { RecipePanel } from "../components/recipe-panel.tsx";
 import { HistoryRecordsPanel } from "../components/history-records-panel.tsx";
 import { MealRecordForm } from "../components/meal-record-form.tsx";
-import { MealTag } from "../components/meal-tag.tsx";
+import { mealLabel, MealTag } from "../components/meal-tag.tsx";
 import { MembersPanel } from "../components/members-panel.tsx";
 import { RecentMealRecords } from "../components/recent-meal-records.tsx";
 import {
@@ -25,12 +25,17 @@ import {
   Card,
   EmptyState,
   ErrorBanner,
+  Input,
   PageHeader,
   SecondaryButton,
+  Select,
   Spinner,
 } from "../components/ui.tsx";
 
 type HomeTab = "recommend" | "dishes" | "history" | "members";
+type DishStatusFilter = "" | "true" | "false";
+
+const mealTypeOptions: MealType[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
 const homeTabs: Array<{
   key: HomeTab;
@@ -72,7 +77,14 @@ const homeTabs: Array<{
 export function HomePage() {
   const auth = useAuth();
   const [mealType, setMealType] = useState<MealType | "">("");
-  const dishesQuery = useDishes();
+  const [dishSearch, setDishSearch] = useState("");
+  const [dishMealType, setDishMealType] = useState<MealType | "">("");
+  const [dishStatus, setDishStatus] = useState<DishStatusFilter>("");
+  const dishesQuery = useDishes({
+    q: dishSearch.trim() || undefined,
+    mealType: dishMealType || undefined,
+    isActive: dishStatus ? dishStatus === "true" : undefined,
+  });
   const recommendMutation = useRecommend();
   const blindBoxMutation = useBlindBox();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -81,6 +93,19 @@ export function HomePage() {
   const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
   const [imageDish, setImageDish] = useState<Dish | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+
+  const hasDishFilters = hasActiveDishFilters({
+    q: dishSearch,
+    mealType: dishMealType,
+    status: dishStatus,
+  });
+  const dishEmptyState = getDishEmptyState(hasDishFilters);
+
+  const resetDishFilters = () => {
+    setDishSearch("");
+    setDishMealType("");
+    setDishStatus("");
+  };
 
   const handleRecommend = () => {
     recommendMutation.mutate(
@@ -222,6 +247,17 @@ export function HomePage() {
               </Button>
             </div>
 
+            <DishFiltersCard
+              search={dishSearch}
+              mealType={dishMealType}
+              status={dishStatus}
+              hasFilters={hasDishFilters}
+              onSearchChange={setDishSearch}
+              onMealTypeChange={setDishMealType}
+              onStatusChange={setDishStatus}
+              onReset={resetDishFilters}
+            />
+
             {showCreateForm && (
               <Card>
                 <CreateDishForm
@@ -241,17 +277,27 @@ export function HomePage() {
 
             {dishesQuery.data && dishesQuery.data.length === 0 && (
               <EmptyState
-                icon="🥘"
-                title="还没有菜品"
-                description="点击上方按钮添加第一道菜"
+                icon={dishEmptyState.icon}
+                title={dishEmptyState.title}
+                description={dishEmptyState.description}
               />
             )}
 
             {dishesQuery.data &&
               dishesQuery.data.map((dish) => (
                 <DishCard
-                  key={dish.id}
+                  key={getDishListKey(dish, {
+                    q: dishSearch,
+                    mealType: dishMealType,
+                    status: dishStatus,
+                  })}
                   dish={dish}
+                  forceExpanded={
+                    editingDish?.id === dish.id ||
+                    recordDish?.id === dish.id ||
+                    recipeDish?.id === dish.id ||
+                    imageDish?.id === dish.id
+                  }
                   isEditing={editingDish?.id === dish.id}
                   onEditDish={handleEditDish}
                   onCancelEdit={() => setEditingDish(null)}
@@ -286,6 +332,110 @@ export function HomePage() {
 
       <MobileTabBar activeTab={activeTab} onChange={setActiveTab} />
     </div>
+  );
+}
+
+function DishFiltersCard({
+  search,
+  mealType,
+  status,
+  hasFilters,
+  onSearchChange,
+  onMealTypeChange,
+  onStatusChange,
+  onReset,
+}: {
+  search: string;
+  mealType: MealType | "";
+  status: DishStatusFilter;
+  hasFilters: boolean;
+  onSearchChange: (value: string) => void;
+  onMealTypeChange: (value: MealType | "") => void;
+  onStatusChange: (value: DishStatusFilter) => void;
+  onReset: () => void;
+}) {
+  return (
+    <Card className="flex flex-col gap-3 border-amber-200 bg-white/65">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-serif text-base font-semibold text-slate-900">
+            找菜
+          </p>
+          <p className="text-xs text-slate-500">按名称、简介、餐次和状态筛选</p>
+        </div>
+        {hasFilters && (
+          <SecondaryButton
+            type="button"
+            className="shrink-0 px-3 py-2 text-xs"
+            onClick={onReset}
+          >
+            清空
+          </SecondaryButton>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="dish-search"
+          className="mb-1 block text-sm font-semibold text-slate-700"
+        >
+          关键词
+        </label>
+        <Input
+          id="dish-search"
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="搜索菜名或简介"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label
+            htmlFor="dish-meal-type"
+            className="mb-1 block text-sm font-semibold text-slate-700"
+          >
+            餐次
+          </label>
+          <Select
+            id="dish-meal-type"
+            value={mealType}
+            onChange={(event) => onMealTypeChange(event.target.value as MealType | "")}
+          >
+            <option value="">全部餐次</option>
+            {mealTypeOptions.map((value) => (
+              <option key={value} value={value}>
+                {mealLabel(value)}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="dish-status"
+            className="mb-1 block text-sm font-semibold text-slate-700"
+          >
+            状态
+          </label>
+          <Select
+            id="dish-status"
+            value={status}
+            onChange={(event) => onStatusChange(event.target.value as DishStatusFilter)}
+          >
+            <option value="">全部状态</option>
+            <option value="true">启用</option>
+            <option value="false">停用</option>
+          </Select>
+        </div>
+      </div>
+
+      {hasFilters && (
+        <p className="rounded-2xl border border-amber-100 bg-amber-50/65 px-3 py-2 text-xs leading-5 text-slate-600">
+          正在筛选：{getDishFilterSummary({ q: search, mealType, status })}
+        </p>
+      )}
+    </Card>
   );
 }
 
@@ -387,6 +537,83 @@ function MobileTabBar({
   );
 }
 
+function hasActiveDishFilters({
+  q,
+  mealType,
+  status,
+}: {
+  q: string;
+  mealType: MealType | "";
+  status: DishStatusFilter;
+}) {
+  return Boolean(q.trim() || mealType || status);
+}
+
+function getDishListKey(
+  dish: Dish,
+  filters: { q: string; mealType: MealType | ""; status: DishStatusFilter },
+) {
+  return [
+    dish.id,
+    filters.q.trim(),
+    filters.mealType,
+    filters.status,
+    dish.updatedAt,
+  ].join("-");
+}
+
+function getDishFilterSummary({
+  q,
+  mealType,
+  status,
+}: {
+  q: string;
+  mealType: MealType | "";
+  status: DishStatusFilter;
+}) {
+  const keyword = q.trim() ? `关键词“${q.trim()}”` : "全部关键词";
+  const meal = mealType ? mealLabel(mealType) : "全部餐次";
+  const statusLabel = getDishStatusFilterLabel(status);
+
+  return `${keyword} · ${meal} · ${statusLabel}`;
+}
+
+function getDishStatusFilterLabel(status: DishStatusFilter) {
+  if (status === "true") {
+    return "启用";
+  }
+  if (status === "false") {
+    return "停用";
+  }
+  return "全部状态";
+}
+
+function getDishEmptyState(hasFilters: boolean) {
+  if (hasFilters) {
+    return {
+      icon: "🔎",
+      title: "没有找到菜品",
+      description: "换个关键词或筛选条件试试",
+    };
+  }
+
+  return {
+    icon: "🥘",
+    title: "还没有菜品",
+    description: "点击上方按钮添加第一道菜",
+  };
+}
+
+function getMobileDetailsLabel(forceExpanded: boolean, expanded: boolean) {
+  if (forceExpanded) {
+    return "详情已展开";
+  }
+  if (expanded) {
+    return "收起详情";
+  }
+  return "展开详情";
+}
+
 function DishToolButton({
   mark,
   label,
@@ -415,8 +642,72 @@ function DishToolButton({
   );
 }
 
+function DishImageStrip({
+  dish,
+  images,
+  className,
+}: {
+  dish: Dish;
+  images: DishImage[];
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="flex snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+        {images.map((image, index) => (
+          <img
+            key={image.id}
+            src={image.fileUrl}
+            alt={image.isCover ? `${dish.name}封面` : `${dish.name}图片`}
+            className={`h-28 shrink-0 snap-start rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] ${
+              index === 0 ? "w-44" : "w-32"
+            }`}
+            loading="lazy"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ActiveSwitch({
+  id,
+  dish,
+  disabled,
+  className,
+  onChange,
+}: {
+  id: string;
+  dish: Dish;
+  disabled: boolean;
+  className: string;
+  onChange: () => void;
+}) {
+  return (
+    <label className={className} htmlFor={id}>
+      <input
+        id={id}
+        type="checkbox"
+        checked={dish.isActive}
+        onChange={onChange}
+        disabled={disabled}
+        aria-label="启用状态开关"
+        className="peer sr-only"
+      />
+      <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
+        <span
+          className={`block h-5 w-5 rounded-full bg-white shadow transition ${
+            dish.isActive ? "translate-x-5" : ""
+          }`}
+        />
+      </span>
+    </label>
+  );
+}
+
 function DishCard({
   dish,
+  forceExpanded,
   isEditing,
   onEditDish,
   onCancelEdit,
@@ -427,6 +718,7 @@ function DishCard({
   onResetRecommendations,
 }: {
   dish: Dish;
+  forceExpanded: boolean;
   isEditing: boolean;
   onEditDish: (dish: Dish) => void;
   onCancelEdit: () => void;
@@ -436,14 +728,19 @@ function DishCard({
   onManageImages: (dish: Dish) => void;
   onResetRecommendations: () => void;
 }) {
-  const activeSwitchId = useId();
+  const activeSwitchDesktopId = useId();
+  const activeSwitchMobileId = useId();
+  const cardDetailsId = useId();
   const recipePanelId = useId();
   const updateDish = useUpdateDish();
   const imagesQuery = useDishImages(dish.id, Boolean(dish.coverImage));
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const [recipesOpen, setRecipesOpen] = useState(false);
   const recipesQuery = useRecipes(dish.id, recipesOpen);
   const images = imagesQuery.data ?? (dish.coverImage ? [dish.coverImage] : []);
+  const coverImage = dish.coverImage ?? images[0] ?? null;
   const ratingText = dish.feedbackRatingAverage?.toFixed(1);
+  const showMobileDetails = forceExpanded || mobileExpanded;
 
   const handleToggleActive = () => {
     updateDish.mutate(
@@ -460,20 +757,8 @@ function DishCard({
   return (
     <Card className="overflow-hidden border-amber-200 bg-gradient-to-br from-white/95 via-amber-50/70 to-red-50/45 p-0 shadow-[0_16px_38px_rgba(111,82,56,0.14)]">
       {images.length > 0 && (
-        <div className="border-b border-amber-100 bg-amber-50/55 px-3 py-3 sm:px-4">
-          <div className="flex snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
-            {images.map((image, index) => (
-              <img
-                key={image.id}
-                src={image.fileUrl}
-                alt={image.isCover ? `${dish.name}封面` : `${dish.name}图片`}
-                className={`h-28 shrink-0 snap-start rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] ${
-                  index === 0 ? "w-44" : "w-32"
-                }`}
-                loading="lazy"
-              />
-            ))}
-          </div>
+        <div className="hidden border-b border-amber-100 bg-amber-50/55 px-3 py-3 sm:px-4 md:block">
+          <DishImageStrip dish={dish} images={images} />
           {imagesQuery.isError && (
             <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
           )}
@@ -498,33 +783,27 @@ function DishCard({
               </span>
             </div>
             {dish.description && (
-              <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">
+              <p className="mt-1 hidden line-clamp-2 text-sm leading-5 text-slate-500 md:block">
                 {dish.description}
               </p>
             )}
           </div>
-          <div className="shrink-0 text-right">
-            <label
+          {coverImage && (
+            <img
+              src={coverImage.fileUrl}
+              alt={`${dish.name}封面`}
+              className="h-16 w-20 shrink-0 rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] md:hidden"
+              loading="lazy"
+            />
+          )}
+          <div className="hidden shrink-0 text-right md:block">
+            <ActiveSwitch
+              id={activeSwitchDesktopId}
+              dish={dish}
+              disabled={updateDish.isPending}
               className="block cursor-pointer rounded-2xl border border-amber-200 bg-white/75 px-2.5 py-2 shadow-inner"
-              htmlFor={activeSwitchId}
-            >
-              <input
-                id={activeSwitchId}
-                type="checkbox"
-                checked={dish.isActive}
-                onChange={handleToggleActive}
-                disabled={updateDish.isPending}
-                aria-label="启用状态开关"
-                className="peer sr-only"
-              />
-              <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
-                <span
-                  className={`block h-5 w-5 rounded-full bg-white shadow transition ${
-                    dish.isActive ? "translate-x-5" : ""
-                  }`}
-                />
-              </span>
-            </label>
+              onChange={handleToggleActive}
+            />
           </div>
         </div>
 
@@ -545,6 +824,44 @@ function DishCard({
             </>
           )}
         </div>
+
+        <button
+          type="button"
+          className="mt-4 flex min-h-10 w-full items-center justify-between rounded-2xl border border-amber-100 bg-white/70 px-3 text-left text-xs font-bold text-slate-600 shadow-inner transition hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-70 md:hidden"
+          onClick={() => setMobileExpanded((value) => !value)}
+          disabled={forceExpanded}
+          aria-expanded={showMobileDetails}
+          aria-controls={cardDetailsId}
+        >
+          <span>{getMobileDetailsLabel(forceExpanded, showMobileDetails)}</span>
+          <span aria-hidden="true">{showMobileDetails ? "↑" : "↓"}</span>
+        </button>
+
+        <div id={cardDetailsId} className={`${showMobileDetails ? "block" : "hidden"} md:block`}>
+          {dish.description && (
+            <p className="mt-4 line-clamp-2 text-sm leading-5 text-slate-500 md:hidden">
+              {dish.description}
+            </p>
+          )}
+
+          {images.length > 0 && (
+            <div className="mt-4 border-y border-amber-100 bg-amber-50/55 py-3 md:hidden">
+              <DishImageStrip dish={dish} images={images} />
+              {imagesQuery.isError && (
+                <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 block shrink-0 text-right md:hidden">
+            <ActiveSwitch
+              id={activeSwitchMobileId}
+              dish={dish}
+              disabled={updateDish.isPending}
+              className="inline-block cursor-pointer rounded-2xl border border-amber-200 bg-white/75 px-2.5 py-2 shadow-inner"
+              onChange={handleToggleActive}
+            />
+          </div>
 
         {isEditing && (
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white/75 p-3">
@@ -663,6 +980,7 @@ function DishCard({
             )}
           </div>
         )}
+        </div>
       </div>
     </Card>
   );

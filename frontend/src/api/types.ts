@@ -42,6 +42,12 @@ export interface DishImage {
   updatedAt: string;
 }
 
+export interface DishesQuery {
+  q?: string;
+  mealType?: MealType;
+  isActive?: boolean;
+}
+
 export interface Dish {
   id: string;
   workspaceId: string;

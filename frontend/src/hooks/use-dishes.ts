@@ -8,23 +8,35 @@ import { apiFetch } from "../api/client.ts";
 import type {
   CreateDishRequest,
   Dish,
-  MealType,
+  DishesQuery,
   UpdateDishRequest,
 } from "../api/types.ts";
 
-const dishesKey = (mealType?: MealType): QueryKey => [
+function normalizeDishesQuery(query: DishesQuery = {}) {
+  return {
+    q: query.q?.trim() || null,
+    mealType: query.mealType ?? null,
+    isActive: query.isActive ?? null,
+  };
+}
+
+const dishesKey = (query: DishesQuery = {}): QueryKey => [
   "dishes",
-  mealType ?? null,
+  normalizeDishesQuery(query),
 ];
 
-export function useDishes(mealType?: MealType) {
+export function useDishes(query: DishesQuery = {}) {
+  const normalizedQuery = normalizeDishesQuery(query);
+
   return useQuery({
-    queryKey: dishesKey(mealType),
+    queryKey: dishesKey(query),
     queryFn: () => {
       const params = new URLSearchParams();
-      if (mealType) {
-        params.set("mealType", mealType);
-      }
+      Object.entries(normalizedQuery).forEach(([key, value]) => {
+        if (value !== null) {
+          params.set(key, String(value));
+        }
+      });
       const qs = params.toString();
       return apiFetch<Dish[]>(`/dishes${qs ? `?${qs}` : ""}`);
     },

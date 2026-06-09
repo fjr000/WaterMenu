@@ -1,2 +1,0 @@
-{"file": ".trellis/spec/guides/index.md", "reason": "共享质量检查指南，确认收尾范围和验证标准"}
-{"file": ".agents/skills/trellis-meta/SKILL.md", "reason": "检查 Trellis 本地文件改动是否符合 trellis-meta 边界"}

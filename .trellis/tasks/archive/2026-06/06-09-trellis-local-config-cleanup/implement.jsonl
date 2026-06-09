@@ -1,2 +1,0 @@
-{"file": ".trellis/spec/guides/index.md", "reason": "共享思考指南，确认变更前先搜索和边界控制"}
-{"file": ".agents/skills/trellis-meta/SKILL.md", "reason": "本任务修改 Trellis 本地文件，需要遵守 trellis-meta 边界"}

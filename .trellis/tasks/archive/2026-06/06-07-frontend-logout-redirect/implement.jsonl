@@ -1,4 +1,0 @@
-{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"前端认证 Hook、TanStack Query 缓存和全局 401 处理规范"}
-{"file":".trellis/spec/frontend/state-management.md","reason":"认证状态和服务端数据缓存管理规范"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"前端认证状态、logout 和错误处理技术契约"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"前端 typecheck/build 质量门禁"}

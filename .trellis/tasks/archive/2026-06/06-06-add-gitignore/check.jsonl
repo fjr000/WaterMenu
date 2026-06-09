@@ -1,3 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"检查 .gitignore 是否符合后端当前源码未落地、最小规则的约束。"}
-{"file":".trellis/spec/frontend/index.md","reason":"检查 .gitignore 是否符合前端当前源码未落地、最小规则的约束。"}
-{"file":".trellis/spec/guides/index.md","reason":"检查是否遵循通用最小修改与变更前思考规则。"}

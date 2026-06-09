@@ -21,36 +21,23 @@ the rest conversationally.
 
 ## Status (update the checkboxes as you complete each item)
 
-- [x] Fill backend guidelines
-- [x] Fill frontend guidelines
-- [x] Add code examples（当前无源码，已明确禁止臆造示例；未来接入源码后补充真实示例）
+- [x] Fill guidelines for @watermenu/backend
+- [x] Fill guidelines for @watermenu/frontend
+- [x] Add code examples
 
 ---
 
 ## Spec files to populate
 
+### Package: @watermenu/backend (`spec/backend/`)
 
-### Backend guidelines
+- Backend guidelines: `.trellis/spec/backend/backend/`
 
-| File | What to document |
-|------|------------------|
-| `.trellis/spec/backend/directory-structure.md` | Where different file types go (routes, services, utils) |
-| `.trellis/spec/backend/database-guidelines.md` | ORM, migrations, query patterns, naming conventions |
-| `.trellis/spec/backend/error-handling.md` | How errors are caught, logged, and returned |
-| `.trellis/spec/backend/logging-guidelines.md` | Log levels, format, what to log |
-| `.trellis/spec/backend/quality-guidelines.md` | Code review standards, testing requirements |
+- Frontend guidelines: `.trellis/spec/backend/frontend/`
 
+### Package: @watermenu/frontend (`spec/frontend/`)
 
-### Frontend guidelines
-
-| File | What to document |
-|------|------------------|
-| `.trellis/spec/frontend/directory-structure.md` | Component/page/hook organization |
-| `.trellis/spec/frontend/component-guidelines.md` | Component patterns, props conventions |
-| `.trellis/spec/frontend/hook-guidelines.md` | Custom hook naming, patterns |
-| `.trellis/spec/frontend/state-management.md` | State library, patterns, what goes where |
-| `.trellis/spec/frontend/type-safety.md` | TypeScript conventions, type organization |
-| `.trellis/spec/frontend/quality-guidelines.md` | Linting, testing, accessibility |
+- Frontend guidelines: `.trellis/spec/frontend/frontend/`
 
 
 ### Thinking guides (already populated)
@@ -117,11 +104,12 @@ is a separate conversation, not a bootstrap concern.
 
 ## Completion
 
-When the developer confirms the checklist items above are done, and any code examples are either real source references or explicitly omitted because no source exists, guide them to run:
+When the developer confirms the checklist items above are done with real
+examples (not placeholders), guide them to run:
 
 ```bash
-python ./.trellis/scripts/task.py finish
-python ./.trellis/scripts/task.py archive 00-bootstrap-guidelines
+python3 ./.trellis/scripts/task.py finish
+python3 ./.trellis/scripts/task.py archive 00-bootstrap-guidelines
 ```
 
 After archive, every new developer who joins this project will get a

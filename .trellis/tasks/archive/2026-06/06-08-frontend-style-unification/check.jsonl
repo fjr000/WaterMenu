@@ -1,6 +1,0 @@
-{"file":".trellis/spec/frontend/index.md","reason":"检查前端任务是否符合技术栈、目录和验证要求"}
-{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查基础 UI 与功能组件样式是否遵守现有组件规范和可访问性约定"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查必须执行并通过前端 typecheck 与 build"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查样式改动是否破坏手机优先、PWA、认证、服务端数据与业务交互契约"}
-{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查是否通过 ui.tsx 复用统一样式，避免相似样式多处漂移"}
-{"file":".trellis/tasks/06-08-frontend-style-unification/research/frontend-design-analysis.md","reason":"对照真实浏览器调试分析检查视觉结果和风险点"}

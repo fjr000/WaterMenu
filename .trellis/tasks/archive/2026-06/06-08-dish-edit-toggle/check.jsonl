@@ -1,9 +1,0 @@
-{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查菜品卡片、编辑表单和按钮布局是否符合组件、props、可访问性和手机优先样式规范。"}
-{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"检查更新 hook 是否集中 API 调用、使用正确 query key invalidation，组件中不直接 apiFetch。"}
-{"file":".trellis/spec/frontend/state-management.md","reason":"检查服务端数据与本地 UI 状态边界，以及菜品更新后推荐/盲盒 mutation 是否 reset。"}
-{"file":".trellis/spec/frontend/type-safety.md","reason":"检查 API 类型、表单类型、Zod 校验、无 any/as any 绕过。"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查 REST/Session/TanStack Query/RHF/Zod 契约、推荐状态 reset 与现有页面级面板互斥行为。"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查前端 typecheck/build 和必要手动验证项是否覆盖。"}
-{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查未破坏后端菜品 isActive 与推荐/盲盒候选池契约，避免引入硬删除语义。"}
-{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查是否复用或合理抽取创建/编辑表单逻辑，没有不必要重复。"}
-{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查前后端字段与行为一致：name、description、mealTypes、isActive、推荐候选过滤。"}

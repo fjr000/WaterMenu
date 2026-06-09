@@ -1,7 +1,0 @@
-{"file":"docs/project-definition.md","reason":"项目产品边界、MealRecord/Feedback 模型方向、API 风格与 MVP 范围来源"}
-{"file":".trellis/spec/backend/index.md","reason":"后端规范入口，指向本任务实现需要遵守的具体规范"}
-{"file":".trellis/spec/backend/directory-structure.md","reason":"新增 NestJS 模块、DTO、测试文件时遵守现有目录结构约束"}
-{"file":".trellis/spec/backend/database-guidelines.md","reason":"新增 Prisma 模型、关系、索引与 migration 时遵守数据库规范"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"实现 workspace 隔离、NotFound/Unauthorized/Conflict 等错误语义"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现后需运行 lint、typecheck、test 的质量要求"}
-{"file":".trellis/spec/backend/technical-contracts.md","reason":"NestJS、Prisma、Session Cookie、REST JSON API 与 DTO 校验契约"}

@@ -1,9 +1,0 @@
-{"file":".trellis/spec/backend/index.md","reason":"检查后端规范覆盖范围，确认部署相关改动符合后端契约。"}
-{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查生产部署、Session Cookie、/api、Docker Compose、Nginx 与备份契约是否满足。"}
-{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查 Prisma migrate deploy、PostgreSQL 持久化、备份恢复和本地 Compose 不破坏。"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查后端验证命令是否执行或记录阻塞。"}
-{"file":".trellis/spec/frontend/index.md","reason":"检查前端规范覆盖范围，确认静态构建与 Nginx 托管符合前端契约。"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查同域 /api、Vite 构建、PWA 与生产静态托管契约。"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查前端 typecheck/build 等质量门禁。"}
-{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"检查前端、后端、Nginx、Compose、数据库、脚本之间的跨层一致性。"}
-{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查是否复用现有命令、环境变量和部署约束，避免重复或漂移。"}

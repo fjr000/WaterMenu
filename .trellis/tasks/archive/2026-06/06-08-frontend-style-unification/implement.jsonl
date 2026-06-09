@@ -1,8 +1,0 @@
-{"file":".trellis/spec/frontend/index.md","reason":"前端任务入口规范，确认技术栈、目录和验证命令"}
-{"file":".trellis/spec/frontend/directory-structure.md","reason":"确认前端文件放置规则，避免新增不必要文件或改错层级"}
-{"file":".trellis/spec/frontend/component-guidelines.md","reason":"本任务主要修改基础 UI 与功能组件样式，需遵守组件、props 与 Tailwind 约定"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"实现后必须按前端质量门禁运行 typecheck 和 build"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"确认手机优先、Tailwind v4、PWA、业务交互与前端数据契约不被样式改动破坏"}
-{"file":".trellis/spec/guides/index.md","reason":"共享思考指南入口，确认复用和跨层触发条件"}
-{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"本任务会统一多处相似 UI 样式，需优先复用基础 UI 组件，避免重复漂移"}
-{"file":".trellis/tasks/06-08-frontend-style-unification/research/frontend-design-analysis.md","reason":"真实浏览器调试后的设计方向、页面风险和实现切分"}

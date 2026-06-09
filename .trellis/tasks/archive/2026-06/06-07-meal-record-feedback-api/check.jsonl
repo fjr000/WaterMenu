@@ -1,7 +1,0 @@
-{"file":"docs/project-definition.md","reason":"核对实现是否符合 MealRecord/Feedback、workspace、MVP 范围与 API 风格"}
-{"file":".trellis/spec/backend/index.md","reason":"检查阶段的后端规范入口"}
-{"file":".trellis/spec/backend/directory-structure.md","reason":"检查新增文件位置与模块组织是否符合规范"}
-{"file":".trellis/spec/backend/database-guidelines.md","reason":"检查 Prisma 模型、关系、索引、迁移与数据库隔离设计"}
-{"file":".trellis/spec/backend/error-handling.md","reason":"检查认证、workspace 隔离与错误处理是否符合现有契约"}
-{"file":".trellis/spec/backend/quality-guidelines.md","reason":"检查 lint、typecheck、test 等质量门是否通过"}
-{"file":".trellis/spec/backend/technical-contracts.md","reason":"检查 NestJS/Prisma/API/DTO/Session 契约一致性"}

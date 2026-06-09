@@ -1,4 +1,0 @@
-{"file":".trellis/spec/frontend/hook-guidelines.md","reason":"检查 logout 认证状态更新与 TanStack Query 缓存清理是否符合 Hook 规范"}
-{"file":".trellis/spec/frontend/state-management.md","reason":"检查认证状态与业务服务端缓存分离是否符合状态管理规范"}
-{"file":".trellis/spec/frontend/technical-contracts.md","reason":"检查认证技术契约与 401/logout 行为一致性"}
-{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"检查前端 typecheck/build 质量门禁"}

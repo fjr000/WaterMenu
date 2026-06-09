@@ -39,3 +39,37 @@ Populated .trellis/spec/ with codebase-backed guidelines for backend and fronten
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: Clean up Trellis local config
+
+**Date**: 2026-06-09
+**Task**: Clean up Trellis local config
+**Package**: backend
+**Branch**: `main`
+
+### Summary
+
+Fixed Trellis default package config, removed noisy template/hash and permission changes, archived the cleanup task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7749643` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

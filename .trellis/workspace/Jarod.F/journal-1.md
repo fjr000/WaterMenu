@@ -7,15 +7,15 @@
 
 
 
-## Session 1: Bootstrap Trellis project guidelines
+## Session 1: Bootstrap Project Spec
 
 **Date**: 2026-06-09
-**Task**: Bootstrap Trellis project guidelines
+**Task**: Bootstrap Project Spec
 **Branch**: `main`
 
 ### Summary
 
-Populated .trellis/spec/ with codebase-backed guidelines for backend and frontend packages. Added cross-layer API contract and Prisma schema change checklists. Removed obsolete template specs. Archived bootstrap task.
+补齐 WaterMenu Trellis 规范占位，并通过 spec 质量检查；本轮不包含业务代码提交。
 
 ### Main Changes
 
@@ -23,78 +23,7 @@ Populated .trellis/spec/ with codebase-backed guidelines for backend and fronten
 
 ### Git Commits
 
-| Hash | Message |
-|------|---------|
-| `afff8cb` | (see git log) |
-| `f2f80f9` | (see git log) |
-
-### Testing
-
-- [OK] (Add test results)
-
-### Status
-
-[OK] **Completed**
-
-### Next Steps
-
-- None - task complete
-
-
-## Session 2: Clean up Trellis local config
-
-**Date**: 2026-06-09
-**Task**: Clean up Trellis local config
-**Package**: backend
-**Branch**: `main`
-
-### Summary
-
-Fixed Trellis default package config, removed noisy template/hash and permission changes, archived the cleanup task.
-
-### Main Changes
-
-(Add details)
-
-### Git Commits
-
-| Hash | Message |
-|------|---------|
-| `7749643` | (see git log) |
-
-### Testing
-
-- [OK] (Add test results)
-
-### Status
-
-[OK] **Completed**
-
-### Next Steps
-
-- None - task complete
-
-
-## Session 3: Improve mobile dish browsing
-
-**Date**: 2026-06-09
-**Task**: Improve mobile dish browsing
-**Package**: backend
-**Branch**: `main`
-
-### Summary
-
-Added backend dish search/filtering, frontend dish filters, and mobile collapsed dish cards; validated backend/frontend checks.
-
-### Main Changes
-
-(Add details)
-
-### Git Commits
-
-| Hash | Message |
-|------|---------|
-| `8540daf` | (see git log) |
+(No commits - planning session)
 
 ### Testing
 

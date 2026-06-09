@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
+- **Total Sessions**: 1
 - **Last Active**: 2026-06-09
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~109 | Active |
+| `journal-1.md` | ~38 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,9 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
-| 3 | 2026-06-09 | Improve mobile dish browsing | `8540daf` | `main` |
-| 2 | 2026-06-09 | Clean up Trellis local config | `7749643` | `main` |
-| 1 | 2026-06-09 | Bootstrap Trellis project guidelines | `afff8cb`, `f2f80f9` | `main` |
+| 1 | 2026-06-09 | Bootstrap Project Spec | - | `main` |
 <!-- @@@/auto:session-history -->
 
 ---

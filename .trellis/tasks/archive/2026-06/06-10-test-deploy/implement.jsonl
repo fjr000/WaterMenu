@@ -1,0 +1,10 @@
+{"file":".trellis/spec/guides/index.md","reason":"共享思考索引，帮助识别复用与跨层检查触发点"}
+{"file":".trellis/spec/frontend/frontend/index.md","reason":"前端测试补充需要遵循当前 React/Vite 目录与开发约定"}
+{"file":".trellis/spec/frontend/frontend/component-guidelines.md","reason":"页面级与表单测试涉及组件 props、状态、样式和可访问性约定"}
+{"file":".trellis/spec/frontend/frontend/hook-guidelines.md","reason":"页面测试会 mock 或验证 React Query hooks 行为与缓存失效约定"}
+{"file":".trellis/spec/frontend/frontend/state-management.md","reason":"登录、邀请、首页测试涉及 auth context、server-state 与局部 UI 状态"}
+{"file":".trellis/spec/frontend/frontend/type-safety.md","reason":"表单验证与 API 类型测试需要遵循 Zod/类型推导约定"}
+{"file":".trellis/spec/frontend/frontend/quality-guidelines.md","reason":"实现阶段需要遵循前端测试、类型检查和构建质量门"}
+{"file":".trellis/spec/backend/backend/index.md","reason":"部署验证涉及后端包的整体质量约定"}
+{"file":".trellis/spec/backend/backend/quality-guidelines.md","reason":"后端测试与部署健康检查验证需要遵循后端质量门"}
+{"file":".trellis/spec/backend/backend/error-handling.md","reason":"错误处理测试与 API 失败路径断言需要遵循统一错误响应约定"}

@@ -104,3 +104,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: 测试覆盖与部署健康检查
+
+**Date**: 2026-06-10
+**Task**: 测试覆盖与部署健康检查
+**Branch**: `main`
+
+### Summary
+
+补充前端页面测试、后端 /api/health 与生产 Compose healthcheck，验证前后端测试、构建和部署配置。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `51f8f09` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

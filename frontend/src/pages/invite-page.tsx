@@ -102,19 +102,19 @@ export function InvitePage({ token }: { token: string }) {
                 </p>
               </div>
 
-              <Field label="姓名" error={errors.name?.message}>
+              <Field label="姓名" htmlFor="invite-name" error={errors.name?.message}>
                 <Input id="invite-name" autoComplete="name" {...register("name")} />
               </Field>
 
-              <Field label="邮箱" error={errors.email?.message}>
+              <Field label="邮箱" htmlFor="invite-email" error={errors.email?.message}>
                 <Input id="invite-email" type="email" autoComplete="email" {...register("email")} />
               </Field>
 
-              <Field label="密码" error={errors.password?.message}>
+              <Field label="密码" htmlFor="invite-password" error={errors.password?.message}>
                 <Input id="invite-password" type="password" autoComplete="new-password" {...register("password")} />
               </Field>
 
-              <Field label="确认密码" error={errors.confirmPassword?.message}>
+              <Field label="确认密码" htmlFor="invite-confirm-password" error={errors.confirmPassword?.message}>
                 <Input
                   id="invite-confirm-password"
                   type="password"
@@ -142,16 +142,18 @@ export function InvitePage({ token }: { token: string }) {
 
 function Field({
   label,
+  htmlFor,
   error,
   children,
 }: {
   label: string;
+  htmlFor: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
+      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-slate-700">{label}</label>
       {children}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>

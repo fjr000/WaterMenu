@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { DishImagesModule } from './dish-images/dish-images.module';
 import { DishesModule } from './dishes/dishes.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { HealthModule } from './health/health.module';
 import { InvitesModule } from './invites/invites.module';
 import { MealRecordsModule } from './meal-records/meal-records.module';
 import { MembersModule } from './members/members.module';
@@ -18,6 +19,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     AuthModule,
     DishesModule,
     DishImagesModule,
+    HealthModule,
     MealRecordsModule,
     FeedbackModule,
     RecipesModule,

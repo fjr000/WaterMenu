@@ -99,8 +99,9 @@ docker compose -f docker-compose.prod.yml exec backend pnpm prisma:seed
 
 1. 访问 `https://你的域名/`。
 2. 使用 seed 创建的管理员登录。
-3. 验证新增菜品、推荐 / 盲盒、记录已吃、反馈、查看做法等核心流程。
-4. 访问 `https://你的域名/api/docs` 检查后端 OpenAPI 文档是否可用。
+3. 访问 `https://你的域名/api/health`，确认返回 `{ "status": "ok" }`。
+4. 验证新增菜品、推荐 / 盲盒、记录已吃、反馈、查看做法等核心流程。
+5. 访问 `https://你的域名/api/docs` 检查后端 OpenAPI 文档是否可用。
 
 ## Nginx 路由策略
 
@@ -242,6 +243,7 @@ docker compose -f docker-compose.prod.yml logs backend
 - `DATABASE_URL` 与 `POSTGRES_*` 不一致。
 - Prisma migration 失败。
 - PostgreSQL 尚未健康。
+- `/api/health` 未返回 200，导致 backend healthcheck 未通过。
 
 ### 数据库不应向公网开放
 

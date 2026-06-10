@@ -91,6 +91,93 @@ Reference files:
 - `backend/src/app.setup.ts`
 - `backend/test/dishes.e2e-spec.ts`
 
+## Scenario: Production Healthcheck and Compose Gate
+
+### 1. Scope / Trigger
+
+- Trigger: 新增或修改生产部署健康检查、Compose 服务依赖、后端公开健康接口。
+- Scope: 后端 `/api/health`、`docker-compose.prod.yml` backend healthcheck、Nginx 对 backend 的启动依赖。
+
+### 2. Signatures
+
+后端健康检查 API：
+
+```http
+GET /api/health
+```
+
+期望响应：
+
+```json
+{ "status": "ok" }
+```
+
+生产 Compose 健康检查签名：
+
+```yaml
+backend:
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+nginx:
+  depends_on:
+    backend:
+      condition: service_healthy
+```
+
+### 3. Contracts
+
+- `/api/health` 必须公开可访问，不依赖 session、Prisma 或业务 workspace 数据。
+- `/api/health` 成功时返回 HTTP 200，body 至少包含 `status: "ok"`。
+- backend 容器 healthcheck 必须访问容器内部 `127.0.0.1:3000/api/health`，避免依赖 Nginx 或外部网络。
+- Nginx 生产服务应等待 backend `service_healthy`，避免后端未就绪时提前对外代理。
+- 生产验证文档应包含 `https://<domain>/api/health` 检查步骤。
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected failure |
+|---|---|
+| `/api/health` 未注册在 `AppModule` | e2e 测试返回 404 |
+| `/api/health` 被 auth guard 保护 | 未登录健康检查返回 401，容器 healthcheck 失败 |
+| healthcheck 指向 `/health` 而不是 `/api/health` | Compose backend 健康检查失败 |
+| Nginx 只依赖 backend 启动而非 healthy | 后端启动中时 Nginx 可能提前接流量 |
+| 文档未说明健康检查 | 上线验证遗漏部署就绪检查 |
+
+### 5. Good/Base/Bad Cases
+
+- Good: 新增健康接口时同步添加 e2e、Compose healthcheck、Nginx `service_healthy` 依赖和部署文档。
+- Base: 只添加 `/api/health` 和 e2e，用于本地/API 层验证。
+- Bad: 只在 Dockerfile 或 Compose 里写健康检查，但没有后端测试覆盖对应 endpoint。
+
+### 6. Tests Required
+
+- E2E: `GET /api/health` 返回 `200` 和 `{ status: "ok" }`。
+- Compose: `docker compose -f docker-compose.prod.yml config` 能解析生产配置。
+- Build: `docker compose -f docker-compose.prod.yml build` 能构建 backend 与 nginx 镜像。
+- Nginx: 使用临时证书或真实证书执行 `nginx -t`，确认配置语法有效。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```yaml
+nginx:
+  depends_on:
+    - backend
+```
+
+只等待容器启动，不等待后端健康。
+
+#### Correct
+
+```yaml
+nginx:
+  depends_on:
+    backend:
+      condition: service_healthy
+```
+
+由后端 `/api/health` 决定 Nginx 是否进入依赖就绪状态。
+
 ## Verification
 
 ```bash

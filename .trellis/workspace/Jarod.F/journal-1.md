@@ -137,3 +137,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 5: 完成菜品版本来源管理
+
+**Date**: 2026-06-11
+**Task**: 完成菜品版本来源管理
+**Branch**: `main`
+
+### Summary
+
+完成 DishVariant 后端与前端链路，补齐用餐记录版本选择、历史展示、测试与规范记录。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0fc3850` | (see git log) |
+| `bfd8777` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

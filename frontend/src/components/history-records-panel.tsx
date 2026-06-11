@@ -111,7 +111,7 @@ export function HistoryRecordsPanel({
             历史记录
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            按菜、餐次、反馈和关键词找回吃过什么
+            按菜、餐次、反馈和关键词找回吃过什么，也能区分具体版本
           </p>
         </div>
         <Button

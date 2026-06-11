@@ -7,6 +7,24 @@ import { UpdateMealRecordDto } from './dto/update-meal-record.dto';
 
 function getMealRecordInclude(workspaceId: string): Prisma.MealRecordInclude {
   return {
+    dish: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+    variant: {
+      select: {
+        id: true,
+        workspaceId: true,
+        dishId: true,
+        name: true,
+        type: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    },
     feedbacks: {
       where: { workspaceId },
       select: {
@@ -85,11 +103,13 @@ export class MealRecordsService {
   async create(userId: string, body: CreateMealRecordDto) {
     const workspaceId = await this.getWorkspaceId(userId);
     await this.assertDishInWorkspace(workspaceId, body.dishId);
+    await this.assertVariantInWorkspace(workspaceId, body.dishId, body.variantId);
 
     return this.prisma.mealRecord.create({
       data: {
         workspaceId,
         dishId: body.dishId ?? null,
+        variantId: body.variantId ?? null,
         title: body.title,
         mealType: body.mealType,
         eatenAt: new Date(body.eatenAt),
@@ -163,6 +183,25 @@ export class MealRecordsService {
     });
 
     if (!dish) {
+      throw new NotFoundException();
+    }
+  }
+
+  private async assertVariantInWorkspace(workspaceId: string, dishId?: string | null, variantId?: string | null) {
+    if (!variantId) {
+      return;
+    }
+
+    if (!dishId) {
+      throw new NotFoundException();
+    }
+
+    const variant = await this.prisma.dishVariant.findFirst({
+      where: { id: variantId, dishId, workspaceId, isActive: true },
+      select: { id: true },
+    });
+
+    if (!variant) {
       throw new NotFoundException();
     }
   }

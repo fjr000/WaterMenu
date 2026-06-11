@@ -9,6 +9,11 @@ export class CreateMealRecordDto {
 
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
+  variantId?: string | null;
+
+  @IsString()
+  @IsNotEmpty()
   title!: string;
 
   @IsEnum(MealType)

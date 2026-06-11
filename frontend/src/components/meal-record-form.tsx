@@ -2,10 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { Dish, MealType } from "../api/types.ts";
+import type { Dish, DishVariant, MealType } from "../api/types.ts";
+import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateMealRecord } from "../hooks/use-meal-records.ts";
 import { mealLabel } from "./meal-tag.tsx";
-import { Button, Card, Input, SecondaryButton, Select } from "./ui.tsx";
+import { Button, Card, ErrorBanner, Input, SecondaryButton, Select, Spinner } from "./ui.tsx";
 
 interface Props {
   dish: Dish;
@@ -16,6 +17,7 @@ interface Props {
 
 const schema = z.object({
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
+  variantId: z.string().optional(),
   eatenAt: z
     .string()
     .min(1, "请选择用餐时间")
@@ -39,11 +41,13 @@ export function MealRecordForm({
   onSuccess,
 }: Props) {
   const createMealRecord = useCreateMealRecord();
+  const variantsQuery = useDishVariants(dish.id);
+  const activeVariants = useMemo(
+    () => (variantsQuery.data ?? []).filter((variant) => variant.isActive),
+    [variantsQuery.data],
+  );
   const initialMealType = useMemo<MealType>(
-    () =>
-      defaultMealType && dish.mealTypes.includes(defaultMealType)
-        ? defaultMealType
-        : (dish.mealTypes[0] ?? "LUNCH"),
+    () => pickInitialMealType(dish.mealTypes, defaultMealType),
     [defaultMealType, dish.mealTypes],
   );
   const {
@@ -54,19 +58,26 @@ export function MealRecordForm({
     resolver: zodResolver(schema),
     defaultValues: {
       mealType: initialMealType,
+      variantId: "",
       eatenAt: toLocalInputValue(new Date()),
       note: "",
     },
   });
 
   const submit = handleSubmit((values) => {
+    const selectedVariant = activeVariants.find(
+      (variant) => variant.id === values.variantId,
+    );
+    const trimmedNote = values.note?.trim();
+
     createMealRecord.mutate(
       {
         dishId: dish.id,
-        title: dish.name,
+        variantId: selectedVariant?.id ?? undefined,
+        title: buildMealRecordTitle(dish.name, selectedVariant),
         mealType: values.mealType,
         eatenAt: new Date(values.eatenAt).toISOString(),
-        note: values.note?.trim() || undefined,
+        note: trimmedNote || undefined,
       },
       { onSuccess },
     );
@@ -99,6 +110,36 @@ export function MealRecordForm({
               {errors.mealType.message}
             </p>
           )}
+        </div>
+
+        {variantsQuery.isLoading && <Spinner />}
+
+        {variantsQuery.isError && (
+          <ErrorBanner
+            message="加载版本失败"
+            onRetry={() => void variantsQuery.refetch()}
+          />
+        )}
+
+        <div>
+          <label
+            htmlFor="meal-record-variant"
+            className="mb-1 block text-sm font-semibold text-slate-700"
+          >
+            版本 / 来源（可选）
+          </label>
+          <Select
+            id="meal-record-variant"
+            {...register("variantId")}
+            disabled={variantsQuery.isLoading || variantsQuery.isError}
+          >
+            <option value="">主菜品</option>
+            {activeVariants.map((variant) => (
+              <option key={variant.id} value={variant.id}>
+                {variant.name}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <div>
@@ -161,4 +202,23 @@ export function MealRecordForm({
       </form>
     </Card>
   );
+}
+
+function pickInitialMealType(
+  mealTypes: MealType[],
+  defaultMealType?: MealType | "",
+): MealType {
+  if (defaultMealType && mealTypes.includes(defaultMealType)) {
+    return defaultMealType;
+  }
+
+  return mealTypes[0] ?? "LUNCH";
+}
+
+function buildMealRecordTitle(dishName: string, variant?: DishVariant) {
+  if (!variant) {
+    return dishName;
+  }
+
+  return `${dishName} · ${variant.name}`;
 }

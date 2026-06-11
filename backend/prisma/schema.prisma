@@ -12,11 +12,12 @@ model Workspace {
   name        String
   users       User[]
   invites     WorkspaceInvite[]
-  dishes      Dish[]
-  dishImages  DishImage[]
-  recipes     Recipe[]
-  mealRecords MealRecord[]
-  feedbacks   Feedback[]
+  dishes       Dish[]
+  dishImages   DishImage[]
+  dishVariants DishVariant[]
+  recipes      Recipe[]
+  mealRecords  MealRecord[]
+  feedbacks    Feedback[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -80,6 +81,13 @@ enum FeedbackRating {
   BAD
 }
 
+enum DishVariantType {
+  HOME_RECIPE
+  TAKEOUT
+  DINE_IN
+  OTHER
+}
+
 model Dish {
   id          String       @id @default(cuid())
   workspaceId String
@@ -89,6 +97,7 @@ model Dish {
   isActive    Boolean      @default(true)
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
   images      DishImage[]
+  variants    DishVariant[]
   recipes     Recipe[]
   mealRecords MealRecord[]
   createdAt   DateTime     @default(now())
@@ -120,6 +129,25 @@ model DishImage {
   @@map("dish_images")
 }
 
+model DishVariant {
+  id          String          @id @default(cuid())
+  workspaceId String
+  dishId      String
+  name        String
+  type        DishVariantType @default(OTHER)
+  isActive    Boolean         @default(true)
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  dish        Dish            @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  mealRecords MealRecord[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([dishId, name])
+  @@index([workspaceId])
+  @@index([dishId])
+  @@map("dish_variants")
+}
+
 model Recipe {
   id          String    @id @default(cuid())
   workspaceId String
@@ -137,21 +165,24 @@ model Recipe {
 }
 
 model MealRecord {
-  id          String     @id @default(cuid())
+  id          String       @id @default(cuid())
   workspaceId String
   dishId      String?
+  variantId   String?
   title       String
   mealType    MealType
   eatenAt     DateTime
   note        String?
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  dish        Dish?      @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  dish        Dish?        @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  variant     DishVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   feedbacks   Feedback[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([workspaceId])
   @@index([dishId])
+  @@index([variantId])
   @@map("meal_records")
 }
 

@@ -2,6 +2,8 @@ export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 
 export type FeedbackRating = "GOOD" | "OK" | "BAD";
 
+export type DishVariantType = "HOME_RECIPE" | "TAKEOUT" | "DINE_IN" | "OTHER";
+
 export type UserRole = "ADMIN" | "MEMBER";
 
 export interface User {
@@ -73,10 +75,29 @@ export interface Feedback {
   updatedAt: string;
 }
 
+export interface DishVariant {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  name: string;
+  type: DishVariantType;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MealRecordDishRef {
+  id: string;
+  name: string;
+}
+
 export interface MealRecord {
   id: string;
   workspaceId: string;
   dishId: string | null;
+  dish?: MealRecordDishRef | null;
+  variantId: string | null;
+  variant: DishVariant | null;
   title: string;
   mealType: MealType;
   eatenAt: string;
@@ -131,6 +152,7 @@ export interface UpdateDishRequest {
 
 export interface CreateMealRecordRequest {
   dishId?: string;
+  variantId?: string;
   title: string;
   mealType: MealType;
   eatenAt: string;
@@ -158,6 +180,18 @@ export interface CreateRecipeRequest {
 export interface UpdateRecipeRequest {
   title?: string;
   content?: string;
+}
+
+export interface CreateDishVariantRequest {
+  name: string;
+  type: DishVariantType;
+  isActive?: boolean;
+}
+
+export interface UpdateDishVariantRequest {
+  name?: string;
+  type?: DishVariantType;
+  isActive?: boolean;
 }
 
 export interface RecommendationCandidate {

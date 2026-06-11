@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { DishImagesModule } from './dish-images/dish-images.module';
+import { DishVariantsModule } from './dish-variants/dish-variants.module';
 import { DishesModule } from './dishes/dishes.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { HealthModule } from './health/health.module';
@@ -19,6 +20,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     AuthModule,
     DishesModule,
     DishImagesModule,
+    DishVariantsModule,
     HealthModule,
     MealRecordsModule,
     FeedbackModule,

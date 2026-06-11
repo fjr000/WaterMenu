@@ -18,6 +18,7 @@ import { Button, Card, EmptyState, ErrorBanner, Input, PageHeader, SecondaryButt
 import { useCreateDish, useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import { useCreateMealRecord, useDeleteMealRecord, useMealRecords, useUpdateMealRecord, useUpsertFeedback } from "../hooks/use-meal-records.ts";
 import { useDeleteDishImage, useDishImages, useSetDishImageCover, useUploadDishImage } from "../hooks/use-dish-images.ts";
+import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateRecipe, useRecipes, useUpdateRecipe } from "../hooks/use-recipes.ts";
 import { useCreateInvite, useInvites, useRevokeInvite } from "../hooks/use-invites.ts";
 import { useMembers } from "../hooks/use-members.ts";
@@ -41,6 +42,10 @@ vi.mock("../hooks/use-dish-images.ts", () => ({
   useUploadDishImage: vi.fn(),
   useSetDishImageCover: vi.fn(),
   useDeleteDishImage: vi.fn(),
+}));
+
+vi.mock("../hooks/use-dish-variants.ts", () => ({
+  useDishVariants: vi.fn(),
 }));
 
 vi.mock("../hooks/use-recipes.ts", () => ({
@@ -71,6 +76,7 @@ const useDishImagesMock = useDishImages as Mock;
 const useUploadDishImageMock = useUploadDishImage as Mock;
 const useSetDishImageCoverMock = useSetDishImageCover as Mock;
 const useDeleteDishImageMock = useDeleteDishImage as Mock;
+const useDishVariantsMock = useDishVariants as Mock;
 const useRecipesMock = useRecipes as Mock;
 const useCreateRecipeMock = useCreateRecipe as Mock;
 const useUpdateRecipeMock = useUpdateRecipe as Mock;
@@ -111,6 +117,7 @@ beforeEach(() => {
   useUploadDishImageMock.mockReturnValue(mutationState());
   useSetDishImageCoverMock.mockReturnValue(mutationState());
   useDeleteDishImageMock.mockReturnValue(mutationState());
+  useDishVariantsMock.mockReturnValue(queryState([]));
   useRecipesMock.mockReturnValue(queryState<Recipe[]>([sampleRecipe]));
   useCreateRecipeMock.mockReturnValue(mutationState());
   useUpdateRecipeMock.mockReturnValue(mutationState());
@@ -284,5 +291,31 @@ describe("业务面板组件", () => {
     expect(screen.getAllByText("番茄炒蛋").length).toBeGreaterThan(0);
     expect(screen.getByText("最近用餐")).toBeInTheDocument();
     expect(screen.getByText("历史记录")).toBeInTheDocument();
+  });
+
+  it("MealRecordCard 优先展示当前菜品名和当前版本名", () => {
+    render(
+      <MealRecordCard
+        record={{
+          ...sampleMealRecord,
+          title: "番茄炒蛋 · 老版本名",
+          variantId: "variant-1",
+          variant: {
+            id: "variant-1",
+            workspaceId: "workspace-1",
+            dishId: "dish-1",
+            name: "外卖店1",
+            type: "TAKEOUT",
+            isActive: true,
+            createdAt: "2026-06-01T00:00:00.000Z",
+            updatedAt: "2026-06-01T00:00:00.000Z",
+          },
+        }}
+        userId="user-1"
+      />,
+    );
+
+    expect(screen.getByText("番茄炒蛋 · 外卖店1")).toBeInTheDocument();
+    expect(screen.queryByText("番茄炒蛋 · 老版本名")).not.toBeInTheDocument();
   });
 });

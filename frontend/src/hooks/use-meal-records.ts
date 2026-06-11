@@ -36,9 +36,11 @@ function mealRecordsQueryKey(query: MealRecordsQuery = {}): QueryKey {
   return ["meal-records", normalizeQuery(query)];
 }
 
-function invalidateMealRecordDependencies(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: mealRecordsKey });
-  void queryClient.invalidateQueries({ queryKey: ["dishes"] });
+export function invalidateMealRecordDependencies(queryClient: QueryClient) {
+  void Promise.all([
+    queryClient.invalidateQueries({ queryKey: mealRecordsKey }),
+    queryClient.invalidateQueries({ queryKey: ["dishes"] }),
+  ]);
 }
 
 export function useMealRecords(query: MealRecordsQuery = {}) {
@@ -118,7 +120,7 @@ export function useUpsertFeedback() {
         body: JSON.stringify(body),
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: mealRecordsKey });
+      invalidateMealRecordDependencies(queryClient);
     },
   });
 }

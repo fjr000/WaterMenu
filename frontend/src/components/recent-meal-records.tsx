@@ -175,7 +175,7 @@ export function MealRecordCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-semibold text-slate-900">
-            {record.title}
+            {getMealRecordDisplayTitle(record)}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
             {mealLabel(record.mealType)} · {formatDate(record.eatenAt)}
@@ -472,6 +472,18 @@ function EditMealRecordForm({
       </div>
     </form>
   );
+}
+
+function getMealRecordDisplayTitle(record: MealRecord) {
+  if (record.dish?.name && record.variant?.name) {
+    return `${record.dish.name} · ${record.variant.name}`;
+  }
+
+  if (record.dish?.name) {
+    return record.dish.name;
+  }
+
+  return record.title;
 }
 
 function formatDate(value: string) {

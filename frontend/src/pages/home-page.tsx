@@ -3,6 +3,7 @@ import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import { useRecipes } from "../hooks/use-recipes.ts";
+import { DishVariantsPanel } from "../components/dish-variants-panel.tsx";
 import {
   useRecommend,
   useBlindBox,
@@ -92,6 +93,7 @@ export function HomePage() {
   const [recordDish, setRecordDish] = useState<Dish | null>(null);
   const [recipeDish, setRecipeDish] = useState<Dish | null>(null);
   const [imageDish, setImageDish] = useState<Dish | null>(null);
+  const [variantDish, setVariantDish] = useState<Dish | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
   const hasDishFilters = hasActiveDishFilters({
@@ -125,6 +127,7 @@ export function HomePage() {
   const handleRecordDish = (dish: Dish) => {
     setRecipeDish(null);
     setImageDish(null);
+    setVariantDish(null);
     setEditingDish(null);
     setRecordDish(dish);
   };
@@ -132,6 +135,7 @@ export function HomePage() {
   const handleViewRecipe = (dish: Dish) => {
     setRecordDish(null);
     setImageDish(null);
+    setVariantDish(null);
     setEditingDish(null);
     setRecipeDish(dish);
   };
@@ -139,14 +143,24 @@ export function HomePage() {
   const handleManageImages = (dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
+    setVariantDish(null);
     setEditingDish(null);
     setImageDish(dish);
+  };
+
+  const handleManageVariants = (dish: Dish) => {
+    setRecordDish(null);
+    setRecipeDish(null);
+    setImageDish(null);
+    setEditingDish(null);
+    setVariantDish(dish);
   };
 
   const handleEditDish = (dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
     setImageDish(null);
+    setVariantDish(null);
     setShowCreateForm(false);
     setEditingDish(dish);
   };
@@ -230,6 +244,16 @@ export function HomePage() {
           </div>
         )}
 
+        {variantDish && (
+          <div className="mt-4">
+            <DishVariantsPanel
+              key={variantDish.id}
+              dish={variantDish}
+              onClose={() => setVariantDish(null)}
+            />
+          </div>
+        )}
+
         {activeTab === "dishes" && (
           <div className="mx-auto mt-5 flex max-w-2xl flex-col gap-4 md:mt-6">
             <div className="flex items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-white/60 p-3 shadow-[0_10px_24px_rgba(111,82,56,0.08)]">
@@ -296,7 +320,8 @@ export function HomePage() {
                     editingDish?.id === dish.id ||
                     recordDish?.id === dish.id ||
                     recipeDish?.id === dish.id ||
-                    imageDish?.id === dish.id
+                    imageDish?.id === dish.id ||
+                    variantDish?.id === dish.id
                   }
                   isEditing={editingDish?.id === dish.id}
                   onEditDish={handleEditDish}
@@ -305,6 +330,7 @@ export function HomePage() {
                   onRecordDish={handleRecordDish}
                   onViewRecipe={handleViewRecipe}
                   onManageImages={handleManageImages}
+                  onManageVariants={handleManageVariants}
                   onResetRecommendations={resetRecommendationState}
                 />
               ))}
@@ -715,6 +741,7 @@ function DishCard({
   onRecordDish,
   onViewRecipe,
   onManageImages,
+  onManageVariants,
   onResetRecommendations,
 }: {
   dish: Dish;
@@ -726,6 +753,7 @@ function DishCard({
   onRecordDish: (dish: Dish) => void;
   onViewRecipe: (dish: Dish) => void;
   onManageImages: (dish: Dish) => void;
+  onManageVariants: (dish: Dish) => void;
   onResetRecommendations: () => void;
 }) {
   const activeSwitchDesktopId = useId();
@@ -908,6 +936,11 @@ function DishCard({
                 mark="图"
                 label="管理图库"
                 onClick={() => onManageImages(dish)}
+              />
+              <DishToolButton
+                mark="版"
+                label="管理版本"
+                onClick={() => onManageVariants(dish)}
               />
               <DishToolButton
                 mark="做"

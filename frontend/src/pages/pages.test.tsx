@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { apiFetch } from "../api/client.ts";
 import { ApiError, type DishImage, type MealRecordsPage, type Member, type Recipe, type WorkspaceInvite } from "../api/types.ts";
 import { useDishImages, useDeleteDishImage, useSetDishImageCover, useUploadDishImage } from "../hooks/use-dish-images.ts";
+import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateDish, useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import { authMeKey, useAuth } from "../hooks/use-auth.tsx";
 import { useAcceptInvite, useCreateInvite, useInvitePreview, useInvites, useRevokeInvite } from "../hooks/use-invites.ts";
@@ -49,6 +50,10 @@ vi.mock("../hooks/use-dish-images.ts", () => ({
   useDeleteDishImage: vi.fn(),
 }));
 
+vi.mock("../hooks/use-dish-variants.ts", () => ({
+  useDishVariants: vi.fn(),
+}));
+
 vi.mock("../hooks/use-recipes.ts", () => ({
   useRecipes: vi.fn(),
   useCreateRecipe: vi.fn(),
@@ -86,6 +91,7 @@ const useDishImagesMock = useDishImages as Mock;
 const useUploadDishImageMock = useUploadDishImage as Mock;
 const useSetDishImageCoverMock = useSetDishImageCover as Mock;
 const useDeleteDishImageMock = useDeleteDishImage as Mock;
+const useDishVariantsMock = useDishVariants as Mock;
 const useRecipesMock = useRecipes as Mock;
 const useCreateRecipeMock = useCreateRecipe as Mock;
 const useUpdateRecipeMock = useUpdateRecipe as Mock;
@@ -149,6 +155,7 @@ beforeEach(() => {
   useUploadDishImageMock.mockReturnValue(mutationState());
   useSetDishImageCoverMock.mockReturnValue(mutationState());
   useDeleteDishImageMock.mockReturnValue(mutationState());
+  useDishVariantsMock.mockReturnValue(queryState([]));
   useRecipesMock.mockReturnValue(queryState<Recipe[]>([sampleRecipe]));
   useCreateRecipeMock.mockReturnValue(mutationState());
   useUpdateRecipeMock.mockReturnValue(mutationState());

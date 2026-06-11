@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { FeedbackRating, MealType } from '@prisma/client';
+import { DishVariantType, FeedbackRating, MealType } from '@prisma/client';
 import type { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import request from 'supertest';
@@ -20,10 +20,22 @@ type Dish = {
   name: string;
 };
 
+type DishVariant = {
+  id: string;
+  workspaceId: string;
+  dishId: string;
+  name: string;
+  type: DishVariantType;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 type MealRecord = {
   id: string;
   workspaceId: string;
   dishId: string | null;
+  variantId: string | null;
   title: string;
   mealType: MealType;
   eatenAt: Date;
@@ -63,11 +75,13 @@ function sortMealRecords(left: MealRecord, right: MealRecord) {
 describe('Meal records and feedback API', () => {
   let app: INestApplication;
   let dishes: Dish[];
+  let variants: DishVariant[];
   let mealRecords: MealRecord[];
   let feedbacks: Feedback[];
   let prisma: {
     user: { findUnique: jest.Mock };
     dish: { findFirst: jest.Mock };
+    dishVariant: { findFirst: jest.Mock };
     mealRecord: {
       findMany: jest.Mock;
       count: jest.Mock;
@@ -82,6 +96,7 @@ describe('Meal records and feedback API', () => {
 
   beforeAll(async () => {
     dishes = [];
+    variants = [];
     mealRecords = [];
     feedbacks = [];
 
@@ -106,6 +121,18 @@ describe('Meal records and feedback API', () => {
           return Promise.resolve(dish ? { id: dish.id } : null);
         }),
       },
+      dishVariant: {
+        findFirst: jest.fn(({ where }: { where: { id: string; dishId?: string; workspaceId: string; isActive?: boolean } }) => {
+          const variant = variants.find(
+            (item) =>
+              item.id === where.id &&
+              item.workspaceId === where.workspaceId &&
+              (where.dishId === undefined || item.dishId === where.dishId) &&
+              (where.isActive === undefined || item.isActive === where.isActive),
+          );
+          return Promise.resolve(variant ? { id: variant.id } : null);
+        }),
+      },
       mealRecord: {
         findMany: jest.fn(({ where, skip = 0, take }: { where: MealRecordWhere; skip?: number; take?: number }) => {
           const filtered = filterMealRecords(where).sort(sortMealRecords);
@@ -118,6 +145,7 @@ describe('Meal records and feedback API', () => {
             id: `meal-record-${mealRecords.length + 1}`,
             workspaceId: data.workspaceId,
             dishId: data.dishId,
+            variantId: data.variantId,
             title: data.title,
             mealType: data.mealType,
             eatenAt: data.eatenAt,
@@ -146,6 +174,7 @@ describe('Meal records and feedback API', () => {
 
           Object.assign(mealRecord, {
             dishId: data.dishId === undefined ? mealRecord.dishId : data.dishId,
+            variantId: data.variantId === undefined ? mealRecord.variantId : data.variantId,
             title: data.title ?? mealRecord.title,
             mealType: data.mealType ?? mealRecord.mealType,
             eatenAt: data.eatenAt ?? mealRecord.eatenAt,
@@ -222,12 +251,20 @@ describe('Meal records and feedback API', () => {
 
   beforeEach(() => {
     dishes.length = 0;
+    variants.length = 0;
     mealRecords.length = 0;
     feedbacks.length = 0;
     dishes.push(
       { id: 'dish-1', workspaceId: workspace.id, name: '番茄炒蛋' },
       { id: 'dish-2', workspaceId: workspace.id, name: '青椒肉丝' },
       { id: 'other-dish-1', workspaceId: otherWorkspace.id, name: '他人菜品' },
+    );
+    const now = new Date();
+    variants.push(
+      { id: 'variant-1', workspaceId: workspace.id, dishId: 'dish-1', name: '外卖店1', type: DishVariantType.TAKEOUT, isActive: true, createdAt: now, updatedAt: now },
+      { id: 'variant-inactive', workspaceId: workspace.id, dishId: 'dish-1', name: '停用版本', type: DishVariantType.OTHER, isActive: false, createdAt: now, updatedAt: now },
+      { id: 'variant-dish-2', workspaceId: workspace.id, dishId: 'dish-2', name: '其他菜版本', type: DishVariantType.OTHER, isActive: true, createdAt: now, updatedAt: now },
+      { id: 'other-variant-1', workspaceId: otherWorkspace.id, dishId: 'other-dish-1', name: '他人版本', type: DishVariantType.TAKEOUT, isActive: true, createdAt: now, updatedAt: now },
     );
     jest.clearAllMocks();
   });
@@ -282,6 +319,13 @@ describe('Meal records and feedback API', () => {
   function withFeedbacks(mealRecord: MealRecord) {
     return {
       ...mealRecord,
+      dish: mealRecord.dishId
+        ? (() => {
+            const dish = dishes.find((item) => item.id === mealRecord.dishId);
+            return dish ? { id: dish.id, name: dish.name } : null;
+          })()
+        : null,
+      variant: variants.find((variant) => variant.id === mealRecord.variantId) ?? null,
       feedbacks: feedbacks
         .filter((feedback) => feedback.mealRecordId === mealRecord.id && feedback.workspaceId === mealRecord.workspaceId)
         .map(({ id, userId, rating, note, createdAt, updatedAt }) => ({ id, userId, rating, note, createdAt, updatedAt })),
@@ -321,8 +365,43 @@ describe('Meal records and feedback API', () => {
       .send({ dishId: 'dish-1', title: '午餐番茄炒蛋', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z', note: '少油' })
       .expect(201)
       .expect(({ body }) => {
-        expect(body).toMatchObject({ workspaceId: workspace.id, dishId: 'dish-1', title: '午餐番茄炒蛋', note: '少油' });
+        expect(body).toMatchObject({ workspaceId: workspace.id, dishId: 'dish-1', variantId: null, title: '午餐番茄炒蛋', note: '少油' });
       });
+  });
+
+  it('创建用餐记录可以关联启用版本，并返回当前版本名', async () => {
+    const agent = loginAs(user.id);
+
+    await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', variantId: 'variant-1', title: '午餐番茄炒蛋', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toMatchObject({ workspaceId: workspace.id, dishId: 'dish-1', variantId: 'variant-1' });
+        expect(body.dish).toMatchObject({ id: 'dish-1', name: '番茄炒蛋' });
+        expect(body.variant).toMatchObject({ id: 'variant-1', name: '外卖店1', isActive: true });
+      });
+  });
+
+  it('创建用餐记录拒绝缺少 dishId、跨菜品、跨 workspace 或停用版本', async () => {
+    const agent = loginAs(user.id);
+
+    await agent
+      .post('/api/meal-records')
+      .send({ variantId: 'variant-1', title: '缺少菜品', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(404);
+    await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', variantId: 'variant-dish-2', title: '跨菜品版本', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(404);
+    await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', variantId: 'other-variant-1', title: '跨空间版本', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(404);
+    await agent
+      .post('/api/meal-records')
+      .send({ dishId: 'dish-1', variantId: 'variant-inactive', title: '停用版本', mealType: MealType.LUNCH, eatenAt: '2026-06-07T04:00:00.000Z' })
+      .expect(404);
   });
 
   it('不能用其他 workspace 的 dishId 创建记录，且更新时拒绝 dishId 字段', async () => {

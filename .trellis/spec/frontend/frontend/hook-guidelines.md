@@ -73,6 +73,31 @@ Reference files:
 
 当前 hook 返回的 `isLoading`、`isPending`、`isError` 都要被页面消费。
 
+## Convention: Meal Record Mutation Invalidation
+
+**What**: 任何会影响菜品最近用餐、评分或历史列表的 mutation，都必须统一失效 `meal-records` 与 `dishes` 相关 query。
+
+**Why**: 首页菜品卡片、推荐候选和历史记录都依赖用餐记录/反馈聚合结果。若只刷新 `meal-records`，用户提交反馈后菜品卡片上的统计与推荐会停留在旧值。
+
+**Example**:
+
+```ts
+async function invalidateMealRecordDependencies(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: mealRecordsKey }),
+    queryClient.invalidateQueries({ queryKey: dishesKey }),
+  ]);
+}
+```
+
+适用 mutation 至少包括：
+- `create meal record`
+- `update meal record`
+- `delete meal record`
+- `upsert feedback`
+
+**Related**: `frontend/src/hooks/use-meal-records.ts`, `frontend/src/hooks/use-dishes.ts`
+
 ## Verification
 
 ```bash

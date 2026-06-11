@@ -103,6 +103,111 @@ Reference files:
 - `backend/README.md`
 - `backend/src/session/session.config.ts`
 
+## Scenario: Dish Variant Ownership and Meal Record Linkage
+
+### 1. Scope / Trigger
+
+- Trigger: 新增 `DishVariant` 模型、`MealRecord.variantId` 字段，或修改菜品版本/来源相关 API。
+- Scope: `backend/prisma/schema.prisma`、`DishVariant` 相关 service/controller、`MealRecord` 创建与列表返回结构。
+
+### 2. Signatures
+
+Prisma schema 签名：
+
+```prisma
+model DishVariant {
+  id          String          @id @default(cuid())
+  workspaceId String
+  dishId      String
+  name        String
+  type        DishVariantType @default(OTHER)
+  isActive    Boolean         @default(true)
+
+  @@unique([dishId, name])
+}
+
+model MealRecord {
+  dishId    String?
+  variantId String?
+  variant   DishVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+}
+```
+
+API 签名：
+
+```http
+GET /api/dishes/:dishId/variants
+POST /api/dishes/:dishId/variants
+PATCH /api/dish-variants/:id
+POST /api/meal-records
+```
+
+### 3. Contracts
+
+- `DishVariant` 必须同时保存 `workspaceId` 与 `dishId`，不能只依赖 `dishId` 间接推断 workspace。
+- 同一 `dishId` 下 `name` 唯一；不同菜品允许同名版本。
+- `POST /api/meal-records` 请求里：
+  - `dishId` 可空
+  - `variantId` 可空
+  - 只要传 `variantId`，就必须同时传匹配的 `dishId`
+- `variantId` 命中记录时必须满足：属于当前 `workspaceId`、属于当前 `dishId`、且 `isActive=true`。
+- `MealRecord` 列表/详情返回应包含结构化的 `dish` 与 `variant`，前端历史展示不要再依赖 `title` 字符串拆分。
+- 停用版本不能用于新建记录，但历史记录保留 `variantId` 时仍可继续展示当前版本名。
+
+### 4. Validation & Error Matrix
+
+| Condition | Expected failure |
+|---|---|
+| `POST /api/dishes/:dishId/variants` 命中同菜品重名版本 | `409 Conflict` |
+| `dishId` 不属于当前 workspace | `404 NotFound` |
+| `variantId` 不属于当前 workspace | `404 NotFound` |
+| `variantId` 属于其他 `dishId` | `404 NotFound` |
+| `variantId` 已停用但仍用于创建记录 | `404 NotFound` |
+| 传了 `variantId` 但没传 `dishId` | `404 NotFound` |
+| DTO 缺字段或空字符串 | `400 Bad Request` |
+
+### 5. Good/Base/Bad Cases
+
+- Good: 先按当前用户解析 `workspaceId`，再按 `dishId + workspaceId` 校验菜品，最后按 `id + dishId + workspaceId + isActive` 校验版本。
+- Base: 记录只关联 `dishId`，`variantId` 为空，兼容老数据。
+- Bad: 只按 `variantId` 查询版本，或允许停用版本继续出现在新增记录选择中。
+
+### 6. Tests Required
+
+- E2E: `GET /api/dishes/:dishId/variants` 覆盖未登录 `401`、跨 workspace `404`、正常返回列表。
+- E2E: `POST /api/dishes/:dishId/variants` 覆盖创建成功、同菜品重名 `409`、非法 payload `400`。
+- E2E: `PATCH /api/dish-variants/:id` 覆盖启用/停用、跨 workspace `404`。
+- E2E: `POST /api/meal-records` 覆盖：
+  - 仅 `dishId` 成功
+  - `dishId + variantId` 成功
+  - 停用版本 `404`
+  - 版本属于其他菜品 `404`
+  - 版本属于其他 workspace `404`
+- Assertion points: 响应体应返回结构化 `dish` / `variant` 字段，确保前端可直接展示当前名称。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```ts
+const variant = await prisma.dishVariant.findUnique({
+  where: { id: variantId },
+});
+```
+
+只校验主键，漏掉 `workspaceId`、`dishId` 和 `isActive`。
+
+#### Correct
+
+```ts
+const variant = await prisma.dishVariant.findFirst({
+  where: { id: variantId, dishId, workspaceId, isActive: true },
+  select: { id: true },
+});
+```
+
+把版本归属、启用状态和菜品绑定一次性校验完整。
+
 ## Verification
 
 ```bash

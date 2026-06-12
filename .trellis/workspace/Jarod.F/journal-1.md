@@ -245,3 +245,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: 修复 Docker 网络与 Clash 冲突
+
+**Date**: 2026-06-12
+**Task**: 修复 Docker 网络与 Clash 冲突
+**Branch**: `main`
+
+### Summary
+
+将 watermenu 网络子网从默认改为 172.20.0.0/16，避免与 Clash 代理的 172.19.0.0/16 网段冲突
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d9da413` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

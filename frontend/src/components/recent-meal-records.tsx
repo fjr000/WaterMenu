@@ -99,6 +99,8 @@ export function RecentMealRecords({
   );
 }
 
+type CardMode = 'view' | 'editing' | 'variants' | 'delete-confirm' | 'note';
+
 export function MealRecordCard({
   record,
   userId,
@@ -117,10 +119,7 @@ export function MealRecordCard({
     (feedback) => feedback.userId === userId,
   );
   const [currentFeedback, setCurrentFeedback] = useState(serverFeedback);
-  const [showNote, setShowNote] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [showVariantPanel, setShowVariantPanel] = useState(false);
-  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [mode, setMode] = useState<CardMode>('view');
   const [selectedImage, setSelectedImage] = useState<DishImage | null>(null);
   const [note, setNote] = useState(serverFeedback?.note ?? "");
   const [selectedRating, setSelectedRating] = useState<
@@ -164,7 +163,7 @@ export function MealRecordCard({
       {
         onSuccess: (feedback) => {
           setCurrentFeedback(feedback);
-          setShowNote(false);
+          setMode('view');
           onRecordChange?.();
         },
       },
@@ -174,7 +173,7 @@ export function MealRecordCard({
   const handleDelete = () => {
     deleteMealRecord.mutate(record.id, {
       onSuccess: () => {
-        setDeleteConfirming(false);
+        setMode('view');
         onRecordChange?.();
       },
     });
@@ -199,24 +198,15 @@ export function MealRecordCard({
             <button
               type="button"
               className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-amber-200 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => {
-                setIsEditing((value) => !value);
-                setShowVariantPanel(false);
-                setDeleteConfirming(false);
-                setShowNote(false);
-              }}
+              onClick={() => setMode(mode === 'editing' ? 'view' : 'editing')}
               disabled={deleteMealRecord.isPending}
             >
-              {isEditing ? "收起" : "编辑"}
+              {mode === 'editing' ? "收起" : "编辑"}
             </button>
             <button
               type="button"
               className="rounded-full border border-red-100 bg-red-50/80 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => {
-                setDeleteConfirming(true);
-                setIsEditing(false);
-                setShowVariantPanel(false);
-              }}
+              onClick={() => setMode('delete-confirm')}
               disabled={deleteMealRecord.isPending}
             >
               删除
@@ -231,28 +221,28 @@ export function MealRecordCard({
         onImageClick={(image) => setSelectedImage(image)}
       />
 
-      {isEditing && (
+      {mode === 'editing' && (
         <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50/55 p-3">
           <EditMealRecordForm
             key={`${record.id}-${record.updatedAt}`}
             record={record}
-            onCancel={() => setIsEditing(false)}
+            onCancel={() => setMode('view')}
             onSuccess={() => {
-              setIsEditing(false);
+              setMode('view');
               onRecordChange?.();
             }}
           />
         </div>
       )}
 
-      {showVariantPanel && (
+      {mode === 'variants' && (
         <InlineVariantPanel
           dishId={record.dishId}
           dishName={record.dish.name}
         />
       )}
 
-      {deleteConfirming && (
+      {mode === 'delete-confirm' && (
         <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
           <p className="text-sm font-semibold text-red-700">确认删除这条用餐记录？</p>
           <p className="mt-1 text-xs leading-5 text-red-600">
@@ -262,7 +252,7 @@ export function MealRecordCard({
             <SecondaryButton
               type="button"
               className="flex-1 px-3 py-1.5 text-xs"
-              onClick={() => setDeleteConfirming(false)}
+              onClick={() => setMode('view')}
               disabled={deleteMealRecord.isPending}
             >
               取消
@@ -305,7 +295,7 @@ export function MealRecordCard({
         })}
       </div>
 
-      {currentFeedback?.note && !showNote && (
+      {currentFeedback?.note && mode !== 'note' && (
         <p className="mt-2 text-xs text-slate-500">
           反馈备注：{currentFeedback.note}
         </p>
@@ -317,26 +307,22 @@ export function MealRecordCard({
           className="text-xs font-semibold text-slate-600 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => {
             setNote(currentFeedback?.note ?? "");
-            setShowNote((value) => !value);
+            setMode(mode === 'note' ? 'view' : 'note');
           }}
           disabled={!currentFeedback || upsertFeedback.isPending}
         >
-          {showNote ? "收起备注" : "添加反馈备注"}
+          {mode === 'note' ? "收起备注" : "添加反馈备注"}
         </button>
         <button
           type="button"
           className="text-xs font-semibold text-slate-600 underline underline-offset-4"
-          onClick={() => {
-            setShowVariantPanel((value) => !value);
-            setIsEditing(false);
-            setDeleteConfirming(false);
-          }}
+          onClick={() => setMode(mode === 'variants' ? 'view' : 'variants')}
         >
-          {showVariantPanel ? "收起" : "管理版本"}
+          {mode === 'variants' ? "收起" : "管理版本"}
         </button>
       </div>
 
-      {showNote && currentFeedback && (
+      {mode === 'note' && currentFeedback && (
         <form onSubmit={submitNote} className="mt-3 flex flex-col gap-2">
           <Input
             value={note}
@@ -347,7 +333,7 @@ export function MealRecordCard({
             <SecondaryButton
               type="button"
               className="flex-1 px-3 py-1.5 text-xs"
-              onClick={() => setShowNote(false)}
+              onClick={() => setMode('view')}
               disabled={upsertFeedback.isPending}
             >
               取消

@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend standards verification"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "Component patterns verification"}
+{"file": ".trellis/spec/backend/frontend/quality-guidelines.md", "reason": "Code quality and complexity checks"}
+{"file": ".trellis/spec/backend/frontend/type-safety.md", "reason": "TypeScript safety verification"}
+

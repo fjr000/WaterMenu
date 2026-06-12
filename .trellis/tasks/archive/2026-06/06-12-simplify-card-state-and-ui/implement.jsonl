@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "Component state management patterns"}
+{"file": ".trellis/spec/backend/frontend/state-management.md", "reason": "Local state best practices"}
+{"file": ".trellis/spec/backend/frontend/quality-guidelines.md", "reason": "Code simplification guidelines"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Avoid over-engineering and complexity"}
+

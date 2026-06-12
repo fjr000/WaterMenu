@@ -30,8 +30,18 @@ sudo ./scripts/deploy.sh
 - ✅ 配置 Docker 镜像加速
 - ✅ 创建环境变量配置文件
 - ✅ 引导你编辑必要配置
+- ✅ **自动备份数据库**（升级部署时）
 - ✅ 构建并启动所有服务
+- ✅ **运行健康检查验证部署**
+- ✅ **保存部署记录用于回滚**
 - ✅ 创建初始管理员账号
+- ✅ **自动清理旧备份和镜像**
+
+**新增功能：**
+- 🔄 自动回滚：健康检查失败时自动回滚到上一版本
+- 💾 预部署备份：每次部署前自动备份数据库
+- 📊 部署日志：记录每次部署的详细日志（`deploy/logs/`）
+- ⚡ 手动回滚：使用 `./scripts/rollback.sh` 快速回滚
 
 **3. 按提示编辑配置**
 
@@ -164,6 +174,8 @@ docker compose -f docker-compose.prod.yml start nginx
 
 ## 常用命令
 
+### 日常操作
+
 ```bash
 # 查看日志
 docker compose -f docker-compose.prod.yml logs -f [服务名]
@@ -176,6 +188,34 @@ docker compose -f docker-compose.prod.yml down
 
 # 数据库备份
 ./scripts/backup-postgres.sh
+
+# 数据库恢复
+./scripts/restore-postgres.sh <备份文件路径>
+
+# 升级应用
+git pull
+sudo ./scripts/deploy.sh
+
+# 回滚到上一版本
+sudo ./scripts/rollback.sh
+
+# 回滚并恢复数据库
+sudo ./scripts/rollback.sh --restore-db
+```
+
+### 部署选项
+
+```bash
+# 跳过预部署备份（不推荐）
+sudo ./scripts/deploy.sh --skip-backup
+
+# 跳过健康检查（不推荐）
+sudo ./scripts/deploy.sh --skip-health-check
+
+# 查看部署日志
+ls -lht deploy/logs/
+tail -f deploy/logs/deployment-*.log
+```
 
 # 数据库恢复
 ./scripts/restore-postgres.sh <备份文件路径>

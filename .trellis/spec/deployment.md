@@ -434,7 +434,29 @@ docker compose -f docker-compose.prod.yml exec [服务名] sh
 30 3 * * * cd /path/to/WaterMenu && ./scripts/backup-postgres.sh >> /var/log/watermenu-backup.log 2>&1
 ```
 
-### 7.3 升级部署
+### 7.3 升级部署（推荐使用自动化脚本）
+
+**方案一：使用自动化脚本（推荐）**
+
+```bash
+# 拉取代码
+git pull
+
+# 运行部署脚本（自动备份、健康检查、回滚）
+sudo ./scripts/deploy.sh
+```
+
+脚本自动完成：
+1. 预部署数据库备份
+2. 标记当前镜像用于回滚
+3. 构建新镜像
+4. 启动服务
+5. 运行健康检查
+6. 健康检查失败时自动回滚
+7. 保存部署记录
+8. 清理旧备份和镜像
+
+**方案二：手动升级（不推荐）**
 
 ```bash
 # 1. 备份数据
@@ -450,6 +472,65 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
 curl http://localhost:8080/api/health
 ```
+
+### 7.4 回滚部署
+
+**自动回滚：**
+部署脚本在健康检查失败时会自动回滚到上一版本。
+
+**手动回滚：**
+
+```bash
+# 回滚应用（不含数据库）
+sudo ./scripts/rollback.sh
+
+# 回滚应用并恢复数据库
+sudo ./scripts/rollback.sh --restore-db
+```
+
+回滚操作：
+1. 停止当前服务
+2. 恢复上一次成功部署的镜像
+3. 重启服务
+4. 运行健康检查
+5. （可选）恢复数据库备份
+
+**查看回滚历史：**
+
+```bash
+# 查看部署记录
+cat deploy/.last-deployment
+
+# 查看部署日志
+ls -lht deploy/logs/
+tail -f deploy/logs/deployment-*.log
+
+# 查看可用的备份镜像
+docker images | grep backup
+```
+
+### 7.5 部署日志
+
+所有部署操作自动记录到 `deploy/logs/deployment-YYYYMMDD-HHMMSS.log`。
+
+```bash
+# 查看最近的部署日志
+ls -lht deploy/logs/ | head -5
+
+# 查看特定部署的日志
+tail -f deploy/logs/deployment-20260612-164500.log
+
+# 搜索部署日志中的错误
+grep -i error deploy/logs/deployment-*.log
+```
+
+日志内容包括：
+- 部署开始/结束时间
+- Git commit 哈希
+- 备份状态
+- 构建状态
+- 健康检查结果
+- 回滚事件（如果发生）
 
 ---
 
@@ -490,10 +571,118 @@ HTTP 环境下 Session Cookie 可能被中间人攻击。仅在测试或内网�
 
 ---
 
-## 9. 未来改进
+## 9. 部署自动化增强功能 (2026-06-12)
+
+### 9.1 自动备份与回滚机制
+
+**签名（2026-06-12 实现）：**
+
+```bash
+# 部署脚本新增功能
+./scripts/deploy.sh
+  --skip-backup         # 跳过预部署备份（不推荐）
+  --skip-health-check   # 跳过健康检查（不推荐）
+
+# 回滚脚本
+./scripts/rollback.sh
+  --restore-db          # 同时恢复数据库备份
+```
+
+**实现的功能：**
+
+1. **预部署备份**
+   - 每次部署前自动运行 `backup-postgres.sh`
+   - 备份失败时中止部署
+   - 首次部署时自动跳过（容器不存在）
+
+2. **镜像标记与回滚**
+   - 部署前标记当前镜像为 `backup-<timestamp>`
+   - 健康检查失败时自动回滚到旧镜像
+   - 保存部署记录到 `deploy/.last-deployment`
+
+3. **健康检查**
+   - 容器状态检查（postgres, backend, nginx）
+   - API 健康端点检查（`/api/health`）
+   - 重试逻辑：3 次尝试，5 秒间隔
+   - 失败时触发自动回滚
+
+4. **部署日志**
+   - 日志文件：`deploy/logs/deployment-YYYYMMDD-HHMMSS.log`
+   - 记录每步操作、时间戳、commit 哈希
+   - 自动保留最近 30 个日志
+
+5. **自动清理**
+   - 保留最近 10 个数据库备份
+   - 保留最近 5 个镜像备份
+   - 部署成功后自动清理
+
+**测试要求：**
+- [ ] 首次部署：跳过备份，成功创建 `.last-deployment`
+- [ ] 升级部署：自动备份，健康检查通过
+- [ ] 失败部署：健康检查失败，自动回滚
+- [ ] 手动回滚：`rollback.sh` 成功回滚
+- [ ] 日志记录：所有操作记录到日志文件
+
+**Good/Base/Bad Cases：**
+
+| Case | Scenario | Result |
+|------|----------|--------|
+| Good | 升级部署 + 健康检查通过 | ✅ 部署成功，保存记录 |
+| Good | 升级部署 + 健康检查失败 | ✅ 自动回滚到旧版本 |
+| Good | 手动回滚 | ✅ 恢复到上一版本 |
+| Base | 首次部署 | ✅ 跳过备份，正常部署 |
+| Bad | 备份失败 + 强制部署 | ⚠️ 使用 `--skip-backup`（不推荐）|
+
+**验证：**
+
+```bash
+# 1. 测试首次部署
+sudo ./scripts/deploy.sh
+# 预期：跳过备份，创建 deploy/.last-deployment
+
+# 2. 测试升级部署
+git pull
+sudo ./scripts/deploy.sh
+# 预期：自动备份，健康检查，保存记录
+
+# 3. 测试回滚
+sudo ./scripts/rollback.sh
+# 预期：回滚到上一版本，健康检查通过
+
+# 4. 查看日志
+tail -f deploy/logs/deployment-*.log
+# 预期：包含所有步骤的日志
+```
+
+**设计决策：**
+
+**Context：**
+现有部署脚本缺少安全机制，升级失败时需要手动回滚，耗时且容易出错。
+
+**Options Considered：**
+1. 零停机部署（blue-green）- 需要 2x 资源，复杂度高
+2. 安全增强 + 自动回滚 - 低复杂度，高安全性
+3. CI/CD 集成 - 需要额外基础设施
+
+**Decision：**
+实现方案 2（安全增强 + 自动回滚），理由：
+- 低复杂度，易于维护
+- 复用现有备份脚本
+- 回滚时间 < 60 秒
+- 适合单服务器部署场景
+
+**Trade-offs：**
+- ✅ 更安全的部署流程
+- ✅ 快速回滚能力
+- ⚠️ 部署时间增加约 30 秒（备份 + 健康检查）
+- ⚠️ 磁盘空间占用增加（备份 + 镜像）
+
+---
+
+## 10. 未来改进
 
 - [ ] 自动化 HTTPS 证书申请（Let's Encrypt）
 - [ ] 支持多域名配置
 - [ ] 健康检查告警
 - [ ] 自动备份到对象存储
-- [ ] 部署回滚机制
+- [x] ~~部署回滚机制~~ (已完成 2026-06-12)

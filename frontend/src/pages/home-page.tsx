@@ -8,7 +8,7 @@ import {
   useRecommend,
   useBlindBox,
 } from "../hooks/use-recommendations.ts";
-import type { Dish, DishImage, MealType } from "../api/types.ts";
+import type { Dish, MealType } from "../api/types.ts";
 import {
   CreateDishForm,
   EditDishForm,
@@ -95,6 +95,7 @@ export function HomePage() {
   const [imageDish, setImageDish] = useState<Dish | null>(null);
   const [variantDish, setVariantDish] = useState<Dish | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
 
   const hasDishFilters = hasActiveDishFilters({
     q: dishSearch,
@@ -124,11 +125,16 @@ export function HomePage() {
     blindBoxMutation.reset();
   };
 
-  const handleRecordDish = (dish: Dish) => {
+  const handleToggleDish = (dishId: string) => {
+    setExpandedDishId((current) => (current === dishId ? null : dishId));
+  };
+
+    const handleRecordDish = (dish: Dish) => {
     setRecipeDish(null);
     setImageDish(null);
     setVariantDish(null);
     setEditingDish(null);
+    setExpandedDishId(dish.id);
     setRecordDish(dish);
   };
 
@@ -137,6 +143,7 @@ export function HomePage() {
     setImageDish(null);
     setVariantDish(null);
     setEditingDish(null);
+    setExpandedDishId(dish.id);
     setRecipeDish(dish);
   };
 
@@ -145,6 +152,7 @@ export function HomePage() {
     setRecipeDish(null);
     setVariantDish(null);
     setEditingDish(null);
+    setExpandedDishId(dish.id);
     setImageDish(dish);
   };
 
@@ -153,6 +161,7 @@ export function HomePage() {
     setRecipeDish(null);
     setImageDish(null);
     setEditingDish(null);
+    setExpandedDishId(dish.id);
     setVariantDish(dish);
   };
 
@@ -162,6 +171,7 @@ export function HomePage() {
     setImageDish(null);
     setVariantDish(null);
     setShowCreateForm(false);
+    setExpandedDishId(dish.id);
     setEditingDish(dish);
   };
 
@@ -316,13 +326,8 @@ export function HomePage() {
                     status: dishStatus,
                   })}
                   dish={dish}
-                  forceExpanded={
-                    editingDish?.id === dish.id ||
-                    recordDish?.id === dish.id ||
-                    recipeDish?.id === dish.id ||
-                    imageDish?.id === dish.id ||
-                    variantDish?.id === dish.id
-                  }
+                  expanded={expandedDishId === dish.id}
+                  onToggle={() => handleToggleDish(dish.id)}
                   isEditing={editingDish?.id === dish.id}
                   onEditDish={handleEditDish}
                   onCancelEdit={() => setEditingDish(null)}
@@ -398,22 +403,26 @@ function DishFiltersCard({
       </div>
 
       <div>
+        <label htmlFor="dish-search" className="mb-1.5 block text-sm font-medium text-slate-700">
+          关键词
+        </label>
         <Input
           id="dish-search"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="搜索菜名或简介"
-          aria-label="搜索菜品"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
+          <label htmlFor="dish-meal-type" className="mb-1.5 block text-sm font-medium text-slate-700">
+            餐次
+          </label>
           <Select
             id="dish-meal-type"
             value={mealType}
             onChange={(event) => onMealTypeChange(event.target.value as MealType | "")}
-            aria-label="餐次筛选"
           >
             <option value="">全部餐次</option>
             {mealTypeOptions.map((value) => (
@@ -425,11 +434,13 @@ function DishFiltersCard({
         </div>
 
         <div>
+          <label htmlFor="dish-status" className="mb-1.5 block text-sm font-medium text-slate-700">
+            状态
+          </label>
           <Select
             id="dish-status"
             value={status}
             onChange={(event) => onStatusChange(event.target.value as DishStatusFilter)}
-            aria-label="状态筛选"
           >
             <option value="">全部状态</option>
             <option value="true">启用</option>
@@ -579,11 +590,11 @@ function getDishFilterSummary({
   mealType: MealType | "";
   status: DishStatusFilter;
 }) {
-  const keyword = q.trim() ? `关键词“${q.trim()}”` : "全部关键词";
+  const keyword = q.trim() ? `关键词"${q.trim()}"` : "全部关键词";
   const meal = mealType ? mealLabel(mealType) : "全部餐次";
   const statusLabel = getDishStatusFilterLabel(status);
 
-  return `${keyword} · ${meal} · ${statusLabel}`;
+  return `正在筛选：${keyword} · ${meal} · ${statusLabel}`;
 }
 
 function getDishStatusFilterLabel(status: DishStatusFilter) {
@@ -612,110 +623,38 @@ function getDishEmptyState(hasFilters: boolean) {
   };
 }
 
-function getMobileDetailsLabel(forceExpanded: boolean, expanded: boolean) {
-  if (forceExpanded) {
-    return "详情已展开";
-  }
-  if (expanded) {
-    return "收起详情";
-  }
-  return "展开详情";
-}
-
 function DishToolButton({
-  mark,
+  icon,
   label,
   tone = "amber",
   onClick,
 }: {
-  mark: ReactNode;
+  icon: ReactNode;
   label: string;
   tone?: "amber" | "emerald";
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
 }) {
   return (
     <button
       type="button"
-      className={`grid h-10 w-10 place-items-center rounded-xl border text-sm font-black shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 active:translate-y-0 ${
+      className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 active:translate-y-0 sm:gap-2 sm:px-3 ${
         tone === "emerald"
           ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100"
-          : "border-amber-200/80 bg-amber-50/90 text-red-600 hover:bg-amber-100"
+          : "border-amber-200/80 bg-amber-50/90 text-slate-700 hover:bg-amber-100"
       }`}
       onClick={onClick}
       aria-label={label}
-      title={label}
     >
-      <span aria-hidden="true">{mark}</span>
+      <span className="text-base" aria-hidden="true">{icon}</span>
+      <span className="hidden sm:inline">{label}</span>
     </button>
-  );
-}
-
-function DishImageStrip({
-  dish,
-  images,
-  className,
-}: {
-  dish: Dish;
-  images: DishImage[];
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <div className="flex snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
-        {images.map((image, index) => (
-          <img
-            key={image.id}
-            src={image.fileUrl}
-            alt={image.isCover ? `${dish.name}封面` : `${dish.name}图片`}
-            className={`h-28 shrink-0 snap-start rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] ${
-              index === 0 ? "w-44" : "w-32"
-            }`}
-            loading="lazy"
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ActiveSwitch({
-  id,
-  dish,
-  disabled,
-  className,
-  onChange,
-}: {
-  id: string;
-  dish: Dish;
-  disabled: boolean;
-  className: string;
-  onChange: () => void;
-}) {
-  return (
-    <label className={className} htmlFor={id}>
-      <input
-        id={id}
-        type="checkbox"
-        checked={dish.isActive}
-        onChange={onChange}
-        disabled={disabled}
-        aria-label="启用状态开关"
-        className="peer sr-only"
-      />
-      <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
-        <span
-          className={`block h-5 w-5 rounded-full bg-white shadow transition ${
-            dish.isActive ? "translate-x-5" : ""
-          }`}
-        />
-      </span>
-    </label>
   );
 }
 
 function DishCard({
   dish,
-  forceExpanded,
+  expanded,
+  onToggle,
   isEditing,
   onEditDish,
   onCancelEdit,
@@ -727,7 +666,8 @@ function DishCard({
   onResetRecommendations,
 }: {
   dish: Dish;
-  forceExpanded: boolean;
+  expanded: boolean;
+  onToggle: () => void;
   isEditing: boolean;
   onEditDish: (dish: Dish) => void;
   onCancelEdit: () => void;
@@ -738,21 +678,16 @@ function DishCard({
   onManageVariants: (dish: Dish) => void;
   onResetRecommendations: () => void;
 }) {
-  const activeSwitchDesktopId = useId();
-  const activeSwitchMobileId = useId();
-  const cardDetailsId = useId();
-  const recipePanelId = useId();
+  const activeSwitchId = useId();
   const updateDish = useUpdateDish();
   const imagesQuery = useDishImages(dish.id, Boolean(dish.coverImage));
-  const [mobileExpanded, setMobileExpanded] = useState(false);
-  const [recipesOpen, setRecipesOpen] = useState(false);
-  const recipesQuery = useRecipes(dish.id, recipesOpen);
+  const recipesQuery = useRecipes(dish.id, expanded);
   const images = imagesQuery.data ?? (dish.coverImage ? [dish.coverImage] : []);
   const coverImage = dish.coverImage ?? images[0] ?? null;
   const ratingText = dish.feedbackRatingAverage?.toFixed(1);
-  const showMobileDetails = forceExpanded || mobileExpanded;
 
-  const handleToggleActive = () => {
+  const handleToggleActive = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     updateDish.mutate(
       {
         id: dish.id,
@@ -764,239 +699,238 @@ function DishCard({
     );
   };
 
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
+
   return (
-    <Card className="overflow-hidden border-amber-200/80 bg-gradient-to-br from-white/95 via-amber-50/70 to-red-50/45 p-0 shadow-[0_18px_42px_rgba(111,82,56,0.14)]">
-      {images.length > 0 && (
-        <div className="hidden border-b border-amber-100/80 bg-amber-50/60 px-4 py-3.5 md:block backdrop-blur-sm">
-          <DishImageStrip dish={dish} images={images} />
-          {imagesQuery.isError && (
-            <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
-          )}
-        </div>
-      )}
-
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <p className="truncate font-serif text-xl font-semibold text-slate-900">
-                {dish.name}
-              </p>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                  dish.isActive
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                    : "bg-slate-100 text-slate-500 border border-slate-200"
-                }`}
-              >
-                {dish.isActive ? "启用" : "停用"}
-              </span>
-            </div>
-            {dish.description && (
-              <p className="mt-1.5 hidden line-clamp-2 text-sm leading-relaxed text-slate-500 md:block">
-                {dish.description}
-              </p>
-            )}
-          </div>
+    <Card className="overflow-hidden border-amber-200/80 bg-gradient-to-br from-white/95 via-amber-50/40 to-orange-50/30 p-0 shadow-[0_8px_24px_rgba(111,82,56,0.12)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(111,82,56,0.16)]">
+      <button
+        type="button"
+        className="w-full cursor-pointer p-5 text-left transition-colors hover:bg-white/40"
+        onClick={onToggle}
+        aria-expanded={expanded}
+      >
+        <div className="flex items-start gap-4">
           {coverImage && (
-            <img
-              src={coverImage.fileUrl}
-              alt={`${dish.name}封面`}
-              className="h-16 w-20 shrink-0 rounded-2xl border border-white/80 object-cover shadow-[0_10px_20px_rgba(111,82,56,0.15)] md:hidden"
-              loading="lazy"
-            />
-          )}
-          <div className="hidden shrink-0 text-right md:block">
-            <ActiveSwitch
-              id={activeSwitchDesktopId}
-              dish={dish}
-              disabled={updateDish.isPending}
-              className="block cursor-pointer rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-2.5 shadow-inner transition-all hover:bg-amber-50/50"
-              onChange={handleToggleActive}
-            />
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {dish.mealTypes.map((mt) => (
-            <MealTag key={mt} mealType={mt} />
-          ))}
-          {dish.mealRecordCount > 0 && (
-            <>
-              <span className="inline-flex rounded-full border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                {dish.mealRecordCount} 次
-              </span>
-              {ratingText && (
-                <span className="inline-flex rounded-full border border-amber-200/80 bg-amber-50/90 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                  ★ {ratingText}
+            <div className="relative shrink-0">
+              <img
+                src={coverImage.fileUrl}
+                alt={`${dish.name}`}
+                className="h-20 w-20 rounded-2xl border-2 border-white object-cover shadow-[0_8px_20px_rgba(111,82,56,0.15)]"
+                loading="lazy"
+              />
+              {images.length > 1 && (
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white shadow-sm">
+                  {images.length}
                 </span>
               )}
-            </>
+            </div>
           )}
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif text-xl font-semibold text-slate-900">
+                    {dish.name}
+                  </h3>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      dish.isActive
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {dish.isActive ? "启用" : "停用"}
+                  </span>
+                </div>
+
+                {dish.description && (
+                  <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                    {dish.description}
+                  </p>
+                )}
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  {dish.mealTypes.map((mt) => (
+                    <MealTag key={mt} mealType={mt} />
+                  ))}
+                  {dish.mealRecordCount > 0 && (
+                    <>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                        <span className="text-[10px]">🍽️</span>
+                        {dish.mealRecordCount} 次
+                      </span>
+                      {ratingText && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/90 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                          ★ {ratingText}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                <span
+                  className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500 transition-transform"
+                  style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                  aria-hidden="true"
+                >
+                  ▼
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
+      </button>
 
-        <button
-          type="button"
-          className="mt-4 flex min-h-10 w-full items-center justify-between rounded-2xl border border-amber-100/80 bg-white/75 px-3.5 text-left text-xs font-bold text-slate-600 shadow-inner transition-all duration-200 hover:bg-amber-50/80 focus:outline-none focus:ring-2 focus:ring-red-500/25 disabled:cursor-not-allowed disabled:opacity-70 md:hidden"
-          onClick={() => setMobileExpanded((value) => !value)}
-          disabled={forceExpanded}
-          aria-expanded={showMobileDetails}
-          aria-controls={cardDetailsId}
-        >
-          <span>{getMobileDetailsLabel(forceExpanded, showMobileDetails)}</span>
-          <span aria-hidden="true" className="text-sm">{showMobileDetails ? "↑" : "↓"}</span>
-        </button>
+      {expanded && (
+        <div className="border-t border-amber-100/80 bg-white/50 p-5 backdrop-blur-sm">
+          {images.length > 1 && (
+            <div className="mb-4">
+              <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
+                {images.map((image) => (
+                  <img
+                    key={image.id}
+                    src={image.fileUrl}
+                    alt={image.isCover ? `${dish.name}封面` : `${dish.name}图片`}
+                    className="h-24 w-24 shrink-0 rounded-xl border border-white object-cover shadow-[0_6px_16px_rgba(111,82,56,0.12)]"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              {imagesQuery.isError && (
+                <p className="mt-2 text-xs text-red-600">图库加载失败</p>
+              )}
+            </div>
+          )}
 
-        <div id={cardDetailsId} className={`${showMobileDetails ? "block" : "hidden"} md:block`}>
-          {dish.description && (
-            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-slate-500 md:hidden">
-              {dish.description}
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-100/80 bg-white/80 p-3 shadow-sm">
+            <label className="flex cursor-pointer items-center gap-2.5" htmlFor={activeSwitchId}>
+              <input
+                id={activeSwitchId}
+                type="checkbox"
+                checked={dish.isActive}
+                onChange={handleToggleActive}
+                disabled={updateDish.isPending}
+                aria-label="启用状态开关"
+                className="peer sr-only"
+              />
+              <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
+                <span
+                  className={`block h-5 w-5 rounded-full bg-white shadow transition ${
+                    dish.isActive ? "translate-x-5" : ""
+                  }`}
+                />
+              </span>
+              <span className="text-sm font-semibold text-slate-700">
+                {dish.isActive ? "已启用" : "已停用"}
+              </span>
+            </label>
+          </div>
+
+          {isEditing && (
+            <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4">
+              <EditDishForm
+                dish={dish}
+                onCancel={onCancelEdit}
+                onSuccess={onDishUpdated}
+              />
+            </div>
+          )}
+
+          {updateDish.isError && (
+            <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
+              更新失败，请重试
             </p>
           )}
 
-          {images.length > 0 && (
-            <div className="mt-4 border-y border-amber-100/80 bg-amber-50/60 py-3.5 md:hidden backdrop-blur-sm">
-              <DishImageStrip dish={dish} images={images} />
-              {imagesQuery.isError && (
-                <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
-              )}
-            </div>
-          )}
-
-          <div className="mt-4 block shrink-0 text-right md:hidden">
-            <ActiveSwitch
-              id={activeSwitchMobileId}
-              dish={dish}
-              disabled={updateDish.isPending}
-              className="inline-block cursor-pointer rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-2.5 shadow-inner transition-all hover:bg-amber-50/50"
-              onChange={handleToggleActive}
-            />
-          </div>
-
-        {isEditing && (
-          <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/85 p-4 backdrop-blur-sm">
-            <EditDishForm
-              dish={dish}
-              onCancel={onCancelEdit}
-              onSuccess={onDishUpdated}
-            />
-          </div>
-        )}
-
-        {updateDish.isError && (
-          <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
-            更新失败，请重试
-          </p>
-        )}
-
-        <div className="mt-5 rounded-3xl border border-amber-100/80 bg-white/60 p-3 shadow-inner backdrop-blur-sm">
-          <div className="flex items-center gap-2.5">
+          <div className="mt-4 space-y-3">
             <Button
-              className="min-h-12 flex-1 justify-between rounded-2xl px-4 py-3 text-sm shadow-[0_5px_0_rgba(111,82,56,0.16)]"
-              onClick={() => onRecordDish(dish)}
+              className="w-full justify-between rounded-2xl px-4 py-3 text-base shadow-[0_4px_0_rgba(111,82,56,0.12)]"
+              onClick={(e) => handleActionClick(e, () => onRecordDish(dish))}
             >
-              <span className="truncate">记录已吃</span>
+              <span className="flex items-center gap-2">
+                <span className="text-lg">✅</span>
+                <span>记录已吃</span>
+              </span>
               <span
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25 text-base font-bold"
+                className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-xl font-bold"
                 aria-hidden="true"
               >
                 +
               </span>
             </Button>
 
-            <div
-              className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-amber-100/80 bg-white/80 p-1.5"
-              role="toolbar"
-              aria-label={`${dish.name}管理操作`}
-            >
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <DishToolButton
-                mark="编"
-                label="编辑菜品"
-                onClick={() => onEditDish(dish)}
+                icon="✏️"
+                label="编辑"
+                onClick={(e) => handleActionClick(e, () => onEditDish(dish))}
               />
               <DishToolButton
-                mark="图"
-                label="管理图库"
-                onClick={() => onManageImages(dish)}
+                icon="🖼️"
+                label="图库"
+                onClick={(e) => handleActionClick(e, () => onManageImages(dish))}
               />
               <DishToolButton
-                mark="版"
-                label="管理版本"
-                onClick={() => onManageVariants(dish)}
+                icon="🔄"
+                label="版本"
+                onClick={(e) => handleActionClick(e, () => onManageVariants(dish))}
               />
               <DishToolButton
-                mark="做"
-                label="管理做法"
+                icon="📝"
+                label="做法"
                 tone="emerald"
-                onClick={() => onViewRecipe(dish)}
+                onClick={(e) => handleActionClick(e, () => onViewRecipe(dish))}
               />
             </div>
           </div>
 
-          <button
-            type="button"
-            className={`mt-2.5 flex min-h-10 w-full items-center justify-between rounded-2xl border px-3.5 text-left text-xs font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/25 ${
-              recipesOpen
-                ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-800 shadow-sm"
-                : "border-amber-100/80 bg-amber-50/75 text-slate-600 hover:bg-amber-100/90"
-            }`}
-            onClick={() => setRecipesOpen((value) => !value)}
-            aria-expanded={recipesOpen}
-            aria-controls={recipePanelId}
-          >
-            <span className="flex min-w-0 items-center gap-2.5">
-              <span
-                className={`grid h-6 w-6 shrink-0 place-items-center rounded-xl text-[11px] font-black ${
-                  recipesOpen ? "bg-emerald-100 text-emerald-700" : "bg-white/90 text-red-600"
-                }`}
-                aria-hidden="true"
-              >
-                做
-              </span>
-              <span className="truncate">做法</span>
-            </span>
-            <span className="shrink-0 text-[11px] text-slate-500">
-              {recipesOpen ? "收起" : "展开"}
-            </span>
-          </button>
-        </div>
+          {recipesQuery.isLoading && (
+            <div className="mt-4">
+              <Spinner />
+            </div>
+          )}
 
-        {recipesOpen && (
-          <div id={recipePanelId} className="mt-3.5 rounded-2xl border border-emerald-100/80 bg-emerald-50/60 p-4 backdrop-blur-sm">
-            {recipesQuery.isLoading && <Spinner />}
-
-            {recipesQuery.isError && (
+          {recipesQuery.isError && (
+            <div className="mt-4">
               <ErrorBanner
                 message="加载做法失败"
                 onRetry={() => void recipesQuery.refetch()}
               />
-            )}
+            </div>
+          )}
 
-            {recipesQuery.data && recipesQuery.data.length === 0 && (
-              <p className="text-sm text-slate-500">还没有做法，先在做法面板里记录一个。</p>
-            )}
-
-            {recipesQuery.data && recipesQuery.data.length > 0 && (
-              <div className="flex flex-col gap-2.5">
+          {recipesQuery.data && recipesQuery.data.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-emerald-100/80 bg-emerald-50/50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-lg">📝</span>
+                <h4 className="font-serif text-base font-semibold text-slate-900">做法</h4>
+              </div>
+              <div className="space-y-3">
                 {recipesQuery.data.map((recipe) => (
                   <article
                     key={recipe.id}
-                    className="rounded-2xl border border-white/90 bg-white/85 p-4 shadow-sm backdrop-blur-sm"
+                    className="rounded-xl border border-white/90 bg-white/80 p-3 shadow-sm"
                   >
-                    <p className="font-serif text-base font-semibold text-slate-900">
+                    <p className="font-serif text-sm font-semibold text-slate-900">
                       {recipe.title}
                     </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                       {recipe.content}
                     </p>
                   </article>
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </Card>
   );
 }

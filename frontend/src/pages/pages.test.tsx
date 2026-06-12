@@ -297,7 +297,9 @@ describe("HomePage", () => {
     await userEvent.selectOptions(screen.getByLabelText("状态"), "false");
 
     await waitFor(() => expect(useDishesMock).toHaveBeenLastCalledWith({ q: "番茄", mealType: "DINNER", isActive: false }));
-    expect(screen.getByText("正在筛选：关键词“番茄” · 晚餐 · 停用")).toBeInTheDocument();
+    expect(screen.getByText((_content, element) => {
+      return element?.textContent === '正在筛选：关键词"番茄" · 晚餐 · 停用';
+    })).toBeInTheDocument();
   });
 
   it("菜品加载失败时显示重试入口", async () => {

@@ -66,6 +66,9 @@ export function LoginPage() {
         <Card className="relative overflow-hidden before:absolute before:left-8 before:top-0 before:h-3 before:w-20 before:-translate-y-1/2 before:rounded-full before:bg-red-200 before:opacity-70">
           <form onSubmit={onSubmit} className="relative flex flex-col gap-5">
             <div>
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
+                邮箱
+              </label>
               <Input
                 id="email"
                 type="email"
@@ -81,6 +84,9 @@ export function LoginPage() {
             </div>
 
             <div>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
+                密码
+              </label>
               <Input
                 id="password"
                 type="password"

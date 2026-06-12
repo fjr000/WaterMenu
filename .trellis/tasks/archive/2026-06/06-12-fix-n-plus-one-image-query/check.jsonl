@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend standards verification"}
+{"file": ".trellis/spec/backend/frontend/quality-guidelines.md", "reason": "Code quality checks"}
+{"file": ".trellis/spec/backend/frontend/hook-guidelines.md", "reason": "Verify React Query usage patterns"}
+

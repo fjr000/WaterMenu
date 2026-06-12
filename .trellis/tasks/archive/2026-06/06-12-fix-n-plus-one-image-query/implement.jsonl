@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards"}
+{"file": ".trellis/spec/backend/frontend/hook-guidelines.md", "reason": "React Query patterns and data fetching"}
+{"file": ".trellis/spec/backend/frontend/state-management.md", "reason": "Server state management with React Query"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "Component composition patterns"}
+

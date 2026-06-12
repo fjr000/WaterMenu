@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~280 | Active |
+| `journal-1.md` | ~311 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-06-12 | 深入理解 WaterMenu 项目架构 | - | `main` |
 | 7 | 2026-06-12 | 修复 Docker 网络与 Clash 冲突 | `d9da413` | `main` |
 | 6 | 2026-06-12 | 本地开发脚本与启动文档 | `a88d8cd` | `main` |
 | 5 | 2026-06-11 | 完成菜品版本来源管理 | `0fc3850`, `bfd8777` | `main` |

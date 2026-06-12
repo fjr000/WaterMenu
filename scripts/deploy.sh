@@ -105,7 +105,7 @@ log_success "Docker Compose 已安装: $(docker compose version)"
 
 # 步骤 2: 准备环境变量
 echo ""
-log_info "步骤 2/7: 配置环境变量"
+log_info "步骤 2/8: 配置环境变量"
 if [ ! -f deploy/env/prod.env ]; then
     cp deploy/env/prod.env.example deploy/env/prod.env
     log_warning "已创建 deploy/env/prod.env，请立即编辑以下配置："
@@ -211,11 +211,19 @@ else
         # Auto-rollback: restore previous images
         if [ -n "$TIMESTAMP" ]; then
             log_info "恢复之前的镜像..."
-            docker tag "watermenu-backend:backup-${TIMESTAMP}" watermenu-backend:latest 2>/dev/null && \
-            docker tag "watermenu-frontend:backup-${TIMESTAMP}" watermenu-frontend:latest 2>/dev/null && \
-            docker compose -f docker-compose.prod.yml up -d && \
-            sleep 5 && \
-            log_success "已回滚到之前的版本" || log_error "自动回滚失败"
+            # Check if backup images exist
+            if docker image inspect "watermenu-backend:backup-${TIMESTAMP}" &>/dev/null && \
+               docker image inspect "watermenu-frontend:backup-${TIMESTAMP}" &>/dev/null; then
+                docker tag "watermenu-backend:backup-${TIMESTAMP}" watermenu-backend:latest && \
+                docker tag "watermenu-frontend:backup-${TIMESTAMP}" watermenu-frontend:latest && \
+                docker compose -f docker-compose.prod.yml up -d && \
+                sleep 5 && \
+                log_success "已回滚到之前的版本" || log_error "自动回滚失败"
+            else
+                log_error "未找到备份镜像，无法自动回滚（可能是首次部署）"
+            fi
+        else
+            log_error "未标记备份镜像，无法回滚"
         fi
 
         log_error "部署失败"
@@ -228,13 +236,20 @@ fi
 if [ "$HEALTH_CHECK_PASSED" = true ]; then
     log_info "保存部署记录..."
     LAST_DEPLOYMENT_FILE="deploy/.last-deployment"
-    cat > "$LAST_DEPLOYMENT_FILE" <<EOF
+
+    # Check if we have valid backup images
+    if docker image inspect "watermenu-backend:backup-${TIMESTAMP}" &>/dev/null && \
+       docker image inspect "watermenu-frontend:backup-${TIMESTAMP}" &>/dev/null; then
+        cat > "$LAST_DEPLOYMENT_FILE" <<EOF
 BACKEND_IMAGE=watermenu-backend:backup-${TIMESTAMP}
 FRONTEND_IMAGE=watermenu-frontend:backup-${TIMESTAMP}
 COMMIT_HASH=${COMMIT_HASH}
 DEPLOYED_AT=$(date -Iseconds)
 EOF
-    log_success "部署记录已保存: ${LAST_DEPLOYMENT_FILE}"
+        log_success "部署记录已保存: ${LAST_DEPLOYMENT_FILE}"
+    else
+        log_info "首次部署，跳过回滚记录保存"
+    fi
 fi
 
 # 步骤 8: 创建初始管理员
@@ -256,10 +271,10 @@ echo ""
 log_info "清理旧备份和镜像..."
 # Keep last 10 backups
 if [ -d deploy/backups/postgres ]; then
-    BACKUP_COUNT=$(find deploy/backups/postgres -name "*.sql" -o -name "*.sql.gz" | wc -l)
+    BACKUP_COUNT=$(find deploy/backups/postgres -name "*.dump" | wc -l)
     if [ "$BACKUP_COUNT" -gt 10 ]; then
         log_info "清理旧数据库备份（保留最近 10 个）"
-        find deploy/backups/postgres \( -name "*.sql" -o -name "*.sql.gz" \) -type f | sort | head -n -10 | xargs rm -f
+        find deploy/backups/postgres -name "*.dump" -type f | sort | head -n -10 | xargs rm -f
     fi
 fi
 

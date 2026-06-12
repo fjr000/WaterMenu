@@ -31,9 +31,13 @@ check_containers() {
 
     for service in "${required_services[@]}"; do
         local service_state
-        service_state=$(echo "$status_output" | jq -r "select(.Service == \"$service\") | .State" 2>/dev/null)
+        # Parse line-delimited JSON
+        service_state=$(echo "$status_output" | jq -r "select(.Service == \"$service\") | .State" 2>/dev/null | head -n1)
 
-        if [ "$service_state" != "running" ]; then
+        if [ -z "$service_state" ]; then
+            log_error "Service ${service} not found"
+            all_running=false
+        elif [ "$service_state" != "running" ]; then
             log_error "Service ${service} is not running (state: ${service_state})"
             all_running=false
         else
@@ -73,9 +77,9 @@ check_api_health() {
 check_database() {
     log_info "Checking database connectivity..."
 
-    # Try to connect to database via backend container
+    # Try to connect to database via backend container using Prisma
     local result
-    result=$(docker compose -f docker-compose.prod.yml exec -T backend sh -c "node -e \"require('pg').Client.prototype.connect()\"" 2>&1)
+    result=$(docker compose -f docker-compose.prod.yml exec -T backend sh -c "npx prisma db execute --stdin <<< 'SELECT 1'" 2>&1)
     local exit_code=$?
 
     if [ $exit_code -ne 0 ]; then
@@ -91,10 +95,22 @@ check_database() {
 run_health_checks() {
     local port="${1:-8080}"
     local attempt=1
+    local start_time
+    start_time=$(date +%s)
 
-    log_info "Starting health checks (${HEALTH_CHECK_RETRIES} attempts, ${HEALTH_CHECK_DELAY}s delay)"
+    log_info "Starting health checks (${HEALTH_CHECK_RETRIES} attempts, ${HEALTH_CHECK_DELAY}s delay, ${HEALTH_CHECK_TIMEOUT}s timeout)"
 
     while [ $attempt -le "$HEALTH_CHECK_RETRIES" ]; do
+        # Check if we've exceeded the overall timeout
+        local current_time
+        current_time=$(date +%s)
+        local elapsed=$((current_time - start_time))
+
+        if [ $elapsed -ge "$HEALTH_CHECK_TIMEOUT" ]; then
+            log_error "Health checks timed out after ${elapsed}s"
+            return 1
+        fi
+
         log_info "Health check attempt ${attempt}/${HEALTH_CHECK_RETRIES}"
 
         # Run checks

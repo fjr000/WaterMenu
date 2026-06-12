@@ -139,7 +139,7 @@ if [ "$RESTORE_DB" = true ]; then
     if [ "$db_response" = "yes" ]; then
         # List recent backups
         log_info "最近的备份文件:"
-        ls -lht deploy/backups/postgres/*.sql 2>/dev/null | head -5 || {
+        ls -lht deploy/backups/postgres/*.dump 2>/dev/null | head -5 || {
             log_error "未找到备份文件"
             exit 1
         }

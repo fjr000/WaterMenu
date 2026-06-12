@@ -677,6 +677,121 @@ tail -f deploy/logs/deployment-*.log
 - ⚠️ 部署时间增加约 30 秒（备份 + 健康检查）
 - ⚠️ 磁盘空间占用增加（备份 + 镜像）
 
+### 9.2 脚本模块化架构
+
+**Context:**
+为了提高脚本可维护性和可测试性，将共享逻辑提取到独立模块。
+
+**目录结构：**
+```bash
+scripts/
+├── deploy.sh           # 主部署脚本（编排）
+├── rollback.sh         # 手动回滚脚本
+├── backup-postgres.sh  # 数据库备份（已有）
+├── restore-postgres.sh # 数据库恢复（已有）
+└── lib/                # 共享模块
+    ├── logger.sh       # 日志工具
+    └── health-check.sh # 健康检查逻辑
+```
+
+**模块契约：**
+
+**logger.sh - 日志工具模块**
+```bash
+# 函数签名
+init_log()              # 初始化日志文件
+log_info "message"      # 记录 INFO 级别日志
+log_success "message"   # 记录 SUCCESS 级别日志
+log_error "message"     # 记录 ERROR 级别日志
+log_warning "message"   # 记录 WARNING 级别日志
+cleanup_old_logs N      # 清理旧日志，保留最近 N 个
+
+# 环境变量要求
+LOG_FILE               # 必须在调用前设置日志文件路径
+
+# 日志格式
+[YYYY-MM-DD HH:MM:SS] [LEVEL] message
+```
+
+**health-check.sh - 健康检查模块**
+```bash
+# 函数签名
+check_health()         # 执行完整健康检查
+  # 返回: 0=成功, 1=失败
+
+# 健康检查维度
+1. 容器状态检查（postgres, backend, nginx）
+2. API 端点检查（GET /api/health）
+3. 数据库连接检查（通过 backend 容器）
+
+# 重试配置
+MAX_RETRIES=3         # 最多重试 3 次
+RETRY_DELAY=5         # 重试间隔 5 秒
+```
+
+**使用示例：**
+```bash
+#!/bin/bash
+set -e
+
+# 加载模块
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/logger.sh
+source "${SCRIPT_DIR}/lib/logger.sh"
+# shellcheck source=scripts/lib/health-check.sh
+source "${SCRIPT_DIR}/lib/health-check.sh"
+
+# 初始化日志
+init_log
+log_info "Starting deployment"
+
+# 执行健康检查
+if check_health; then
+    log_success "Health check passed"
+else
+    log_error "Health check failed"
+    exit 1
+fi
+```
+
+**Wrong vs Correct:**
+
+#### Wrong - 所有逻辑在主脚本中
+```bash
+# deploy.sh - 300+ 行，难以维护
+...
+# 直接嵌入健康检查逻辑
+echo "[INFO] Checking health..."
+for i in 1 2 3; do
+    if curl -s http://localhost:8080/api/health > /dev/null; then
+        break
+    fi
+    sleep 5
+done
+...
+# 直接嵌入日志逻辑
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $message" | tee -a "$LOG_FILE"
+...
+```
+
+#### Correct - 模块化架构
+```bash
+# deploy.sh - 简洁的编排脚本
+source lib/logger.sh
+source lib/health-check.sh
+
+log_info "Starting deployment"
+if check_health; then
+    log_success "Deployment successful"
+fi
+```
+
+**测试要求：**
+- [ ] 每个模块可以独立 source 不报错
+- [ ] logger.sh 日志格式正确，文件权限正确
+- [ ] health-check.sh 在各种失败场景下返回正确退出码
+- [ ] 模块之间无循环依赖
+
 ---
 
 ## 10. 未来改进

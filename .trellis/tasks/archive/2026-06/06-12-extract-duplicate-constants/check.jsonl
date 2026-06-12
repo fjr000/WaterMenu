@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards verification"}
+{"file": ".trellis/spec/backend/frontend/quality-guidelines.md", "reason": "Code quality checks and forbidden patterns"}
+{"file": ".trellis/spec/backend/frontend/type-safety.md", "reason": "Verify TypeScript type safety"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Check for remaining duplication"}

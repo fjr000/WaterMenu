@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards and conventions"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "Component patterns and code organization"}
+{"file": ".trellis/spec/backend/frontend/type-safety.md", "reason": "TypeScript patterns for constants and exports"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Code reuse best practices"}

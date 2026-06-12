@@ -1,0 +1,5 @@
+{"file":".trellis/spec/guides/index.md","reason":"根脚本、README 和 .gitignore 同时变更，需要先做跨文件思考与复用检查。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"新增 dev 脚本与根命令前，先检查是否复用已有命令和约定，避免脚本漂移。"}
+{"file":".trellis/spec/backend/backend/index.md","reason":"本地开发脚本会触发 Prisma、seed 与后端启动，需要遵守当前后端工作流总览。"}
+{"file":".trellis/spec/backend/backend/database-guidelines.md","reason":"dev 脚本会自动执行 Prisma generate / migrate / seed，需要遵守现有数据库初始化约定。"}
+{"file":".trellis/spec/backend/backend/quality-guidelines.md","reason":"实现阶段需要按现有项目质量门槛验证脚本和相关命令。"}

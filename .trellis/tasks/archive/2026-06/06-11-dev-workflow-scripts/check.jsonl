@@ -1,0 +1,5 @@
+{"file":".trellis/spec/guides/index.md","reason":"最终检查时需要确认跨文件改动没有遗漏 README、脚本与忽略规则。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"检查根脚本是否复用现有命令而不是引入重复逻辑。"}
+{"file":".trellis/spec/backend/backend/index.md","reason":"检查脚本是否仍与后端现有开发/数据库约定一致。"}
+{"file":".trellis/spec/backend/backend/database-guidelines.md","reason":"检查自动 migrate / seed 流程是否符合当前数据库初始化规范。"}
+{"file":".trellis/spec/backend/backend/quality-guidelines.md","reason":"检查阶段需要按项目质量门槛运行相关验证命令。"}

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState } from "react";
 import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
@@ -622,35 +622,6 @@ function getDishEmptyState(hasFilters: boolean) {
     description: "点击上方按钮添加第一道菜",
   };
 }
-
-function DishToolButton({
-  icon,
-  label,
-  tone = "amber",
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  tone?: "amber" | "emerald";
-  onClick: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <button
-      type="button"
-      className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 active:translate-y-0 sm:gap-2 sm:px-3 ${
-        tone === "emerald"
-          ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100"
-          : "border-amber-200/80 bg-amber-50/90 text-slate-700 hover:bg-amber-100"
-      }`}
-      onClick={onClick}
-      aria-label={label}
-    >
-      <span className="text-base" aria-hidden="true">{icon}</span>
-      <span className="hidden sm:inline">{label}</span>
-    </button>
-  );
-}
-
 function DishCard({
   dish,
   expanded,

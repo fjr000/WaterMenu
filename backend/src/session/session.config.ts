@@ -13,7 +13,8 @@ export function getSessionCookieOptions(): CookieOptions {
     path: '/',
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // 允许通过环境变量控制 secure 属性，默认生产环境需要 HTTPS
+    secure: process.env.SESSION_SECURE === 'false' ? false : process.env.NODE_ENV === 'production',
   };
 }
 

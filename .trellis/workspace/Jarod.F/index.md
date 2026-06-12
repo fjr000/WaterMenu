@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 1
 - **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~411 | Active |
+| `journal-1.md` | ~40 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,17 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
-| 11 | 2026-06-12 | 实现部署自动化增强功能 | `faaf64b`, `295b162` | `main` |
-| 10 | 2026-06-12 | 前端规范更新：补充可访问性与测试模式 | `0136086` | `main` |
-| 9 | 2026-06-12 | Frontend UI/UX优化：重构菜品卡片交互 | `f615a66` | `main` |
-| 8 | 2026-06-12 | 深入理解 WaterMenu 项目架构 | - | `main` |
-| 7 | 2026-06-12 | 修复 Docker 网络与 Clash 冲突 | `d9da413` | `main` |
-| 6 | 2026-06-12 | 本地开发脚本与启动文档 | `a88d8cd` | `main` |
-| 5 | 2026-06-11 | 完成菜品版本来源管理 | `0fc3850`, `bfd8777` | `main` |
-| 4 | 2026-06-10 | 测试覆盖与部署健康检查 | `51f8f09` | `main` |
-| 3 | 2026-06-10 | 补 README、前端测试与 CI | `0b74fcd`, `bc9e74e` | `main` |
-| 2 | 2026-06-09 | Bootstrap Project Spec | `27acc8e`, `16d93af` | `main` |
-| 1 | 2026-06-09 | Bootstrap Project Spec | - | `main` |
+| 1 | 2026-06-12 | 重构历史记录深度集成菜品管理 | `d002b0e` | `main` |
 <!-- @@@/auto:session-history -->
 
 ---

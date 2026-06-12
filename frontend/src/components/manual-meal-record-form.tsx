@@ -8,6 +8,7 @@ import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { DishAutocomplete } from "./dish-autocomplete.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import { Button, Card, Input, SecondaryButton, Select } from "./ui.tsx";
+import { toLocalInputValue } from "../utils/date-formatting.ts";
 
 const mealTypes: MealType[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
@@ -229,9 +230,4 @@ function inferMealType(date: Date): MealType {
   }
 
   return "SNACK";
-}
-
-function toLocalInputValue(date: Date): string {
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

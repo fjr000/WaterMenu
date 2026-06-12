@@ -4,6 +4,7 @@ import type { CreateInviteResponse, Member, UserRole, WorkspaceInvite } from "..
 import { useCreateInvite, useInvites, useRevokeInvite } from "../hooks/use-invites.ts";
 import { useMembers } from "../hooks/use-members.ts";
 import { Button, Card, EmptyState, ErrorBanner, SecondaryButton, Spinner } from "./ui.tsx";
+import { formatShortDate } from "../utils/date-formatting.ts";
 
 const roleText: Record<UserRole, string> = {
   ADMIN: "管理员",
@@ -121,7 +122,7 @@ export function MembersPanel({ isAdmin }: { isAdmin: boolean }) {
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <SecondaryButton onClick={() => void handleCopy()}>复制链接</SecondaryButton>
-                <span className="text-xs text-slate-500">有效期至 {formatDate(newInvite.expiresAt)}</span>
+                <span className="text-xs text-slate-500">有效期至 {formatShortDate(newInvite.expiresAt)}</span>
               </div>
               {copyMessage && <p className="mt-2 text-xs text-slate-600">{copyMessage}</p>}
             </div>
@@ -166,7 +167,7 @@ function MemberRow({ member, isAdmin }: { member: Member; isAdmin: boolean }) {
           {roleText[member.role]}
         </span>
       </div>
-      <p className="mt-2 text-xs text-slate-500">加入时间：{formatDate(member.createdAt)}</p>
+      <p className="mt-2 text-xs text-slate-500">加入时间：{formatShortDate(member.createdAt)}</p>
     </article>
   );
 }
@@ -190,8 +191,8 @@ function InviteRow({ invite }: { invite: WorkspaceInvite }) {
     <article className="rounded-2xl border border-amber-200 bg-white/70 p-3 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-slate-800">创建于 {formatDate(invite.createdAt)}</p>
-          <p className="mt-1 text-xs text-slate-500">有效期至 {formatDate(invite.expiresAt)}</p>
+          <p className="text-sm font-semibold text-slate-800">创建于 {formatShortDate(invite.createdAt)}</p>
+          <p className="mt-1 text-xs text-slate-500">有效期至 {formatShortDate(invite.expiresAt)}</p>
         </div>
         <SecondaryButton className="px-3 py-2 text-xs" onClick={handleRevoke} disabled={revokeInvite.isPending}>
           {revokeInvite.isPending ? "撤销中…" : confirming ? "确认撤销" : "撤销"}
@@ -208,13 +209,4 @@ function getCreateInviteError(error: unknown) {
   }
 
   return "创建邀请失败，请重试";
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
 }

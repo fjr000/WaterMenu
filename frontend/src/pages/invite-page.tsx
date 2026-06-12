@@ -6,6 +6,7 @@ import { ApiError } from "../api/types.ts";
 import { Button, Card, ErrorBanner, Input, SecondaryButton, Spinner } from "../components/ui.tsx";
 import { authMeKey, useAuth } from "../hooks/use-auth.tsx";
 import { useAcceptInvite, useInvitePreview } from "../hooks/use-invites.ts";
+import { formatFullDate } from "../utils/date-formatting.ts";
 
 const schema = z
   .object({
@@ -98,7 +99,7 @@ export function InvitePage({ token }: { token: string }) {
                   你将加入：{previewQuery.data.workspaceName}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  邀请有效期至 {formatDate(previewQuery.data.expiresAt)}
+                  邀请有效期至 {formatFullDate(previewQuery.data.expiresAt)}
                 </p>
               </div>
 
@@ -170,14 +171,4 @@ function getAcceptError(error: unknown) {
   }
 
   return "接受邀请失败，请重试";
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
 }

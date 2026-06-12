@@ -27,6 +27,7 @@ import {
   Spinner,
 } from "./ui.tsx";
 import { apiFetch } from "../api/client.ts";
+import { toLocalInputValue, formatShortDate } from "../utils/date-formatting.ts";
 
 const editSchema = z.object({
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
@@ -190,7 +191,7 @@ export function MealRecordCard({
             {getMealRecordDisplayTitle(record)}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
-            {mealLabel(record.mealType)} · {formatDate(record.eatenAt)}
+            {mealLabel(record.mealType)} · {formatShortDate(record.eatenAt)}
           </p>
           {record.note && (
             <p className="mt-1 text-xs text-slate-500">备注：{record.note}</p>
@@ -493,18 +494,4 @@ function getMealRecordDisplayTitle(record: MealRecord) {
   }
 
   return record.dish.name;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function toLocalInputValue(date: Date) {
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

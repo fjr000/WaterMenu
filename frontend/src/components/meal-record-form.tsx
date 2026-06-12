@@ -7,6 +7,7 @@ import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateMealRecord } from "../hooks/use-meal-records.ts";
 import { mealLabel } from "./meal-tag.tsx";
 import { Button, Card, ErrorBanner, Input, SecondaryButton, Select, Spinner } from "./ui.tsx";
+import { toLocalInputValue } from "../utils/date-formatting.ts";
 
 interface Props {
   dish: Dish;
@@ -28,11 +29,6 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-
-function toLocalInputValue(date: Date) {
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
 
 export function MealRecordForm({
   dish,

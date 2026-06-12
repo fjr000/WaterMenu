@@ -72,6 +72,90 @@ Reference files:
 - `frontend/src/pages/home-page.tsx`
 - `frontend/src/components/create-dish-form.tsx`
 
+### Pattern: Form Label Association
+
+**Problem**: 表单输入框需要明确的标签关联，以支持屏幕阅读器和自动化测试。
+
+**Solution**: 始终使用`<label>`元素配合`htmlFor`属性，而非仅依赖`placeholder`或`aria-label`。
+
+**Example**:
+```tsx
+// Good - 明确的label关联
+<div>
+  <label htmlFor="dish-search" className="mb-1.5 block text-sm font-medium text-slate-700">
+    关键词
+  </label>
+  <Input
+    id="dish-search"
+    placeholder="搜索菜名或简介"
+    {...props}
+  />
+</div>
+
+// Bad - 只有placeholder
+<Input
+  id="dish-search"
+  placeholder="关键词"
+  aria-label="搜索菜品"
+  {...props}
+/>
+```
+
+**Why**: 
+- 测试库的`getByLabelText`依赖真实的`<label>`元素
+- 屏幕阅读器更好地识别label与输入框的关系
+- 点击label可以聚焦输入框，提升移动端体验
+
+**Tests Required**:
+```tsx
+// 使用label文本查找输入框
+await userEvent.type(screen.getByLabelText("关键词"), "番茄");
+```
+
+### Pattern: Accordion State Management
+
+**Problem**: 实现单一展开的accordion交互，同时避免组件间状态耦合。
+
+**Solution**: 在父组件维护`expandedId`状态，通过`onToggle`回调控制展开/收起。
+
+**Example**:
+```tsx
+// 父组件
+const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
+
+const handleToggleDish = (dishId: string) => {
+  setExpandedDishId((current) => (current === dishId ? null : dishId));
+};
+
+// 子组件
+<DishCard
+  dish={dish}
+  expanded={expandedDishId === dish.id}
+  onToggle={() => handleToggleDish(dish.id)}
+/>
+```
+
+**Why**:
+- 父组件控制全局展开状态，实现accordion行为
+- 子组件保持纯净，只响应props变化
+- 易于扩展（如支持多选展开）
+
+**Event Handling**:
+```tsx
+// 卡片整体点击展开
+<button onClick={onToggle}>
+  {/* 卡片内容 */}
+</button>
+
+// 操作按钮阻止冒泡
+<button onClick={(e) => {
+  e.stopPropagation();
+  handleAction();
+}}>
+  操作
+</button>
+```
+
 ## Common Mistakes
 
 ### Don't: 在组件里直接写请求逻辑

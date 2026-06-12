@@ -129,6 +129,33 @@ export default defineConfig({
 - Components: 使用 RTL 断言用户可见文本、表单提交、pending/error/disabled 分支或回调触发。
 - CI: 流水线至少执行 install、Prisma generate、lint、typecheck、test、build。
 
+### Pattern: Testing Dynamic Text Content
+
+**Problem**: 测试需要验证动态生成的文本内容，但文本中可能包含中文引号、变量插值等，直接字符串匹配容易因编码差异失败。
+
+**Solution**: 使用函数匹配器检查`element.textContent`，而非直接传递字符串。
+
+**Example**:
+```tsx
+// Good - 使用函数匹配器
+expect(screen.getByText((_content, element) => {
+  return element?.textContent === '正在筛选：关键词"番茄" · 晚餐 · 停用';
+})).toBeInTheDocument();
+
+// Bad - 直接字符串匹配（可能因引号编码失败）
+expect(screen.getByText("正在筛选：关键词"番茄" · 晚餐 · 停用")).toBeInTheDocument();
+```
+
+**Why**:
+- 函数匹配器更健壮，不受字符编码影响
+- `textContent`获取元素的完整文本，包括嵌套元素
+- 参数前缀`_`表示未使用，避免TypeScript警告
+
+**When to Use**:
+- 文本包含动态内容（如用户输入）
+- 文本可能被多个元素分割
+- 需要精确匹配完整文本内容
+
 ### 7. Wrong vs Correct
 
 #### Wrong

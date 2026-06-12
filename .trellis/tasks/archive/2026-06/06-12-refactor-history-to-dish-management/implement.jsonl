@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/backend/backend/index.md", "reason": "Backend coding standards and conventions"}
+{"file": ".trellis/spec/backend/backend/database-guidelines.md", "reason": "Database migration best practices for Prisma"}
+{"file": ".trellis/spec/backend/backend/error-handling.md", "reason": "Error handling patterns for DTOs and controllers"}
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards and conventions"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "React component patterns and structure"}
+{"file": ".trellis/spec/backend/frontend/hook-guidelines.md", "reason": "Custom hooks patterns for data fetching"}
+{"file": ".trellis/spec/backend/frontend/state-management.md", "reason": "State management patterns with React Query"}
+{"file": ".trellis/spec/backend/frontend/type-safety.md", "reason": "TypeScript type patterns and validation"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Code reuse checklist to avoid duplication"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Cross-layer data flow validation"}

@@ -1,2 +1,0 @@
-{"file": ".trellis/spec/deployment.md", "reason": "Verify new deployment procedures align with existing deployment conventions and troubleshooting patterns"}
-{"file": ".trellis/tasks/06-12-deploy-automation-script/prd.md", "reason": "Verify all acceptance criteria are met: backup integration, health checks, rollback mechanism, logging"}

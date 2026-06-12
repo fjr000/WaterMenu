@@ -1,5 +1,0 @@
-{"file": ".trellis/spec/frontend/frontend/index.md", "reason": "前端整体架构验证"}
-{"file": ".trellis/spec/frontend/frontend/quality-guidelines.md", "reason": "前端质量标准验证，确认测试符合规范"}
-{"file": ".trellis/spec/frontend/frontend/hook-guidelines.md", "reason": "hook 测试质量验证"}
-{"file": ".trellis/spec/frontend/frontend/component-guidelines.md", "reason": "组件测试质量验证"}
-{"file": ".trellis/spec/backend/backend/quality-guidelines.md", "reason": "CI 流水线后端命令验证"}

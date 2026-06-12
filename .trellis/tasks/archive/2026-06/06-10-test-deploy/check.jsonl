@@ -1,9 +1,0 @@
-{"file":".trellis/spec/guides/index.md","reason":"验收时检查是否触发复用或跨层思考指南"}
-{"file":".trellis/spec/frontend/frontend/index.md","reason":"检查前端变更是否符合目录、页面组合与测试组织约定"}
-{"file":".trellis/spec/frontend/frontend/component-guidelines.md","reason":"检查新增页面/表单测试是否覆盖可访问性和交互约定"}
-{"file":".trellis/spec/frontend/frontend/hook-guidelines.md","reason":"检查 React Query hook mock、缓存与错误路径断言是否符合约定"}
-{"file":".trellis/spec/frontend/frontend/state-management.md","reason":"检查 auth、server-state 和局部状态相关测试是否符合约定"}
-{"file":".trellis/spec/frontend/frontend/type-safety.md","reason":"检查表单验证和 API 类型使用是否保持类型安全"}
-{"file":".trellis/spec/frontend/frontend/quality-guidelines.md","reason":"检查前端 lint/typecheck/test/build 质量门要求"}
-{"file":".trellis/spec/backend/backend/quality-guidelines.md","reason":"检查后端测试和部署验证命令是否满足质量门"}
-{"file":".trellis/spec/backend/backend/error-handling.md","reason":"检查错误处理测试是否符合统一错误响应约定"}

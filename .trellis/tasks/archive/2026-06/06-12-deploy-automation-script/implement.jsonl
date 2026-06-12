@@ -1,3 +1,0 @@
-{"file": ".trellis/spec/deployment.md", "reason": "Production deployment specs, environment variables, known issues, troubleshooting patterns"}
-{"file": ".trellis/tasks/06-12-deploy-automation-script/research/deployment-automation-patterns.md", "reason": "Industry best practices for Docker Compose deployment automation, rollback patterns, health check strategies"}
-{"file": ".trellis/tasks/06-12-deploy-automation-script/prd.md", "reason": "Task requirements, technical approach, implementation plan, acceptance criteria"}

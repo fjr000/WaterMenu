@@ -1,6 +1,0 @@
-{"file": ".trellis/spec/frontend/frontend/index.md", "reason": "前端整体架构、目录结构、主线模式参考"}
-{"file": ".trellis/spec/frontend/frontend/quality-guidelines.md", "reason": "前端质量标准、禁止模式、验证命令"}
-{"file": ".trellis/spec/frontend/frontend/hook-guidelines.md", "reason": "hooks 实现模式，编写 hook 测试需要遵循"}
-{"file": ".trellis/spec/frontend/frontend/component-guidelines.md", "reason": "组件分层、props、样式规范，编写组件测试需要遵循"}
-{"file": ".trellis/spec/frontend/frontend/type-safety.md", "reason": "API 类型、Zod、React Hook Form 推导规则"}
-{"file": ".trellis/spec/backend/backend/quality-guidelines.md", "reason": "后端 e2e 测试模式参考，CI 流水线需要后端 lint/test 命令"}

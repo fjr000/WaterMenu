@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/backend/backend/index.md", "reason": "Backend coding standards verification"}
+{"file": ".trellis/spec/backend/backend/quality-guidelines.md", "reason": "Code quality checks and forbidden patterns"}
+{"file": ".trellis/spec/backend/backend/database-guidelines.md", "reason": "Verify migration safety and schema integrity"}
+{"file": ".trellis/spec/backend/backend/error-handling.md", "reason": "Verify error handling patterns"}
+{"file": ".trellis/spec/backend/frontend/index.md", "reason": "Frontend coding standards verification"}
+{"file": ".trellis/spec/backend/frontend/quality-guidelines.md", "reason": "Frontend quality checks and forbidden patterns"}
+{"file": ".trellis/spec/backend/frontend/component-guidelines.md", "reason": "Verify component patterns and structure"}
+{"file": ".trellis/spec/backend/frontend/type-safety.md", "reason": "Verify TypeScript type safety"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Verify cross-layer data flow consistency"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Check for code duplication and reuse opportunities"}

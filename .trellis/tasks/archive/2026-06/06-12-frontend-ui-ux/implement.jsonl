@@ -1,8 +1,0 @@
-{"type":"spec","path":".trellis/spec/frontend-design.md","reason":"前端设计规范和组件库指南"}
-{"type":"file","path":"frontend/src/index.css","reason":"全局样式、CSS变量、动画定义"}
-{"type":"file","path":"frontend/src/components/ui.tsx","reason":"基础UI组件库"}
-{"type":"file","path":"frontend/src/pages/login-page.tsx","reason":"登录页面组件"}
-{"type":"file","path":"frontend/src/pages/home-page.tsx","reason":"主页组件和布局"}
-{"type":"file","path":"frontend/src/components/recommendation-panel.tsx","reason":"推荐面板组件"}
-{"type":"file","path":"frontend/src/components/meal-tag.tsx","reason":"餐次标签组件"}
-{"type":"file","path":"frontend/src/components/dish-cover-image.tsx","reason":"菜品封面图组件"}

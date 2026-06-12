@@ -3,7 +3,7 @@
   "name": "add-database-indexes",
   "title": "添加数据库索引优化查询性能",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

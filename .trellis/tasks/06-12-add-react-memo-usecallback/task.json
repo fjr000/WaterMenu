@@ -3,7 +3,7 @@
   "name": "add-react-memo-usecallback",
   "title": "添加React.memo和useCallback优化",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

@@ -3,7 +3,7 @@
   "name": "cache-workspace-in-session",
   "title": "缓存workspace查询到session",
   "description": "",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

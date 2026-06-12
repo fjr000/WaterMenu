@@ -105,6 +105,7 @@ model Dish {
 
   @@unique([workspaceId, name])
   @@index([workspaceId])
+  @@index([workspaceId, updatedAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@map("dishes")
 }
 
@@ -126,6 +127,7 @@ model DishImage {
 
   @@index([workspaceId])
   @@index([dishId])
+  @@index([dishId, sortOrder, createdAt])
   @@map("dish_images")
 }
 
@@ -146,6 +148,7 @@ model DishVariant {
   @@unique([dishId, name])
   @@index([workspaceId])
   @@index([dishId])
+  @@index([dishId, isActive(sort: Desc), createdAt, id])
   @@map("dish_variants")
 }
 
@@ -183,6 +186,8 @@ model MealRecord {
   @@index([workspaceId])
   @@index([dishId])
   @@index([variantId])
+  @@index([workspaceId, eatenAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
+  @@index([workspaceId, eatenAt])
   @@map("meal_records")
 }
 
@@ -202,5 +207,7 @@ model Feedback {
   @@unique([mealRecordId, userId])
   @@index([workspaceId])
   @@index([userId])
+  @@index([mealRecordId, rating])
+  @@index([workspaceId, rating])
   @@map("feedbacks")
 }

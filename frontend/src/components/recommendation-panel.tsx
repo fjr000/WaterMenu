@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Dish, MealType, RecommendationCandidate } from "../api/types.ts";
 import { DishCoverImage } from "./dish-cover-image.tsx";
 import { MealTag } from "./meal-tag.tsx";
@@ -142,7 +143,7 @@ export function RecommendationPanel({
   );
 }
 
-function CandidateCard({
+const CandidateCard = memo(function CandidateCard({
   candidate,
   highlight = false,
   onRecordDish,
@@ -205,4 +206,4 @@ function CandidateCard({
       </div>
     </Card>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { memo, useCallback, useId, useState } from "react";
 import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
@@ -125,47 +125,47 @@ export function HomePage() {
     blindBoxMutation.reset();
   };
 
-  const handleToggleDish = (dishId: string) => {
+  const handleToggleDish = useCallback((dishId: string) => {
     setExpandedDishId((current) => (current === dishId ? null : dishId));
-  };
+  }, []);
 
-    const handleRecordDish = (dish: Dish) => {
+  const handleRecordDish = useCallback((dish: Dish) => {
     setRecipeDish(null);
     setImageDish(null);
     setVariantDish(null);
     setEditingDish(null);
     setExpandedDishId(dish.id);
     setRecordDish(dish);
-  };
+  }, []);
 
-  const handleViewRecipe = (dish: Dish) => {
+  const handleViewRecipe = useCallback((dish: Dish) => {
     setRecordDish(null);
     setImageDish(null);
     setVariantDish(null);
     setEditingDish(null);
     setExpandedDishId(dish.id);
     setRecipeDish(dish);
-  };
+  }, []);
 
-  const handleManageImages = (dish: Dish) => {
+  const handleManageImages = useCallback((dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
     setVariantDish(null);
     setEditingDish(null);
     setExpandedDishId(dish.id);
     setImageDish(dish);
-  };
+  }, []);
 
-  const handleManageVariants = (dish: Dish) => {
+  const handleManageVariants = useCallback((dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
     setImageDish(null);
     setEditingDish(null);
     setExpandedDishId(dish.id);
     setVariantDish(dish);
-  };
+  }, []);
 
-  const handleEditDish = (dish: Dish) => {
+  const handleEditDish = useCallback((dish: Dish) => {
     setRecordDish(null);
     setRecipeDish(null);
     setImageDish(null);
@@ -173,17 +173,17 @@ export function HomePage() {
     setShowCreateForm(false);
     setExpandedDishId(dish.id);
     setEditingDish(dish);
-  };
+  }, []);
 
-  const handleDishUpdated = () => {
+  const handleDishUpdated = useCallback(() => {
     setEditingDish(null);
     resetRecommendationState();
-  };
+  }, []);
 
-  const handleRecordSuccess = () => {
+  const handleRecordSuccess = useCallback(() => {
     setRecordDish(null);
     resetRecommendationState();
-  };
+  }, []);
 
   return (
     <div className="min-h-dvh pb-28 md:pb-0">
@@ -320,11 +320,7 @@ export function HomePage() {
             {dishesQuery.data &&
               dishesQuery.data.map((dish) => (
                 <DishCard
-                  key={getDishListKey(dish, {
-                    q: dishSearch,
-                    mealType: dishMealType,
-                    status: dishStatus,
-                  })}
+                  key={dish.id}
                   dish={dish}
                   expanded={expandedDishId === dish.id}
                   onToggle={() => handleToggleDish(dish.id)}
@@ -568,19 +564,6 @@ function hasActiveDishFilters({
   return Boolean(q.trim() || mealType || status);
 }
 
-function getDishListKey(
-  dish: Dish,
-  filters: { q: string; mealType: MealType | ""; status: DishStatusFilter },
-) {
-  return [
-    dish.id,
-    filters.q.trim(),
-    filters.mealType,
-    filters.status,
-    dish.updatedAt,
-  ].join("-");
-}
-
 function getDishFilterSummary({
   q,
   mealType,
@@ -622,7 +605,7 @@ function getDishEmptyState(hasFilters: boolean) {
     description: "点击上方按钮添加第一道菜",
   };
 }
-function DishCard({
+const DishCard = memo(function DishCard({
   dish,
   expanded,
   onToggle,
@@ -941,4 +924,4 @@ function DishCard({
       )}
     </Card>
   );
-}
+});

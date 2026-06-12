@@ -134,6 +134,7 @@ model DishVariant {
   workspaceId String
   dishId      String
   name        String
+  description String?
   type        DishVariantType @default(OTHER)
   isActive    Boolean         @default(true)
   workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
@@ -167,14 +168,13 @@ model Recipe {
 model MealRecord {
   id          String       @id @default(cuid())
   workspaceId String
-  dishId      String?
+  dishId      String
   variantId   String?
-  title       String
   mealType    MealType
   eatenAt     DateTime
   note        String?
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
-  dish        Dish?        @relation(fields: [dishId], references: [id], onDelete: SetNull)
+  dish        Dish         @relation(fields: [dishId], references: [id], onDelete: Restrict)
   variant     DishVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   feedbacks   Feedback[]
   createdAt   DateTime     @default(now())

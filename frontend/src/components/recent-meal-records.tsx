@@ -2,14 +2,18 @@ import { useEffect, useState, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { FeedbackRating, MealRecord, MealType } from "../api/types.ts";
+import type { DishImage, FeedbackRating, MealRecord, MealType } from "../api/types.ts";
 import {
   useDeleteMealRecord,
   useMealRecords,
   useUpdateMealRecord,
   useUpsertFeedback,
 } from "../hooks/use-meal-records.ts";
+import { useDishImages } from "../hooks/use-dish-images.ts";
 import { mealLabel } from "./meal-tag.tsx";
+import { HorizontalImageGallery } from "./horizontal-image-gallery.tsx";
+import { ImagePreviewModal } from "./image-preview-modal.tsx";
+import { InlineVariantPanel } from "./inline-variant-panel.tsx";
 import {
   Button,
   Card,
@@ -35,7 +39,6 @@ const ratingOptions: { value: FeedbackRating; label: string }[] = [
 ];
 
 const editSchema = z.object({
-  title: z.string().trim().min(1, "请输入记录标题"),
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
   eatenAt: z
     .string()
@@ -105,13 +108,18 @@ export function MealRecordCard({
 }) {
   const upsertFeedback = useUpsertFeedback();
   const deleteMealRecord = useDeleteMealRecord();
+  const dishImagesQuery = useDishImages(record.dishId);
+  const dishImages = dishImagesQuery.data ?? [];
+
   const serverFeedback = record.feedbacks.find(
     (feedback) => feedback.userId === userId,
   );
   const [currentFeedback, setCurrentFeedback] = useState(serverFeedback);
   const [showNote, setShowNote] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showVariantPanel, setShowVariantPanel] = useState(false);
   const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<DishImage | null>(null);
   const [note, setNote] = useState(serverFeedback?.note ?? "");
   const [selectedRating, setSelectedRating] = useState<
     FeedbackRating | undefined
@@ -185,17 +193,13 @@ export function MealRecordCard({
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {record.dishId && (
-            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-              已关联菜品
-            </span>
-          )}
           <div className="flex gap-1">
             <button
               type="button"
               className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:border-amber-200 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => {
                 setIsEditing((value) => !value);
+                setShowVariantPanel(false);
                 setDeleteConfirming(false);
                 setShowNote(false);
               }}
@@ -209,6 +213,7 @@ export function MealRecordCard({
               onClick={() => {
                 setDeleteConfirming(true);
                 setIsEditing(false);
+                setShowVariantPanel(false);
               }}
               disabled={deleteMealRecord.isPending}
             >
@@ -217,6 +222,12 @@ export function MealRecordCard({
           </div>
         </div>
       </div>
+
+      <HorizontalImageGallery
+        dishId={record.dishId}
+        images={dishImages}
+        onImageClick={(image) => setSelectedImage(image)}
+      />
 
       {isEditing && (
         <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50/55 p-3">
@@ -230,6 +241,13 @@ export function MealRecordCard({
             }}
           />
         </div>
+      )}
+
+      {showVariantPanel && (
+        <InlineVariantPanel
+          dishId={record.dishId}
+          dishName={record.dish.name}
+        />
       )}
 
       {deleteConfirming && (
@@ -291,7 +309,7 @@ export function MealRecordCard({
         </p>
       )}
 
-      <div className="mt-3">
+      <div className="mt-3 flex gap-2">
         <button
           type="button"
           className="text-xs font-semibold text-slate-600 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
@@ -302,6 +320,17 @@ export function MealRecordCard({
           disabled={!currentFeedback || upsertFeedback.isPending}
         >
           {showNote ? "收起备注" : "添加反馈备注"}
+        </button>
+        <button
+          type="button"
+          className="text-xs font-semibold text-slate-600 underline underline-offset-4"
+          onClick={() => {
+            setShowVariantPanel((value) => !value);
+            setIsEditing(false);
+            setDeleteConfirming(false);
+          }}
+        >
+          {showVariantPanel ? "收起" : "管理版本"}
         </button>
       </div>
 
@@ -337,6 +366,14 @@ export function MealRecordCard({
           反馈提交失败，请重试
         </p>
       )}
+
+      {selectedImage && (
+        <ImagePreviewModal
+          dishId={record.dishId}
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
     </Card>
   );
 }
@@ -358,7 +395,6 @@ function EditMealRecordForm({
   } = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
-      title: record.title,
       mealType: record.mealType,
       eatenAt: toLocalInputValue(new Date(record.eatenAt)),
       note: record.note ?? "",
@@ -372,7 +408,6 @@ function EditMealRecordForm({
       {
         id: record.id,
         body: {
-          title: values.title.trim(),
           mealType: values.mealType,
           eatenAt: new Date(values.eatenAt).toISOString(),
           note: trimmedNote || null,
@@ -384,19 +419,6 @@ function EditMealRecordForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-3">
-      <div>
-        <label
-          htmlFor={`meal-record-title-${record.id}`}
-          className="mb-1 block text-sm font-semibold text-slate-700"
-        >
-          标题
-        </label>
-        <Input id={`meal-record-title-${record.id}`} {...register("title")} />
-        {errors.title && (
-          <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>
-        )}
-      </div>
-
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div>
           <label
@@ -475,15 +497,11 @@ function EditMealRecordForm({
 }
 
 function getMealRecordDisplayTitle(record: MealRecord) {
-  if (record.dish?.name && record.variant?.name) {
+  if (record.variant?.name) {
     return `${record.dish.name} · ${record.variant.name}`;
   }
 
-  if (record.dish?.name) {
-    return record.dish.name;
-  }
-
-  return record.title;
+  return record.dish.name;
 }
 
 function formatDate(value: string) {

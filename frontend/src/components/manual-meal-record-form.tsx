@@ -1,16 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { MealType } from "../api/types.ts";
 import { useCreateMealRecord } from "../hooks/use-meal-records.ts";
+import { useDishVariants } from "../hooks/use-dish-variants.ts";
+import { DishAutocomplete } from "./dish-autocomplete.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import { Button, Card, Input, SecondaryButton, Select } from "./ui.tsx";
 
 const mealTypes: MealType[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
 const schema = z.object({
-  title: z.string().trim().min(1, "请输入记录标题"),
+  dishId: z.string().min(1, "请选择菜品"),
+  variantId: z.string().optional(),
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
   eatenAt: z
     .string()
@@ -34,19 +37,28 @@ export function ManualMealRecordForm({
 }: Props) {
   const createMealRecord = useCreateMealRecord();
   const defaultValues = useMemo(buildDefaultValues, []);
+  const [selectedDishId, setSelectedDishId] = useState<string>("");
+  const dishVariantsQuery = useDishVariants(selectedDishId, !!selectedDishId);
+  const activeVariants = dishVariantsQuery.data?.filter(v => v.isActive) ?? [];
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });
 
+  const dishIdValue = watch("dishId");
+
   const submit = handleSubmit((values) => {
     createMealRecord.mutate(
       {
-        title: values.title.trim(),
+        dishId: values.dishId,
+        variantId: values.variantId || undefined,
         mealType: values.mealType,
         eatenAt: new Date(values.eatenAt).toISOString(),
         note: values.note?.trim() || undefined,
@@ -66,20 +78,43 @@ export function ManualMealRecordForm({
 
         <div>
           <label
-            htmlFor="manual-meal-record-title"
+            htmlFor="manual-meal-record-dish"
             className="mb-1 block text-sm font-semibold text-slate-700"
           >
-            标题
+            菜品
           </label>
-          <Input
-            id="manual-meal-record-title"
-            placeholder="例如：外食米粉"
-            {...register("title")}
+          <DishAutocomplete
+            value={dishIdValue}
+            onChange={(dishId) => {
+              setValue("dishId", dishId, { shouldValidate: true });
+              setSelectedDishId(dishId);
+              setValue("variantId", "");
+            }}
+            error={errors.dishId?.message}
           />
-          {errors.title && (
-            <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>
-          )}
         </div>
+
+        {selectedDishId && activeVariants.length > 0 && (
+          <div>
+            <label
+              htmlFor="manual-meal-record-variant"
+              className="mb-1 block text-sm font-semibold text-slate-700"
+            >
+              版本（可选）
+            </label>
+            <Select
+              id="manual-meal-record-variant"
+              {...register("variantId")}
+            >
+              <option value="">无版本</option>
+              {activeVariants.map((variant) => (
+                <option key={variant.id} value={variant.id}>
+                  {variant.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
@@ -170,7 +205,8 @@ function buildDefaultValues(): FormValues {
   const date = new Date();
 
   return {
-    title: "",
+    dishId: "",
+    variantId: "",
     mealType: inferMealType(date),
     eatenAt: toLocalInputValue(date),
     note: "",

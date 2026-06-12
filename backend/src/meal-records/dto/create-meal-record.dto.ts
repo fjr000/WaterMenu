@@ -4,17 +4,12 @@ import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-va
 export class CreateMealRecordDto {
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
-  dishId?: string | null;
+  dishId!: string;
 
   @IsString()
   @IsNotEmpty()
   @IsOptional()
   variantId?: string | null;
-
-  @IsString()
-  @IsNotEmpty()
-  title!: string;
 
   @IsEnum(MealType)
   mealType!: MealType;

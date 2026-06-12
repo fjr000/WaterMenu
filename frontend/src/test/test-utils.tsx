@@ -42,7 +42,6 @@ export const sampleMealRecord: MealRecord = {
   dish: { id: "dish-1", name: "番茄炒蛋" },
   variantId: null,
   variant: null,
-  title: "番茄炒蛋",
   mealType: "LUNCH",
   eatenAt: "2026-06-01T12:00:00.000Z",
   note: "不错",

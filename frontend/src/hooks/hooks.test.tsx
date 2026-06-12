@@ -75,7 +75,7 @@ describe("React Query hooks", () => {
     const createHook = renderQueryHook(() => useCreateMealRecord());
     await act(() =>
       createHook.result.current.mutateAsync({
-        title: "番茄炒蛋",
+        dishId: "dish-1",
         mealType: "LUNCH",
         eatenAt: "2026-06-01T12:00:00.000Z",
       }),

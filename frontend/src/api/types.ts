@@ -80,6 +80,7 @@ export interface DishVariant {
   workspaceId: string;
   dishId: string;
   name: string;
+  description: string | null;
   type: DishVariantType;
   isActive: boolean;
   createdAt: string;
@@ -94,11 +95,10 @@ export interface MealRecordDishRef {
 export interface MealRecord {
   id: string;
   workspaceId: string;
-  dishId: string | null;
-  dish?: MealRecordDishRef | null;
+  dishId: string;
+  dish: MealRecordDishRef;
   variantId: string | null;
   variant: DishVariant | null;
-  title: string;
   mealType: MealType;
   eatenAt: string;
   note: string | null;
@@ -151,16 +151,14 @@ export interface UpdateDishRequest {
 }
 
 export interface CreateMealRecordRequest {
-  dishId?: string;
+  dishId: string;
   variantId?: string;
-  title: string;
   mealType: MealType;
   eatenAt: string;
   note?: string;
 }
 
 export interface UpdateMealRecordRequest {
-  title?: string;
   mealType?: MealType;
   eatenAt?: string;
   note?: string | null;
@@ -184,12 +182,14 @@ export interface UpdateRecipeRequest {
 
 export interface CreateDishVariantRequest {
   name: string;
+  description?: string;
   type: DishVariantType;
   isActive?: boolean;
 }
 
 export interface UpdateDishVariantRequest {
   name?: string;
+  description?: string | null;
   type?: DishVariantType;
   isActive?: boolean;
 }

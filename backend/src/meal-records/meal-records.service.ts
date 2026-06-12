@@ -81,8 +81,8 @@ export class MealRecordsService {
 
     if (query.q) {
       where.OR = [
-        { title: { contains: query.q, mode: 'insensitive' } },
         { note: { contains: query.q, mode: 'insensitive' } },
+        { dish: { name: { contains: query.q, mode: 'insensitive' } } },
       ];
     }
 
@@ -108,9 +108,8 @@ export class MealRecordsService {
     return this.prisma.mealRecord.create({
       data: {
         workspaceId,
-        dishId: body.dishId ?? null,
+        dishId: body.dishId,
         variantId: body.variantId ?? null,
-        title: body.title,
         mealType: body.mealType,
         eatenAt: new Date(body.eatenAt),
         note: body.note ?? null,
@@ -147,7 +146,6 @@ export class MealRecordsService {
     return this.prisma.mealRecord.update({
       where: { id },
       data: {
-        title: body.title,
         mealType: body.mealType,
         eatenAt: body.eatenAt ? new Date(body.eatenAt) : undefined,
         note: body.note === undefined ? undefined : body.note,
@@ -172,11 +170,7 @@ export class MealRecordsService {
     return { ok: true };
   }
 
-  private async assertDishInWorkspace(workspaceId: string, dishId?: string | null) {
-    if (!dishId) {
-      return;
-    }
-
+  private async assertDishInWorkspace(workspaceId: string, dishId: string) {
     const dish = await this.prisma.dish.findFirst({
       where: { id: dishId, workspaceId },
       select: { id: true },
@@ -187,13 +181,9 @@ export class MealRecordsService {
     }
   }
 
-  private async assertVariantInWorkspace(workspaceId: string, dishId?: string | null, variantId?: string | null) {
+  private async assertVariantInWorkspace(workspaceId: string, dishId: string, variantId?: string | null) {
     if (!variantId) {
       return;
-    }
-
-    if (!dishId) {
-      throw new NotFoundException();
     }
 
     const variant = await this.prisma.dishVariant.findFirst({

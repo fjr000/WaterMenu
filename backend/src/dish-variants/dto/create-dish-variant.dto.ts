@@ -6,6 +6,10 @@ export class CreateDishVariantDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsString()
+  @IsOptional()
+  description?: string;
+
   @IsEnum(DishVariantType)
   type!: DishVariantType;
 

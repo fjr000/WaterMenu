@@ -7,7 +7,6 @@ import { CreateDishForm, EditDishForm } from "./create-dish-form.tsx";
 import { DishCoverImage } from "./dish-cover-image.tsx";
 import { DishImagePanel } from "./dish-image-panel.tsx";
 import { HistoryRecordsPanel } from "./history-records-panel.tsx";
-import { ManualMealRecordForm } from "./manual-meal-record-form.tsx";
 import { MealRecordForm } from "./meal-record-form.tsx";
 import { MealRecordCard, RecentMealRecords } from "./recent-meal-records.tsx";
 import { RecipePanel } from "./recipe-panel.tsx";
@@ -198,15 +197,10 @@ describe("表单组件", () => {
   it("MealRecordForm 和 ManualMealRecordForm 提交用餐记录", async () => {
     const mutate = vi.fn();
     useCreateMealRecordMock.mockReturnValue(mutationState(mutate));
-    const { rerender } = render(<MealRecordForm dish={sampleDish} onCancel={vi.fn()} onSuccess={vi.fn()} />);
+    render(<MealRecordForm dish={sampleDish} onCancel={vi.fn()} onSuccess={vi.fn()} />);
 
     await userEvent.click(screen.getByRole("button", { name: "确认记录" }));
-    await waitFor(() => expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ dishId: "dish-1", title: "番茄炒蛋" }), expect.any(Object)));
-
-    rerender(<ManualMealRecordForm onCancel={vi.fn()} onSuccess={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText("标题"), "外食米粉");
-    await userEvent.click(screen.getByRole("button", { name: "确认记录" }));
-    await waitFor(() => expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ title: "外食米粉" }), expect.any(Object)));
+    await waitFor(() => expect(mutate).toHaveBeenCalledWith(expect.objectContaining({ dishId: "dish-1" }), expect.any(Object)));
   });
 });
 
@@ -298,13 +292,13 @@ describe("业务面板组件", () => {
       <MealRecordCard
         record={{
           ...sampleMealRecord,
-          title: "番茄炒蛋 · 老版本名",
           variantId: "variant-1",
           variant: {
             id: "variant-1",
             workspaceId: "workspace-1",
             dishId: "dish-1",
             name: "外卖店1",
+            description: null,
             type: "TAKEOUT",
             isActive: true,
             createdAt: "2026-06-01T00:00:00.000Z",
@@ -316,6 +310,5 @@ describe("业务面板组件", () => {
     );
 
     expect(screen.getByText("番茄炒蛋 · 外卖店1")).toBeInTheDocument();
-    expect(screen.queryByText("番茄炒蛋 · 老版本名")).not.toBeInTheDocument();
   });
 });

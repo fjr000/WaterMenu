@@ -28,6 +28,7 @@ export class DishVariantsService {
           workspaceId,
           dishId,
           name: this.trimRequired(body.name),
+          description: body.description?.trim() || null,
           type: body.type,
           isActive: body.isActive ?? true,
         },
@@ -53,6 +54,7 @@ export class DishVariantsService {
         where: { id },
         data: {
           name: body.name === undefined ? undefined : this.trimRequired(body.name),
+          description: body.description === undefined ? undefined : (body.description?.trim() || null),
           type: body.type,
           isActive: body.isActive,
         },

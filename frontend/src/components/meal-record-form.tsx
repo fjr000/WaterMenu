@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { Dish, DishVariant, MealType } from "../api/types.ts";
+import type { Dish, MealType } from "../api/types.ts";
 import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateMealRecord } from "../hooks/use-meal-records.ts";
 import { mealLabel } from "./meal-tag.tsx";
@@ -74,7 +74,6 @@ export function MealRecordForm({
       {
         dishId: dish.id,
         variantId: selectedVariant?.id ?? undefined,
-        title: buildMealRecordTitle(dish.name, selectedVariant),
         mealType: values.mealType,
         eatenAt: new Date(values.eatenAt).toISOString(),
         note: trimmedNote || undefined,
@@ -213,12 +212,4 @@ function pickInitialMealType(
   }
 
   return mealTypes[0] ?? "LUNCH";
-}
-
-function buildMealRecordTitle(dishName: string, variant?: DishVariant) {
-  if (!variant) {
-    return dishName;
-  }
-
-  return `${dishName} · ${variant.name}`;
 }

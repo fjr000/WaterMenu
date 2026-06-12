@@ -7,6 +7,10 @@ export class UpdateDishVariantDto {
   @IsOptional()
   name?: string;
 
+  @IsString()
+  @IsOptional()
+  description?: string | null;
+
   @IsEnum(DishVariantType)
   @IsOptional()
   type?: DishVariantType;

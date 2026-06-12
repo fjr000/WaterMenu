@@ -104,8 +104,8 @@ else
     echo_success "环境变量文件已存在"
 fi
 
-# 验证关键配置
-if grep -q "change-me" deploy/env/prod.env; then
+# 验证关键配置（排除注释行）
+if grep -v '^#' deploy/env/prod.env | grep -q "change-me"; then
     echo_error "检测到未修改的 'change-me' 配置，请完整填写 deploy/env/prod.env"
     exit 1
 fi

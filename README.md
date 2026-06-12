@@ -69,20 +69,38 @@ pnpm frontend:typecheck   # 前端类型检查
 pnpm frontend:test        # 前端 Vitest 测试
 ```
 
-## Docker 部署
+## 生产部署
+
+### 快速部署（推荐）
+
+使用一键部署脚本：
+
+```bash
+chmod +x scripts/deploy.sh
+sudo ./scripts/deploy.sh
+```
+
+脚本会自动安装 Docker、配置环境、构建并启动所有服务。详见 [deploy/QUICK_START.md](deploy/QUICK_START.md)。
+
+### 手动部署
 
 生产环境使用 `docker-compose.prod.yml`，包含 PostgreSQL、后端、Nginx 三个服务：
 
 ```bash
 # 配置环境变量
-mkdir -p deploy/env
 cp deploy/env/prod.env.example deploy/env/prod.env
-# 编辑 deploy/env/prod.env 填写生产环境配置
+nano deploy/env/prod.env  # 编辑配置
 
 # 启动
 docker compose -f docker-compose.prod.yml up -d --build
+
+# 创建管理员
+docker compose -f docker-compose.prod.yml exec backend pnpm prisma:seed
 ```
 
+完整部署文档：[deploy/README.md](deploy/README.md)
+
+**服务架构：**
 - Nginx 监听 80/443 端口
 - 后端 API 通过 Nginx 反向代理至 `/api`
 - 前端静态文件由 Nginx 直接提供

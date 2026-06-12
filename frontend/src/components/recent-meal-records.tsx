@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useQueries } from "@tanstack/react-query";
 import type { DishImage, FeedbackRating, MealRecord } from "../api/types.ts";
 import {
   useDeleteMealRecord,
@@ -9,7 +10,7 @@ import {
   useUpdateMealRecord,
   useUpsertFeedback,
 } from "../hooks/use-meal-records.ts";
-import { useDishImages } from "../hooks/use-dish-images.ts";
+import { useDishImages, dishImagesKey } from "../hooks/use-dish-images.ts";
 import { mealLabel, mealTypeOptions } from "./meal-tag.tsx";
 import { HorizontalImageGallery } from "./horizontal-image-gallery.tsx";
 import { ImagePreviewModal } from "./image-preview-modal.tsx";
@@ -25,6 +26,7 @@ import {
   Select,
   Spinner,
 } from "./ui.tsx";
+import { apiFetch } from "../api/client.ts";
 
 const editSchema = z.object({
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
@@ -48,6 +50,18 @@ export function RecentMealRecords({
 }) {
   const mealRecordsQuery = useMealRecords({ page: 1, pageSize: 5 });
   const records = mealRecordsQuery.data?.items ?? [];
+
+  // Extract unique dish IDs and prefetch images to avoid N+1 queries
+  const uniqueDishIds = [...new Set(records.map((r) => r.dishId))];
+
+  // Prefetch all dish images in parallel using React Query's useQueries
+  useQueries({
+    queries: uniqueDishIds.map((dishId) => ({
+      queryKey: dishImagesKey(dishId),
+      queryFn: () => apiFetch<DishImage[]>(`/dishes/${dishId}/images`),
+      staleTime: 60000,
+    })),
+  });
 
   return (
     <section className="mt-6 flex flex-col gap-3">

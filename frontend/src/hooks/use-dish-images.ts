@@ -8,7 +8,7 @@ import {
 import { apiFetch } from "../api/client.ts";
 import type { DishImage } from "../api/types.ts";
 
-const dishImagesKey = (dishId: string): QueryKey => ["dish-images", dishId];
+export const dishImagesKey = (dishId: string): QueryKey => ["dish-images", dishId];
 
 function invalidateDishImageQueries(queryClient: QueryClient, dishId: string) {
   void queryClient.invalidateQueries({ queryKey: dishImagesKey(dishId) });

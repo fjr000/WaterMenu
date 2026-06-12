@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -52,7 +52,10 @@ export function RecentMealRecords({
   const records = mealRecordsQuery.data?.items ?? [];
 
   // Extract unique dish IDs and prefetch images to avoid N+1 queries
-  const uniqueDishIds = [...new Set(records.map((r) => r.dishId))];
+  const uniqueDishIds = useMemo(
+    () => [...new Set(records.map((r) => r.dishId))],
+    [records]
+  );
 
   // Prefetch all dish images in parallel using React Query's useQueries
   useQueries({

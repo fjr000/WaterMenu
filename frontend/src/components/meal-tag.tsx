@@ -7,6 +7,13 @@ const mealLabels: Record<MealType, string> = {
   SNACK: "加餐",
 };
 
+export const mealTypeOptions: { value: MealType; label: string }[] = [
+  { value: "BREAKFAST", label: "早餐" },
+  { value: "LUNCH", label: "午餐" },
+  { value: "DINNER", label: "晚餐" },
+  { value: "SNACK", label: "加餐" },
+];
+
 export function mealLabel(mt: MealType): string {
   return mealLabels[mt] ?? mt;
 }

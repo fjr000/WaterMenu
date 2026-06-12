@@ -5,13 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateDish, useUpdateDish } from "../hooks/use-dishes.ts";
 import type { Dish, MealType } from "../api/types.ts";
 import { Button, Input, SecondaryButton } from "./ui.tsx";
-
-const mealOptions: { value: MealType; label: string }[] = [
-  { value: "BREAKFAST", label: "早餐" },
-  { value: "LUNCH", label: "午餐" },
-  { value: "DINNER", label: "晚餐" },
-  { value: "SNACK", label: "加餐" },
-];
+import { mealTypeOptions } from "./meal-tag.tsx";
 
 const schema = z.object({
   name: z.string().trim().min(1, "请输入菜品名称"),
@@ -128,7 +122,7 @@ function DishForm({
       <div>
         <p className="mb-1.5 text-sm font-semibold text-slate-700">适用餐次</p>
         <div className="flex flex-wrap gap-2">
-          {mealOptions.map((opt) => (
+          {mealTypeOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"

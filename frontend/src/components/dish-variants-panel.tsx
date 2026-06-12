@@ -7,6 +7,7 @@ import {
   useDishVariants,
   useUpdateDishVariant,
 } from "../hooks/use-dish-variants.ts";
+import { variantTypeOptions, variantTypeLabels } from "../constants/variant-types.ts";
 import {
   Button,
   Card,
@@ -17,20 +18,6 @@ import {
   Select,
   Spinner,
 } from "./ui.tsx";
-
-const variantTypeOptions: { value: DishVariantType; label: string }[] = [
-  { value: "HOME_RECIPE", label: "自家做法" },
-  { value: "TAKEOUT", label: "外卖" },
-  { value: "DINE_IN", label: "到店" },
-  { value: "OTHER", label: "其他" },
-];
-
-const variantTypeLabels: Record<DishVariantType, string> = {
-  HOME_RECIPE: "自家做法",
-  TAKEOUT: "外卖",
-  DINE_IN: "到店",
-  OTHER: "其他",
-};
 
 const createSchema = z.object({
   name: z.string().trim().min(1, "请输入版本名称"),

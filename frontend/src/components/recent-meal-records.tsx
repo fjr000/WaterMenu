@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { DishImage, FeedbackRating, MealRecord, MealType } from "../api/types.ts";
+import type { DishImage, FeedbackRating, MealRecord } from "../api/types.ts";
 import {
   useDeleteMealRecord,
   useMealRecords,
@@ -10,10 +10,11 @@ import {
   useUpsertFeedback,
 } from "../hooks/use-meal-records.ts";
 import { useDishImages } from "../hooks/use-dish-images.ts";
-import { mealLabel } from "./meal-tag.tsx";
+import { mealLabel, mealTypeOptions } from "./meal-tag.tsx";
 import { HorizontalImageGallery } from "./horizontal-image-gallery.tsx";
 import { ImagePreviewModal } from "./image-preview-modal.tsx";
 import { InlineVariantPanel } from "./inline-variant-panel.tsx";
+import { ratingOptions } from "../constants/feedback-ratings.ts";
 import {
   Button,
   Card,
@@ -24,19 +25,6 @@ import {
   Select,
   Spinner,
 } from "./ui.tsx";
-
-const mealOptions: { value: MealType; label: string }[] = [
-  { value: "BREAKFAST", label: "早餐" },
-  { value: "LUNCH", label: "午餐" },
-  { value: "DINNER", label: "晚餐" },
-  { value: "SNACK", label: "加餐" },
-];
-
-const ratingOptions: { value: FeedbackRating; label: string }[] = [
-  { value: "GOOD", label: "好吃" },
-  { value: "OK", label: "一般" },
-  { value: "BAD", label: "不好吃" },
-];
 
 const editSchema = z.object({
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),
@@ -431,7 +419,7 @@ function EditMealRecordForm({
             id={`meal-record-meal-type-${record.id}`}
             {...register("mealType")}
           >
-            {mealOptions.map((option) => (
+            {mealTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

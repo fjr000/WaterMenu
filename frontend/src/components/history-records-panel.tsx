@@ -5,6 +5,7 @@ import { useMealRecords } from "../hooks/use-meal-records.ts";
 import { ManualMealRecordForm } from "./manual-meal-record-form.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import { MealRecordCard } from "./recent-meal-records.tsx";
+import { ratingOptions } from "../constants/feedback-ratings.ts";
 import {
   Button,
   Card,
@@ -19,12 +20,6 @@ import {
 const pageSize = 20;
 
 type RangeValue = "all" | "7" | "30" | "90";
-
-const ratingOptions: { value: FeedbackRating; label: string }[] = [
-  { value: "GOOD", label: "好吃" },
-  { value: "OK", label: "一般" },
-  { value: "BAD", label: "不好吃" },
-];
 
 export function HistoryRecordsPanel({
   userId,

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Fuse from "fuse.js";
 import type { MealType } from "../api/types.ts";
 import { useDishes, useCreateDish } from "../hooks/use-dishes.ts";
-import { mealLabel } from "./meal-tag.tsx";
+import { mealTypeOptions } from "./meal-tag.tsx";
 import { Button, SecondaryButton } from "./ui.tsx";
 
 interface DishAutocompleteProps {
@@ -192,18 +192,18 @@ export function DishAutocomplete({ value, onChange, error }: DishAutocompletePro
             <div className="animate-slide-up border-t border-amber-200 bg-amber-50/55 p-3">
               <p className="mb-2 text-xs font-semibold text-slate-700">选择餐次</p>
               <div className="mb-3 flex flex-wrap gap-2">
-                {(["BREAKFAST", "LUNCH", "DINNER", "SNACK"] as MealType[]).map((mealType) => (
+                {mealTypeOptions.map((option) => (
                   <button
-                    key={mealType}
+                    key={option.value}
                     type="button"
-                    onClick={() => toggleMealType(mealType)}
+                    onClick={() => toggleMealType(option.value)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      selectedMealTypes.includes(mealType)
+                      selectedMealTypes.includes(option.value)
                         ? "border-red-600 bg-red-500 text-white"
                         : "border-slate-300 bg-white/85 text-slate-600 hover:border-red-200 hover:bg-red-50"
                     }`}
                   >
-                    {mealLabel(mealType)}
+                    {option.label}
                   </button>
                 ))}
               </div>

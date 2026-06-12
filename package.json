@@ -3,6 +3,9 @@
   "private": true,
   "packageManager": "pnpm@10.17.1",
   "scripts": {
+    "dev": "bash ./scripts/dev.sh",
+    "dev:stop": "bash ./scripts/dev-stop.sh",
+    "dev:reset": "bash ./scripts/dev-reset.sh",
     "backend:dev": "pnpm --filter @watermenu/backend start:dev",
     "backend:build": "pnpm --filter @watermenu/backend build",
     "backend:lint": "pnpm --filter @watermenu/backend lint",

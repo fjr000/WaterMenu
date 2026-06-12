@@ -19,18 +19,12 @@
 ```bash
 pnpm install
 cp backend/.env.example backend/.env
-pnpm db:up
-pnpm backend:prisma:generate
-pnpm backend:prisma:migrate
-pnpm backend:prisma:seed
-pnpm backend:dev
+pnpm dev
 ```
 
-在另一个终端启动前端：
-
-```bash
-pnpm frontend:dev
-```
+`pnpm dev` 会自动启动 PostgreSQL、同步数据库迁移、写入 seed 数据，并同时拉起后端和前端。
+`pnpm dev:stop` 会停止前后端进程并关闭 PostgreSQL。
+`pnpm dev:reset` 会清空本地数据库后重新启动整套开发环境。
 
 - 后端 API：`http://localhost:3000/api`
 - 前端页面：`http://localhost:5173`

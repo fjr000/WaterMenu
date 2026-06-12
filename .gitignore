@@ -50,6 +50,7 @@ __pycache__/
 # 临时文件
 tmp/
 temp/
+.tmp/
 
 # 本地 AI 工具配置
 .worktrees/

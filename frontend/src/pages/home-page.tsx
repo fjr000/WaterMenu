@@ -707,86 +707,165 @@ function DishCard({
 
   return (
     <Card className="overflow-hidden border-amber-200/80 bg-gradient-to-br from-white/95 via-amber-50/40 to-orange-50/30 p-0 shadow-[0_8px_24px_rgba(111,82,56,0.12)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(111,82,56,0.16)]">
-      <button
-        type="button"
-        className="w-full cursor-pointer p-5 text-left transition-colors hover:bg-white/40"
-        onClick={onToggle}
-        aria-expanded={expanded}
-      >
-        <div className="flex items-start gap-4">
-          {coverImage && (
-            <div className="relative shrink-0">
-              <img
-                src={coverImage.fileUrl}
-                alt={`${dish.name}`}
-                className="h-20 w-20 rounded-2xl border-2 border-white object-cover shadow-[0_8px_20px_rgba(111,82,56,0.15)]"
-                loading="lazy"
-              />
-              {images.length > 1 && (
-                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white shadow-sm">
-                  {images.length}
-                </span>
-              )}
-            </div>
-          )}
+      <div className="p-5">
+        <button
+          type="button"
+          className="w-full cursor-pointer text-left"
+          onClick={onToggle}
+          aria-expanded={expanded}
+        >
+          <div className="flex items-start gap-4">
+            {coverImage && (
+              <div className="relative shrink-0">
+                <img
+                  src={coverImage.fileUrl}
+                  alt={`${dish.name}`}
+                  className="h-20 w-20 rounded-2xl border-2 border-white object-cover shadow-[0_8px_20px_rgba(111,82,56,0.15)]"
+                  loading="lazy"
+                />
+                {images.length > 1 && (
+                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 text-[10px] font-bold text-white shadow-sm">
+                    {images.length}
+                  </span>
+                )}
+              </div>
+            )}
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-serif text-xl font-semibold text-slate-900">
-                    {dish.name}
-                  </h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif text-xl font-semibold text-slate-900">
+                      {dish.name}
+                    </h3>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        dish.isActive
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {dish.isActive ? "启用" : "停用"}
+                    </span>
+                  </div>
+
+                  {dish.description && (
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                      {dish.description}
+                    </p>
+                  )}
+
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    {dish.mealTypes.map((mt) => (
+                      <MealTag key={mt} mealType={mt} />
+                    ))}
+                    {dish.mealRecordCount > 0 && (
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                          <span className="text-[10px]">🍽️</span>
+                          {dish.mealRecordCount} 次
+                        </span>
+                        {ratingText && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/90 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                            ★ {ratingText}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="shrink-0">
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      dish.isActive
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
+                    className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500 transition-transform"
+                    style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                    aria-hidden="true"
                   >
-                    {dish.isActive ? "启用" : "停用"}
+                    ▼
                   </span>
                 </div>
-
-                {dish.description && (
-                  <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-600">
-                    {dish.description}
-                  </p>
-                )}
-
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  {dish.mealTypes.map((mt) => (
-                    <MealTag key={mt} mealType={mt} />
-                  ))}
-                  {dish.mealRecordCount > 0 && (
-                    <>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                        <span className="text-[10px]">🍽️</span>
-                        {dish.mealRecordCount} 次
-                      </span>
-                      {ratingText && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/90 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                          ★ {ratingText}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="shrink-0">
-                <span
-                  className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500 transition-transform"
-                  style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-                  aria-hidden="true"
-                >
-                  ▼
-                </span>
               </div>
             </div>
           </div>
+        </button>
+
+        {/* Quick Actions - Always visible with elevated primary action */}
+        <div className="mt-4 space-y-2.5">
+          {/* Primary Action - Elevated */}
+          <button
+            type="button"
+            className="group relative w-full overflow-hidden rounded-2xl border-2 border-emerald-300/50 bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3.5 shadow-[0_4px_12px_rgba(16,185,129,0.25)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(16,185,129,0.35)] active:scale-[0.98]"
+            onClick={(e) => handleActionClick(e, () => onRecordDish(dish))}
+            aria-label="记录已吃"
+          >
+            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+            <span className="relative flex items-center justify-between">
+              <span className="flex items-center gap-2.5 text-base font-bold text-white">
+                <span className="text-xl">✅</span>
+                <span>记录已吃</span>
+              </span>
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-lg font-black text-white">
+                +
+              </span>
+            </span>
+          </button>
+
+          {/* Secondary Actions - Compact chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+            <button
+              type="button"
+              className="group relative shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:border-amber-300 hover:shadow-md active:scale-95"
+              onClick={(e) => handleActionClick(e, () => onEditDish(dish))}
+              aria-label="编辑菜品"
+            >
+              <span className="absolute inset-0 bg-amber-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              <span className="relative flex items-center gap-1.5 text-sm font-semibold text-slate-700 group-hover:text-amber-900">
+                <span className="text-base">✏️</span>
+                <span>编辑</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="group relative shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:border-amber-300 hover:shadow-md active:scale-95"
+              onClick={(e) => handleActionClick(e, () => onManageImages(dish))}
+              aria-label="管理图库"
+            >
+              <span className="absolute inset-0 bg-amber-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              <span className="relative flex items-center gap-1.5 text-sm font-semibold text-slate-700 group-hover:text-amber-900">
+                <span className="text-base">🖼️</span>
+                <span>图库</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="group relative shrink-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:border-amber-300 hover:shadow-md active:scale-95"
+              onClick={(e) => handleActionClick(e, () => onManageVariants(dish))}
+              aria-label="管理版本"
+            >
+              <span className="absolute inset-0 bg-amber-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              <span className="relative flex items-center gap-1.5 text-sm font-semibold text-slate-700 group-hover:text-amber-900">
+                <span className="text-base">🔄</span>
+                <span>版本</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="group relative shrink-0 overflow-hidden rounded-xl border border-emerald-200/80 bg-white px-3.5 py-2.5 shadow-sm transition-all duration-200 hover:border-emerald-300 hover:shadow-md active:scale-95"
+              onClick={(e) => handleActionClick(e, () => onViewRecipe(dish))}
+              aria-label="查看做法"
+            >
+              <span className="absolute inset-0 bg-emerald-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              <span className="relative flex items-center gap-1.5 text-sm font-semibold text-emerald-700 group-hover:text-emerald-900">
+                <span className="text-base">📝</span>
+                <span>做法</span>
+              </span>
+            </button>
+          </div>
         </div>
-      </button>
+      </div>
 
       {expanded && (
         <div className="border-t border-amber-100/80 bg-white/50 p-5 backdrop-blur-sm">
@@ -848,48 +927,6 @@ function DishCard({
               更新失败，请重试
             </p>
           )}
-
-          <div className="mt-4 space-y-3">
-            <Button
-              className="w-full justify-between rounded-2xl px-4 py-3 text-base shadow-[0_4px_0_rgba(111,82,56,0.12)]"
-              onClick={(e) => handleActionClick(e, () => onRecordDish(dish))}
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-lg">✅</span>
-                <span>记录已吃</span>
-              </span>
-              <span
-                className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-xl font-bold"
-                aria-hidden="true"
-              >
-                +
-              </span>
-            </Button>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-              <DishToolButton
-                icon="✏️"
-                label="编辑"
-                onClick={(e) => handleActionClick(e, () => onEditDish(dish))}
-              />
-              <DishToolButton
-                icon="🖼️"
-                label="图库"
-                onClick={(e) => handleActionClick(e, () => onManageImages(dish))}
-              />
-              <DishToolButton
-                icon="🔄"
-                label="版本"
-                onClick={(e) => handleActionClick(e, () => onManageVariants(dish))}
-              />
-              <DishToolButton
-                icon="📝"
-                label="做法"
-                tone="emerald"
-                onClick={(e) => handleActionClick(e, () => onViewRecipe(dish))}
-              />
-            </div>
-          </div>
 
           {recipesQuery.isLoading && (
             <div className="mt-4">

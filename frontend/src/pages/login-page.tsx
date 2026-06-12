@@ -64,51 +64,39 @@ export function LoginPage() {
         </div>
 
         <Card className="relative overflow-hidden before:absolute before:left-8 before:top-0 before:h-3 before:w-20 before:-translate-y-1/2 before:rounded-full before:bg-red-200 before:opacity-70">
-          <form onSubmit={onSubmit} className="relative flex flex-col gap-4">
+          <form onSubmit={onSubmit} className="relative flex flex-col gap-5">
             <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-semibold text-slate-700"
-              >
-                邮箱
-              </label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="邮箱地址"
                 autoComplete="email"
                 {...register("email")}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-red-600">
+                <p className="mt-1.5 text-xs text-red-600">
                   {errors.email.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-sm font-semibold text-slate-700"
-              >
-                密码
-              </label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="密码"
                 autoComplete="current-password"
                 {...register("password")}
               />
               {errors.password && (
-                <p className="mt-1 text-xs text-red-600">
+                <p className="mt-1.5 text-xs text-red-600">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             {serverError && (
-              <p className="rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
+              <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700">
                 {serverError}
               </p>
             )}
@@ -119,8 +107,8 @@ export function LoginPage() {
           </form>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-slate-500">
-          暂不支持注册，请联系管理员创建账号
+        <p className="mt-6 text-center text-xs text-slate-400">
+          需要账号请联系管理员
         </p>
       </div>
     </div>

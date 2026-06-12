@@ -98,6 +98,46 @@ textarea {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes success-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
 .animate-paper-enter {
   animation: paper-enter 220ms ease-out both;
 }
@@ -105,6 +145,30 @@ textarea {
 .animate-gentle-spin {
   animation: gentle-spin 800ms linear infinite;
 }
+
+.animate-fade-in {
+  animation: fade-in 300ms ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 350ms ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 280ms ease-out both;
+}
+
+.animate-success-bounce {
+  animation: success-bounce 400ms ease-out both;
+}
+
+/* Stagger effects for lists */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -116,11 +180,16 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 
-  .animate-paper-enter {
+  .animate-paper-enter,
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in,
+  .animate-success-bounce {
     animation: none !important;
   }
 
-  .hover\:-translate-y-0\.5:hover {
+  .hover\:-translate-y-0\.5:hover,
+  .hover\:-translate-y-1:hover {
     transform: none !important;
   }
 }

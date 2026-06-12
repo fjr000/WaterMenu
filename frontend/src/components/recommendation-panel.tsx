@@ -42,26 +42,18 @@ export function RecommendationPanel({
   onViewRecipe,
 }: Props) {
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="mt-5 flex flex-col gap-5">
       {/* 操作区 */}
       <Card>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <div>
-            <p className="mb-3 font-serif text-lg font-semibold text-slate-900">
-              今天菜单
-            </p>
-            <label
-              htmlFor="meal-select"
-              className="mb-1 block text-sm font-semibold text-slate-700"
-            >
-              餐次筛选
-            </label>
             <Select
               id="meal-select"
               value={mealType}
               onChange={(e) =>
                 onMealTypeChange(e.target.value as MealType | "")
               }
+              aria-label="餐次筛选"
             >
               <option value="">不限餐次</option>
               <option value="BREAKFAST">早餐</option>
@@ -71,7 +63,7 @@ export function RecommendationPanel({
             </Select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button
               className="flex-1"
               onClick={onRecommend}
@@ -101,14 +93,15 @@ export function RecommendationPanel({
       {/* 推荐结果 */}
       {recommendResult && recommendResult.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-serif text-lg font-semibold text-slate-900">推荐结果</h2>
-          {recommendResult.map((candidate) => (
-            <CandidateCard
-              key={candidate.dish.id}
-              candidate={candidate}
-              onRecordDish={onRecordDish}
-              onViewRecipe={onViewRecipe}
-            />
+          <h2 className="font-serif text-lg font-semibold text-slate-900">推荐</h2>
+          {recommendResult.map((candidate, index) => (
+            <div key={candidate.dish.id} className={`animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
+              <CandidateCard
+                candidate={candidate}
+                onRecordDish={onRecordDish}
+                onViewRecipe={onViewRecipe}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -125,15 +118,17 @@ export function RecommendationPanel({
       {blindBoxFired && !blindBoxPending && !blindBoxError && (
         <div className="flex flex-col gap-3">
           <h2 className="font-serif text-lg font-semibold text-slate-900">
-            🎲 盲盒结果
+            🎲 盲盒
           </h2>
           {blindBoxResult ? (
-            <CandidateCard
-              candidate={blindBoxResult}
-              highlight
-              onRecordDish={onRecordDish}
-              onViewRecipe={onViewRecipe}
-            />
+            <div className="animate-scale-in">
+              <CandidateCard
+                candidate={blindBoxResult}
+                highlight
+                onRecordDish={onRecordDish}
+                onViewRecipe={onViewRecipe}
+              />
+            </div>
           ) : (
             <EmptyState
               icon="🎲"
@@ -160,19 +155,19 @@ function CandidateCard({
 }) {
   return (
     <Card
-      className={highlight ? "border-amber-300 bg-amber-50/80" : undefined}
+      className={highlight ? "border-amber-300 bg-amber-50/85 shadow-[0_14px_32px_rgba(217,147,31,0.18)]" : undefined}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="truncate font-serif text-lg font-semibold text-slate-900">
+          <p className="truncate font-serif text-xl font-semibold text-slate-900">
             {candidate.dish.name}
           </p>
           {candidate.dish.description && (
-            <p className="mt-0.5 truncate text-xs text-slate-500">
+            <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500">
               {candidate.dish.description}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {candidate.dish.mealTypes.map((mt) => (
               <MealTag key={mt} mealType={mt} />
             ))}
@@ -182,11 +177,11 @@ function CandidateCard({
       </div>
 
       {candidate.reasons.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {candidate.reasons.map((reason, i) => (
             <span
               key={i}
-              className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+              className="rounded-full border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1 text-xs font-medium text-emerald-700"
             >
               {reason}
             </span>
@@ -194,19 +189,19 @@ function CandidateCard({
         </div>
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-4 flex gap-2">
         <SecondaryButton
-          className="flex-1 px-3 py-2 text-xs"
+          className="flex-1 px-3 py-2.5 text-xs"
           onClick={() => onViewRecipe(candidate.dish)}
         >
           查看做法
         </SecondaryButton>
-        <SecondaryButton
-          className="flex-1 px-3 py-2 text-xs"
+        <Button
+          className="flex-1 px-3 py-2.5 text-xs shadow-[0_4px_0_rgba(111,82,56,0.16)]"
           onClick={() => onRecordDish(candidate.dish)}
         >
           记录已吃
-        </SecondaryButton>
+        </Button>
       </div>
     </Card>
   );

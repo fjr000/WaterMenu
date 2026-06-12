@@ -255,16 +255,16 @@ export function HomePage() {
         )}
 
         {activeTab === "dishes" && (
-          <div className="mx-auto mt-5 flex max-w-2xl flex-col gap-4 md:mt-6">
-            <div className="flex items-center justify-between gap-3 rounded-3xl border border-amber-200 bg-white/60 p-3 shadow-[0_10px_24px_rgba(111,82,56,0.08)]">
+          <div className="mx-auto mt-6 flex max-w-2xl flex-col gap-5 md:mt-6">
+            <div className="flex items-center justify-between gap-3 rounded-3xl border border-amber-200/70 bg-white/65 p-4 shadow-[0_10px_24px_rgba(111,82,56,0.08)] backdrop-blur-sm">
               <div>
-                <h2 className="font-serif text-lg font-semibold text-slate-900">
-                  菜品列表
+                <h2 className="font-serif text-xl font-semibold text-slate-900">
+                  菜品
                 </h2>
-                <p className="text-xs text-slate-500">管理家里的常吃菜单</p>
+                <p className="mt-0.5 text-xs text-slate-400">管理家里的常吃菜单</p>
               </div>
               <Button
-                className="shrink-0 px-3 py-2 text-xs sm:px-4 sm:text-sm"
+                className="shrink-0 px-4 py-2.5 text-xs sm:px-5 sm:text-sm"
                 onClick={() => setShowCreateForm((v) => !v)}
               >
                 {showCreateForm ? "收起" : "新增"}
@@ -381,14 +381,11 @@ function DishFiltersCard({
   onReset: () => void;
 }) {
   return (
-    <Card className="flex flex-col gap-3 border-amber-200 bg-white/65">
+    <Card className="flex flex-col gap-4 border-amber-200/80 bg-white/70">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="font-serif text-base font-semibold text-slate-900">
-            找菜
-          </p>
-          <p className="text-xs text-slate-500">按名称、简介、餐次和状态筛选</p>
-        </div>
+        <p className="font-serif text-lg font-semibold text-slate-900">
+          筛选
+        </p>
         {hasFilters && (
           <SecondaryButton
             type="button"
@@ -401,32 +398,22 @@ function DishFiltersCard({
       </div>
 
       <div>
-        <label
-          htmlFor="dish-search"
-          className="mb-1 block text-sm font-semibold text-slate-700"
-        >
-          关键词
-        </label>
         <Input
           id="dish-search"
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="搜索菜名或简介"
+          aria-label="搜索菜品"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label
-            htmlFor="dish-meal-type"
-            className="mb-1 block text-sm font-semibold text-slate-700"
-          >
-            餐次
-          </label>
           <Select
             id="dish-meal-type"
             value={mealType}
             onChange={(event) => onMealTypeChange(event.target.value as MealType | "")}
+            aria-label="餐次筛选"
           >
             <option value="">全部餐次</option>
             {mealTypeOptions.map((value) => (
@@ -438,16 +425,11 @@ function DishFiltersCard({
         </div>
 
         <div>
-          <label
-            htmlFor="dish-status"
-            className="mb-1 block text-sm font-semibold text-slate-700"
-          >
-            状态
-          </label>
           <Select
             id="dish-status"
             value={status}
             onChange={(event) => onStatusChange(event.target.value as DishStatusFilter)}
+            aria-label="状态筛选"
           >
             <option value="">全部状态</option>
             <option value="true">启用</option>
@@ -457,8 +439,8 @@ function DishFiltersCard({
       </div>
 
       {hasFilters && (
-        <p className="rounded-2xl border border-amber-100 bg-amber-50/65 px-3 py-2 text-xs leading-5 text-slate-600">
-          正在筛选：{getDishFilterSummary({ q: search, mealType, status })}
+        <p className="rounded-2xl border border-amber-100/80 bg-amber-50/70 px-3 py-2.5 text-xs leading-5 text-slate-600">
+          {getDishFilterSummary({ q: search, mealType, status })}
         </p>
       )}
     </Card>
@@ -481,30 +463,30 @@ function DesktopTabNav({
           <button
             key={tab.key}
             type="button"
-            className={`group flex items-center gap-3 rounded-3xl border p-3 text-left shadow-sm transition ${
+            className={`group flex items-center gap-3 rounded-3xl border p-4 text-left shadow-sm transition-all duration-300 ${
               active
                 ? "border-red-200 bg-red-50/90 shadow-[0_12px_28px_rgba(217,75,53,0.13)]"
-                : "border-slate-200 bg-white/55 hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50/70"
+                : "border-slate-200/70 bg-white/60 hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50/80 hover:shadow-md backdrop-blur-sm"
             }`}
             onClick={() => onChange(tab.key)}
             aria-current={active ? "page" : undefined}
           >
             <span
-              className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl border text-base font-black ${
+              className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border text-lg font-black transition-transform duration-300 group-hover:scale-105 ${
                 active
-                  ? "border-red-200 bg-red-500 text-white"
-                  : "border-amber-200 bg-white/80 text-slate-600 group-hover:text-red-600"
+                  ? "border-red-200 bg-red-500 text-white shadow-sm"
+                  : "border-amber-200/80 bg-white/90 text-slate-600 group-hover:text-red-600"
               }`}
               aria-hidden="true"
             >
               {tab.mark}
             </span>
             <span className="min-w-0">
-              <span className="block text-[11px] font-semibold text-slate-500">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 {tab.eyebrow}
               </span>
               <span
-                className={`block truncate text-sm font-bold ${
+                className={`block truncate text-base font-bold ${
                   active ? "text-red-700" : "text-slate-800"
                 }`}
               >
@@ -527,10 +509,10 @@ function MobileTabBar({
 }) {
   return (
     <nav
-      className="fixed inset-x-3 bottom-3 z-30 rounded-[1.75rem] border border-slate-200 bg-white/90 p-2 shadow-[0_18px_44px_rgba(111,82,56,0.22)] backdrop-blur md:hidden"
+      className="fixed inset-x-3 bottom-3 z-30 rounded-[2rem] border border-slate-200/70 bg-white/95 p-2.5 shadow-[0_20px_48px_rgba(111,82,56,0.24)] backdrop-blur-md md:hidden"
       aria-label="首页栏目"
     >
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-4 gap-1.5">
         {homeTabs.map((tab) => {
           const active = activeTab === tab.key;
 
@@ -538,17 +520,17 @@ function MobileTabBar({
             <button
               key={tab.key}
               type="button"
-              className={`flex min-w-0 flex-col items-center gap-1 rounded-2xl px-2 py-2 text-xs font-bold transition ${
+              className={`flex min-w-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2.5 text-xs font-bold transition-all duration-200 ${
                 active
-                  ? "bg-red-500 text-white shadow-[0_8px_18px_rgba(217,75,53,0.24)]"
-                  : "text-slate-500 hover:bg-amber-50 hover:text-slate-700"
+                  ? "bg-red-500 text-white shadow-[0_8px_20px_rgba(217,75,53,0.26)] scale-105"
+                  : "text-slate-500 hover:bg-amber-50 hover:text-slate-700 active:scale-95"
               }`}
               onClick={() => onChange(tab.key)}
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`grid h-7 w-7 place-items-center rounded-xl border text-sm ${
-                  active ? "border-red-100/40 bg-white/15" : "border-amber-200 bg-white/70"
+                className={`grid h-8 w-8 place-items-center rounded-xl border text-sm font-black ${
+                  active ? "border-red-100/40 bg-white/20" : "border-amber-200/80 bg-white/80"
                 }`}
                 aria-hidden="true"
               >
@@ -654,10 +636,10 @@ function DishToolButton({
   return (
     <button
       type="button"
-      className={`grid h-11 w-11 place-items-center rounded-2xl border text-sm font-black shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-red-500/25 ${
+      className={`grid h-10 w-10 place-items-center rounded-xl border text-sm font-black shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 active:translate-y-0 ${
         tone === "emerald"
-          ? "border-emerald-200 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100"
-          : "border-amber-200 bg-amber-50/80 text-red-600 hover:bg-amber-100"
+          ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-700 hover:bg-emerald-100"
+          : "border-amber-200/80 bg-amber-50/90 text-red-600 hover:bg-amber-100"
       }`}
       onClick={onClick}
       aria-label={label}
@@ -783,9 +765,9 @@ function DishCard({
   };
 
   return (
-    <Card className="overflow-hidden border-amber-200 bg-gradient-to-br from-white/95 via-amber-50/70 to-red-50/45 p-0 shadow-[0_16px_38px_rgba(111,82,56,0.14)]">
+    <Card className="overflow-hidden border-amber-200/80 bg-gradient-to-br from-white/95 via-amber-50/70 to-red-50/45 p-0 shadow-[0_18px_42px_rgba(111,82,56,0.14)]">
       {images.length > 0 && (
-        <div className="hidden border-b border-amber-100 bg-amber-50/55 px-3 py-3 sm:px-4 md:block">
+        <div className="hidden border-b border-amber-100/80 bg-amber-50/60 px-4 py-3.5 md:block backdrop-blur-sm">
           <DishImageStrip dish={dish} images={images} />
           {imagesQuery.isError && (
             <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
@@ -793,25 +775,25 @@ function DishCard({
         </div>
       )}
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2.5">
               <p className="truncate font-serif text-xl font-semibold text-slate-900">
                 {dish.name}
               </p>
               <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                   dish.isActive
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-slate-100 text-slate-500"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-slate-100 text-slate-500 border border-slate-200"
                 }`}
               >
                 {dish.isActive ? "启用" : "停用"}
               </span>
             </div>
             {dish.description && (
-              <p className="mt-1 hidden line-clamp-2 text-sm leading-5 text-slate-500 md:block">
+              <p className="mt-1.5 hidden line-clamp-2 text-sm leading-relaxed text-slate-500 md:block">
                 {dish.description}
               </p>
             )}
@@ -820,7 +802,7 @@ function DishCard({
             <img
               src={coverImage.fileUrl}
               alt={`${dish.name}封面`}
-              className="h-16 w-20 shrink-0 rounded-2xl border border-white object-cover shadow-[0_8px_18px_rgba(111,82,56,0.14)] md:hidden"
+              className="h-16 w-20 shrink-0 rounded-2xl border border-white/80 object-cover shadow-[0_10px_20px_rgba(111,82,56,0.15)] md:hidden"
               loading="lazy"
             />
           )}
@@ -829,23 +811,23 @@ function DishCard({
               id={activeSwitchDesktopId}
               dish={dish}
               disabled={updateDish.isPending}
-              className="block cursor-pointer rounded-2xl border border-amber-200 bg-white/75 px-2.5 py-2 shadow-inner"
+              className="block cursor-pointer rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-2.5 shadow-inner transition-all hover:bg-amber-50/50"
               onChange={handleToggleActive}
             />
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {dish.mealTypes.map((mt) => (
             <MealTag key={mt} mealType={mt} />
           ))}
           {dish.mealRecordCount > 0 && (
             <>
-              <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              <span className="inline-flex rounded-full border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                 {dish.mealRecordCount} 次
               </span>
               {ratingText && (
-                <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                <span className="inline-flex rounded-full border border-amber-200/80 bg-amber-50/90 px-2.5 py-1 text-xs font-semibold text-amber-700">
                   ★ {ratingText}
                 </span>
               )}
@@ -855,25 +837,25 @@ function DishCard({
 
         <button
           type="button"
-          className="mt-4 flex min-h-10 w-full items-center justify-between rounded-2xl border border-amber-100 bg-white/70 px-3 text-left text-xs font-bold text-slate-600 shadow-inner transition hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-70 md:hidden"
+          className="mt-4 flex min-h-10 w-full items-center justify-between rounded-2xl border border-amber-100/80 bg-white/75 px-3.5 text-left text-xs font-bold text-slate-600 shadow-inner transition-all duration-200 hover:bg-amber-50/80 focus:outline-none focus:ring-2 focus:ring-red-500/25 disabled:cursor-not-allowed disabled:opacity-70 md:hidden"
           onClick={() => setMobileExpanded((value) => !value)}
           disabled={forceExpanded}
           aria-expanded={showMobileDetails}
           aria-controls={cardDetailsId}
         >
           <span>{getMobileDetailsLabel(forceExpanded, showMobileDetails)}</span>
-          <span aria-hidden="true">{showMobileDetails ? "↑" : "↓"}</span>
+          <span aria-hidden="true" className="text-sm">{showMobileDetails ? "↑" : "↓"}</span>
         </button>
 
         <div id={cardDetailsId} className={`${showMobileDetails ? "block" : "hidden"} md:block`}>
           {dish.description && (
-            <p className="mt-4 line-clamp-2 text-sm leading-5 text-slate-500 md:hidden">
+            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-slate-500 md:hidden">
               {dish.description}
             </p>
           )}
 
           {images.length > 0 && (
-            <div className="mt-4 border-y border-amber-100 bg-amber-50/55 py-3 md:hidden">
+            <div className="mt-4 border-y border-amber-100/80 bg-amber-50/60 py-3.5 md:hidden backdrop-blur-sm">
               <DishImageStrip dish={dish} images={images} />
               {imagesQuery.isError && (
                 <p className="mt-2 text-xs text-red-600">图库刷新失败，先显示已有封面</p>
@@ -886,13 +868,13 @@ function DishCard({
               id={activeSwitchMobileId}
               dish={dish}
               disabled={updateDish.isPending}
-              className="inline-block cursor-pointer rounded-2xl border border-amber-200 bg-white/75 px-2.5 py-2 shadow-inner"
+              className="inline-block cursor-pointer rounded-2xl border border-amber-200/80 bg-white/85 px-3 py-2.5 shadow-inner transition-all hover:bg-amber-50/50"
               onChange={handleToggleActive}
             />
           </div>
 
         {isEditing && (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white/75 p-3">
+          <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/85 p-4 backdrop-blur-sm">
             <EditDishForm
               dish={dish}
               onCancel={onCancelEdit}
@@ -907,15 +889,15 @@ function DishCard({
           </p>
         )}
 
-        <div className="mt-4 rounded-3xl border border-amber-100 bg-white/55 p-2.5 shadow-inner">
-          <div className="flex items-center gap-2">
+        <div className="mt-5 rounded-3xl border border-amber-100/80 bg-white/60 p-3 shadow-inner backdrop-blur-sm">
+          <div className="flex items-center gap-2.5">
             <Button
               className="min-h-12 flex-1 justify-between rounded-2xl px-4 py-3 text-sm shadow-[0_5px_0_rgba(111,82,56,0.16)]"
               onClick={() => onRecordDish(dish)}
             >
               <span className="truncate">记录已吃</span>
               <span
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/20 text-base"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/25 text-base font-bold"
                 aria-hidden="true"
               >
                 +
@@ -923,7 +905,7 @@ function DishCard({
             </Button>
 
             <div
-              className="flex shrink-0 items-center gap-1 rounded-2xl border border-amber-100 bg-white/70 p-1"
+              className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-amber-100/80 bg-white/80 p-1.5"
               role="toolbar"
               aria-label={`${dish.name}管理操作`}
             >
@@ -953,19 +935,19 @@ function DishCard({
 
           <button
             type="button"
-            className={`mt-2 flex min-h-10 w-full items-center justify-between rounded-2xl border px-3 text-left text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-red-500/20 ${
+            className={`mt-2.5 flex min-h-10 w-full items-center justify-between rounded-2xl border px-3.5 text-left text-xs font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/25 ${
               recipesOpen
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-amber-100 bg-amber-50/70 text-slate-600 hover:bg-amber-100"
+                ? "border-emerald-200/80 bg-emerald-50/90 text-emerald-800 shadow-sm"
+                : "border-amber-100/80 bg-amber-50/75 text-slate-600 hover:bg-amber-100/90"
             }`}
             onClick={() => setRecipesOpen((value) => !value)}
             aria-expanded={recipesOpen}
             aria-controls={recipePanelId}
           >
-            <span className="flex min-w-0 items-center gap-2">
+            <span className="flex min-w-0 items-center gap-2.5">
               <span
-                className={`grid h-6 w-6 shrink-0 place-items-center rounded-xl text-[11px] ${
-                  recipesOpen ? "bg-emerald-100 text-emerald-700" : "bg-white/85 text-red-600"
+                className={`grid h-6 w-6 shrink-0 place-items-center rounded-xl text-[11px] font-black ${
+                  recipesOpen ? "bg-emerald-100 text-emerald-700" : "bg-white/90 text-red-600"
                 }`}
                 aria-hidden="true"
               >
@@ -980,7 +962,7 @@ function DishCard({
         </div>
 
         {recipesOpen && (
-          <div id={recipePanelId} className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-3">
+          <div id={recipePanelId} className="mt-3.5 rounded-2xl border border-emerald-100/80 bg-emerald-50/60 p-4 backdrop-blur-sm">
             {recipesQuery.isLoading && <Spinner />}
 
             {recipesQuery.isError && (
@@ -995,16 +977,16 @@ function DishCard({
             )}
 
             {recipesQuery.data && recipesQuery.data.length > 0 && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 {recipesQuery.data.map((recipe) => (
                   <article
                     key={recipe.id}
-                    className="rounded-2xl border border-white/80 bg-white/75 p-3 shadow-sm"
+                    className="rounded-2xl border border-white/90 bg-white/85 p-4 shadow-sm backdrop-blur-sm"
                   >
                     <p className="font-serif text-base font-semibold text-slate-900">
                       {recipe.title}
                     </p>
-                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                       {recipe.content}
                     </p>
                   </article>

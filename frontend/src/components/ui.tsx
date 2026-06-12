@@ -7,7 +7,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full border border-red-600 bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_6px_0_rgba(111,82,56,0.18)] transition hover:-translate-y-0.5 hover:bg-red-600 active:translate-y-0 active:shadow-[0_3px_0_rgba(111,82,56,0.16)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-full border border-red-600 bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_6px_0_rgba(111,82,56,0.18)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_0_rgba(111,82,56,0.22)] hover:bg-red-600 active:translate-y-0 active:shadow-[0_3px_0_rgba(111,82,56,0.16)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-[0_6px_0_rgba(111,82,56,0.18)] ${className}`}
       {...props}
     >
       {children}
@@ -22,7 +22,7 @@ export function SecondaryButton({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/85 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-amber-50 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/90 px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:bg-amber-50 hover:shadow-md active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${className}`}
       {...props}
     >
       {children}
@@ -36,7 +36,7 @@ export function Input({
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-900 shadow-inner placeholder-slate-400 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20 ${className}`}
+      className={`w-full rounded-xl border border-slate-300 bg-white/95 px-4 py-3 text-sm text-slate-900 shadow-inner placeholder-slate-400 outline-none transition-all duration-200 focus:border-red-400 focus:ring-2 focus:ring-red-500/25 hover:border-slate-400 ${className}`}
       {...props}
     />
   );
@@ -49,7 +49,7 @@ export function Select({
 }: React.SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }) {
   return (
     <select
-      className={`w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-900 shadow-inner outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/20 ${className}`}
+      className={`w-full rounded-xl border border-slate-300 bg-white/95 px-4 py-3 text-sm text-slate-900 shadow-inner outline-none transition-all duration-200 focus:border-red-400 focus:ring-2 focus:ring-red-500/25 hover:border-slate-400 ${className}`}
       {...props}
     >
       {children}
@@ -66,7 +66,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`animate-paper-enter rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-[0_10px_24px_rgba(111,82,56,0.10)] ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(111,82,56,0.12)] ${className}`}
+      className={`animate-paper-enter rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-[0_12px_28px_rgba(111,82,56,0.10)] ring-1 ring-white/70 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(111,82,56,0.13)] ${className}`}
     >
       {children}
     </div>
@@ -83,16 +83,16 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-3 rounded-3xl border border-slate-200 bg-white/55 p-4 shadow-sm">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-red-600">
-          WaterMenu
+    <header className="flex items-start justify-between gap-4 rounded-3xl border border-slate-200/70 bg-white/60 p-5 shadow-sm backdrop-blur-sm">
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-red-500">
+          WATERMENU
         </p>
-        <h1 className="mt-1 font-serif text-2xl font-semibold text-slate-900">
+        <h1 className="mt-1.5 font-serif text-2xl font-semibold text-slate-900">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>
+          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
         )}
       </div>
       {actions}
@@ -110,11 +110,11 @@ export function EmptyState({
   description?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white/45 px-4 py-8 text-center">
-      {icon && <div className="text-3xl">{icon}</div>}
+    <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-slate-300/80 bg-white/50 px-4 py-10 text-center backdrop-blur-sm">
+      {icon && <div className="text-4xl opacity-60">{icon}</div>}
       <p className="text-sm font-semibold text-slate-700">{title}</p>
       {description && (
-        <p className="max-w-xs text-xs leading-5 text-slate-500">{description}</p>
+        <p className="max-w-xs text-xs leading-relaxed text-slate-500">{description}</p>
       )}
     </div>
   );
@@ -136,11 +136,11 @@ export function ErrorBanner({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-3 shadow-sm">
+    <div className="flex items-center gap-3 rounded-2xl border border-red-200/80 bg-red-50/90 p-3.5 shadow-sm backdrop-blur-sm">
       <p className="flex-1 text-sm text-red-700">{message}</p>
       {onRetry && (
         <button
-          className="shrink-0 text-sm font-semibold text-red-600 underline underline-offset-4"
+          className="shrink-0 text-sm font-semibold text-red-600 underline decoration-red-300 underline-offset-4 transition-colors hover:text-red-700 hover:decoration-red-400"
           onClick={onRetry}
         >
           重试

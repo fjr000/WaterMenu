@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
-- **Last Active**: 2026-06-11
+- **Total Sessions**: 6
+- **Last Active**: 2026-06-12
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~173 | Active |
+| `journal-1.md` | ~247 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-06-12 | 本地开发脚本与启动文档 | `a88d8cd` | `main` |
 | 5 | 2026-06-11 | 完成菜品版本来源管理 | `0fc3850`, `bfd8777` | `main` |
 | 4 | 2026-06-10 | 测试覆盖与部署健康检查 | `51f8f09` | `main` |
 | 3 | 2026-06-10 | 补 README、前端测试与 CI | `0b74fcd`, `bc9e74e` | `main` |

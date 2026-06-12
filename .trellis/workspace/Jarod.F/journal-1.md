@@ -171,3 +171,77 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: 本地开发脚本与启动文档
+
+**Date**: 2026-06-12
+**Task**: dev-workflow-scripts
+**Branch**: `main`
+
+### Summary
+
+统一本地开发环境启动流程，提供根级快捷命令降低新会话启动成本。
+
+### Main Changes
+
+- 新增 `scripts/dev.sh` - 一键启动（环境检查 + DB + Prisma + 前后端并发）
+- 新增 `scripts/dev-stop.sh` - 优雅停止（进程组清理 + 端口释放 + Docker down）
+- 新增 `scripts/dev-reset.sh` - 数据库重置 + 全环境重启
+- 更新 `package.json` - 绑定 `pnpm dev` / `dev:stop` / `dev:reset`
+- 更新 `README.md` - 同步本地启动说明到新流程
+- 更新 `.gitignore` - 添加 `.tmp/` 忽略运行时产物
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a88d8cd` | feat: add unified dev workflow scripts |
+
+### Testing
+
+- [OK] 脚本语法验证通过（bash -n）
+- [OK] 脚本具有可执行权限（chmod +x）
+- [OK] 所有 Acceptance Criteria 验证通过
+- [OK] `.tmp/` 未混入提交
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 6: 本地开发脚本与启动文档
+
+**Date**: 2026-06-12
+**Task**: 本地开发脚本与启动文档
+**Branch**: `main`
+
+### Summary
+
+统一本地开发环境启动流程，提供 pnpm dev/dev:stop/dev:reset 根级快捷命令，降低新会话启动成本
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a88d8cd` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

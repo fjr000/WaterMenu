@@ -375,3 +375,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: 实现部署自动化增强功能
+
+**Date**: 2026-06-12
+**Task**: 实现部署自动化增强功能
+**Branch**: `main`
+
+### Summary
+
+为 WaterMenu 部署脚本添加安全增强和自动回滚机制，包括预部署备份、健康检查、自动回滚、部署日志、手动回滚脚本等功能。修复质量问题并补充 spec 文档。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `faaf64b` | (see git log) |
+| `295b162` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

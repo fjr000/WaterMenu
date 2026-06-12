@@ -12,6 +12,7 @@ import {
   isUnauthorized,
   useAuth,
 } from "./hooks/use-auth.tsx";
+import { ErrorBoundary } from "./components/error-boundary.tsx";
 import { LoginPage } from "./pages/login-page.tsx";
 import { HomePage } from "./pages/home-page.tsx";
 import { InvitePage } from "./pages/invite-page.tsx";
@@ -94,6 +95,8 @@ function App() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

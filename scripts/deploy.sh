@@ -195,7 +195,15 @@ docker tag watermenu-frontend:latest "watermenu-frontend:backup-${TIMESTAMP}" 2>
 # Build new images with memory limit and serial mode
 log_info "开始构建（串行模式 + 内存限制）..."
 export DOCKER_BUILDKIT=1
-docker compose -f docker-compose.prod.yml build --parallel 1 --memory 1g
+
+# Build backend first
+log_info "构建后端镜像..."
+docker compose -f docker-compose.prod.yml build --memory 1g backend
+
+# Build frontend second
+log_info "构建前端镜像..."
+docker compose -f docker-compose.prod.yml build --memory 1g nginx
+
 log_success "镜像构建完成"
 
 # 步骤 6: 启动服务

@@ -20,12 +20,21 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
 
-COPY --from=deps /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/backend/node_modules ./backend/node_modules
-COPY --from=build /app/backend ./backend
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json backend/package.json
 
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+COPY --from=build /app/backend/dist ./backend/dist
+COPY --from=build /app/backend/prisma ./backend/prisma
+COPY --from=build /app/backend/prisma.config.ts ./backend/prisma.config.ts
+COPY --from=build /app/backend/package.json ./backend/package.json
+
+# Generate Prisma Client in production environment
 WORKDIR /app/backend
+RUN pnpm prisma:generate
+
 EXPOSE 3000
 
 CMD ["sh", "-c", "pnpm prisma:deploy && pnpm start"]

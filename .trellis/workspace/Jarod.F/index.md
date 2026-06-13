@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
-- **Last Active**: 2026-06-13
+- **Total Sessions**: 14
+- **Last Active**: 2026-06-14
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~450 | Active |
+| `journal-1.md` | ~483 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-06-14 | Optimize deployment for 2c2g low-spec servers | `bafd40d` | `main` |
 | 13 | 2026-06-13 | 数据库 schema 重构：多 workspace 架构实现 | `3ad571f` | `main` |
 | 12 | 2026-06-13 | 代码简化：提取HEIC转换方法、优化控制流 | `9d6cd42` | `main` |
 | 11 | 2026-06-13 | 图片上传改进：HEIC支持、10MB限制、智能压缩 | `d0b3f2a`, `83ff3d1`, `d5d0023` | `main` |

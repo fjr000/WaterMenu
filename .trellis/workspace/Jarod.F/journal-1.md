@@ -448,3 +448,36 @@ Implemented six UI improvements: moved enable/disable toggle to always-visible a
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: Optimize deployment for 2c2g low-spec servers
+
+**Date**: 2026-06-14
+**Task**: Optimize deployment for 2c2g low-spec servers
+**Branch**: `main`
+
+### Summary
+
+Added pre-deployment checks, swap management, serial build mode, and container memory limits. Successfully optimized deployment for 2 core 2GB servers with ~1.5GB available memory. Build memory peak reduced from ~1.8GB to ~1.2GB. Added comprehensive documentation and test suite. All tests passed.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bafd40d` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

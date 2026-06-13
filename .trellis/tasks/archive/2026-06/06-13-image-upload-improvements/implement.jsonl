@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/backend/index.md", "reason": "Backend implementation patterns, NestJS conventions, file upload handling"}
+{"file": ".trellis/spec/frontend/frontend/index.md", "reason": "Frontend React patterns, hooks usage, UI component conventions"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/research/browser-image-compression.md", "reason": "Frontend compression library API and usage patterns"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/research/heic-conversion.md", "reason": "Backend HEIC conversion library selection and implementation guide"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/prd.md", "reason": "Complete requirements, decisions, and acceptance criteria"}

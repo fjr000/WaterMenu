@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/backend/index.md", "reason": "Backend testing patterns, error handling conventions"}
+{"file": ".trellis/spec/frontend/frontend/index.md", "reason": "Frontend testing patterns, React hooks testing"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/prd.md", "reason": "Acceptance criteria and quality requirements to verify"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/research/browser-image-compression.md", "reason": "Verify compression behavior matches documented library capabilities"}
+{"file": ".trellis/tasks/06-13-image-upload-improvements/research/heic-conversion.md", "reason": "Verify HEIC conversion implementation and error handling"}

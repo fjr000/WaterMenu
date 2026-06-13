@@ -382,3 +382,36 @@ Implemented six UI improvements: moved enable/disable toggle to always-visible a
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: 代码简化：提取HEIC转换方法、优化控制流
+
+**Date**: 2026-06-13
+**Task**: 代码简化：提取HEIC转换方法、优化控制流
+**Branch**: `main`
+
+### Summary
+
+重构图片上传代码提高可读性：后端提取processImageBuffer方法减少变量修改，前端简化handleFile控制流使用早返回模式。所有测试通过，无功能变更。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9d6cd42` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

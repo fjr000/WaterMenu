@@ -19,8 +19,7 @@ interface Props {
   recommendPending: boolean;
   blindBoxPending: boolean;
   recommendResult: RecommendationCandidate[] | null;
-  blindBoxResult: RecommendationCandidate | null;
-  blindBoxFired: boolean;
+  blindBoxEmpty: boolean;
   recommendError: string | null;
   blindBoxError: string | null;
   onRecordDish: (dish: Dish) => void;
@@ -35,8 +34,7 @@ export function RecommendationPanel({
   recommendPending,
   blindBoxPending,
   recommendResult,
-  blindBoxResult,
-  blindBoxFired,
+  blindBoxEmpty,
   recommendError,
   blindBoxError,
   onRecordDish,
@@ -91,6 +89,15 @@ export function RecommendationPanel({
         <ErrorBanner message={blindBoxError} onRetry={onBlindBox} />
       )}
 
+      {/* 盲盒空结果提示 */}
+      {blindBoxEmpty && (
+        <EmptyState
+          icon="🎲"
+          title="盲盒是空的"
+          description="当前没有可抽取的菜品，试试新增一些菜品或换个餐次"
+        />
+      )}
+
       {/* 推荐结果 */}
       {recommendResult && recommendResult.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -113,31 +120,6 @@ export function RecommendationPanel({
           title="暂无推荐"
           description="当前没有可推荐的菜品，试试新增一些菜品或换个餐次"
         />
-      )}
-
-      {/* 盲盒结果 */}
-      {blindBoxFired && !blindBoxPending && !blindBoxError && (
-        <div className="flex flex-col gap-3">
-          <h2 className="font-serif text-lg font-semibold text-slate-900">
-            🎲 盲盒
-          </h2>
-          {blindBoxResult ? (
-            <div className="animate-scale-in">
-              <CandidateCard
-                candidate={blindBoxResult}
-                highlight
-                onRecordDish={onRecordDish}
-                onViewRecipe={onViewRecipe}
-              />
-            </div>
-          ) : (
-            <EmptyState
-              icon="🎲"
-              title="盲盒是空的"
-              description="当前没有可抽取的菜品，试试新增一些菜品或换个餐次"
-            />
-          )}
-        </div>
       )}
     </div>
   );

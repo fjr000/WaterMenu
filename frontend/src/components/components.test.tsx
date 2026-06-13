@@ -251,8 +251,7 @@ describe("业务面板组件", () => {
         recommendPending={false}
         blindBoxPending={false}
         recommendResult={[{ dish: sampleDish, score: 1, weight: 1, reasons: ["最近没吃"] }]}
-        blindBoxResult={null}
-        blindBoxFired={false}
+        blindBoxEmpty={false}
         recommendError={null}
         blindBoxError={null}
         onRecordDish={onRecordDish}
@@ -271,6 +270,28 @@ describe("业务面板组件", () => {
     expect(onBlindBox).toHaveBeenCalledTimes(1);
     expect(onViewRecipe).toHaveBeenCalledWith(sampleDish);
     expect(onRecordDish).toHaveBeenCalledWith(sampleDish);
+  });
+
+  it("RecommendationPanel 显示盲盒空结果提示", () => {
+    render(
+      <RecommendationPanel
+        mealType=""
+        onMealTypeChange={vi.fn()}
+        onRecommend={vi.fn()}
+        onBlindBox={vi.fn()}
+        recommendPending={false}
+        blindBoxPending={false}
+        recommendResult={null}
+        blindBoxEmpty={true}
+        recommendError={null}
+        blindBoxError={null}
+        onRecordDish={vi.fn()}
+        onViewRecipe={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("盲盒是空的")).toBeInTheDocument();
+    expect(screen.getByText("当前没有可抽取的菜品，试试新增一些菜品或换个餐次")).toBeInTheDocument();
   });
 
   it("RecentMealRecords、MealRecordCard 和 HistoryRecordsPanel 渲染记录", () => {

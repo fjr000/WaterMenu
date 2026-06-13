@@ -1,4 +1,4 @@
-import { memo, useCallback, useId, useState } from "react";
+import { memo, useCallback, useEffect, useId, useState } from "react";
 import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
@@ -21,6 +21,7 @@ import { MealRecordForm } from "../components/meal-record-form.tsx";
 import { mealLabel, MealTag } from "../components/meal-tag.tsx";
 import { MembersPanel } from "../components/members-panel.tsx";
 import { RecentMealRecords } from "../components/recent-meal-records.tsx";
+import { BlindBoxResultModal } from "../components/blind-box-result-modal.tsx";
 import {
   Button,
   Card,
@@ -96,6 +97,7 @@ export function HomePage() {
   const [variantDish, setVariantDish] = useState<Dish | null>(null);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
+  const [blindBoxModalOpen, setBlindBoxModalOpen] = useState(false);
 
   const hasDishFilters = hasActiveDishFilters({
     q: dishSearch,
@@ -103,6 +105,13 @@ export function HomePage() {
     status: dishStatus,
   });
   const dishEmptyState = getDishEmptyState(hasDishFilters);
+
+  // Open blind box modal when blind box request succeeds with an item
+  useEffect(() => {
+    if (blindBoxMutation.isSuccess && blindBoxMutation.data?.item) {
+      setBlindBoxModalOpen(true);
+    }
+  }, [blindBoxMutation.isSuccess, blindBoxMutation.data]);
 
   const resetDishFilters = () => {
     setDishSearch("");
@@ -122,6 +131,11 @@ export function HomePage() {
 
   const resetRecommendationState = () => {
     recommendMutation.reset();
+    blindBoxMutation.reset();
+  };
+
+  const handleBlindBoxModalClose = () => {
+    setBlindBoxModalOpen(false);
     blindBoxMutation.reset();
   };
 
@@ -209,8 +223,9 @@ export function HomePage() {
             recommendPending={recommendMutation.isPending}
             blindBoxPending={blindBoxMutation.isPending}
             recommendResult={recommendMutation.data?.items ?? null}
-            blindBoxResult={blindBoxMutation.data?.item ?? null}
-            blindBoxFired={blindBoxMutation.isSuccess}
+            blindBoxEmpty={
+              blindBoxMutation.isSuccess && !blindBoxMutation.data?.item
+            }
             recommendError={
               recommendMutation.isError ? "请求推荐失败，请重试" : null
             }
@@ -221,6 +236,15 @@ export function HomePage() {
             onViewRecipe={handleViewRecipe}
           />
         )}
+
+        {/* Blind Box Result Modal */}
+        <BlindBoxResultModal
+          isOpen={blindBoxModalOpen}
+          onClose={handleBlindBoxModalClose}
+          candidate={blindBoxMutation.data?.item ?? null}
+          onRecordDish={handleRecordDish}
+          onViewRecipe={handleViewRecipe}
+        />
 
         {recordDish && (
           <div className="mt-4">

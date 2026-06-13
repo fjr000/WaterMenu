@@ -13,6 +13,10 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${SCRIPT_DIR}/lib/logger.sh"
 # shellcheck source=scripts/lib/health-check.sh
 source "${SCRIPT_DIR}/lib/health-check.sh"
+# shellcheck source=scripts/lib/pre-check.sh
+source "${SCRIPT_DIR}/lib/pre-check.sh"
+# shellcheck source=scripts/lib/swap-manager.sh
+source "${SCRIPT_DIR}/lib/swap-manager.sh"
 
 # Parse command-line arguments
 SKIP_BACKUP=false
@@ -54,8 +58,16 @@ log_info "Git commit: ${COMMIT_HASH}"
 log_info "=== WaterMenu 一键部署脚本 ==="
 echo ""
 
+# 步骤 0: 预检查
+log_info "步骤 0/9: 运行预检查"
+if ! run_pre_checks; then
+    log_error "预检查失败，部署已中止"
+    exit 1
+fi
+echo ""
+
 # 步骤 1: 检查 Docker 安装
-log_info "步骤 1/8: 检查 Docker 环境"
+log_info "步骤 1/9: 检查 Docker 环境"
 if ! command -v docker &> /dev/null; then
     log_warning "未检测到 Docker，开始安装..."
 
@@ -105,7 +117,7 @@ log_success "Docker Compose 已安装: $(docker compose version)"
 
 # 步骤 2: 准备环境变量
 echo ""
-log_info "步骤 2/8: 配置环境变量"
+log_info "步骤 2/9: 配置环境变量"
 if [ ! -f deploy/env/prod.env ]; then
     cp deploy/env/prod.env.example deploy/env/prod.env
     log_warning "已创建 deploy/env/prod.env，请立即编辑以下配置："
@@ -132,7 +144,7 @@ log_success "环境变量配置验证通过"
 
 # 步骤 3: 检查证书（可选）
 echo ""
-log_info "步骤 3/8: 检查 HTTPS 证书"
+log_info "步骤 3/9: 检查 HTTPS 证书"
 if [ -f deploy/certs/fullchain.pem ] && [ -f deploy/certs/privkey.pem ]; then
     log_success "检测到 HTTPS 证书"
 else
@@ -150,7 +162,7 @@ fi
 
 # 步骤 4: 预部署备份
 echo ""
-log_info "步骤 4/8: 预部署数据库备份"
+log_info "步骤 4/9: 预部署数据库备份"
 if [ "$SKIP_BACKUP" = true ]; then
     log_warning "跳过预部署备份 (--skip-backup)"
 else
@@ -171,7 +183,8 @@ fi
 
 # 步骤 5: 构建镜像
 echo ""
-log_info "步骤 5/8: 构建 Docker 镜像（可能需要几分钟）"
+log_info "步骤 5/9: 构建 Docker 镜像（可能需要几分钟）"
+log_info "使用串行构建模式以节省内存..."
 
 # Tag current images before building new ones (for rollback)
 log_info "标记当前镜像用于回滚..."
@@ -179,13 +192,15 @@ TIMESTAMP=$(date +%s)
 docker tag watermenu-backend:latest "watermenu-backend:backup-${TIMESTAMP}" 2>/dev/null || log_info "后端镜像不存在（首次部署）"
 docker tag watermenu-frontend:latest "watermenu-frontend:backup-${TIMESTAMP}" 2>/dev/null || log_info "前端镜像不存在（首次部署）"
 
-# Build new images
-docker compose -f docker-compose.prod.yml build
+# Build new images with memory limit and serial mode
+log_info "开始构建（串行模式 + 内存限制）..."
+export DOCKER_BUILDKIT=1
+docker compose -f docker-compose.prod.yml build --parallel 1 --memory 1g
 log_success "镜像构建完成"
 
 # 步骤 6: 启动服务
 echo ""
-log_info "步骤 6/8: 启动服务"
+log_info "步骤 6/9: 启动服务"
 docker compose -f docker-compose.prod.yml up -d
 log_success "服务已启动"
 
@@ -195,7 +210,7 @@ sleep 5
 
 # 步骤 7: 运行健康检查
 echo ""
-log_info "步骤 7/8: 运行健康检查"
+log_info "步骤 7/9: 运行健康检查"
 HEALTH_CHECK_PASSED=false
 
 if [ "$SKIP_HEALTH_CHECK" = true ]; then
@@ -254,7 +269,7 @@ fi
 
 # 步骤 8: 创建初始管理员
 echo ""
-log_info "步骤 8/8: 创建初始管理员账号"
+log_info "步骤 8/9: 创建初始管理员账号"
 if docker compose -f docker-compose.prod.yml exec -T backend pnpm prisma:seed; then
     log_success "管理员账号创建成功"
 else
@@ -263,8 +278,13 @@ fi
 
 # 显示状态和访问信息
 echo ""
-log_info "验证部署状态"
+log_info "步骤 9/9: 验证部署状态"
 docker compose -f docker-compose.prod.yml ps
+
+# Show memory usage
+echo ""
+log_info "当前内存使用情况:"
+free -h | grep -E '^(Mem|Swap):'
 
 # Cleanup old backups and images
 echo ""

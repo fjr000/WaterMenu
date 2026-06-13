@@ -13,6 +13,8 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    mem_limit: 384m
+    memswap_limit: 512m
 
   backend:
     build:
@@ -22,6 +24,8 @@ services:
       - ./deploy/env/prod.env.example
       - path: ./deploy/env/prod.env
         required: false
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=480
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,6 +37,8 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    mem_limit: 640m
+    memswap_limit: 768m
 
   nginx:
     build:
@@ -49,6 +55,8 @@ services:
       - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./deploy/certs:/etc/nginx/certs:ro
     restart: unless-stopped
+    mem_limit: 128m
+    memswap_limit: 192m
 
 volumes:
   prod_postgres_data:

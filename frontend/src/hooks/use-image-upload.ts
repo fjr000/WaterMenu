@@ -43,6 +43,7 @@ export function useImageUpload({ onUpload }: UseImageUploadOptions) {
       setCompressing(true);
       setCompressionProgress(0);
       setCompressionError(null);
+
       try {
         const compressed = await compressImage(file, setCompressionProgress);
         onUpload(compressed);
@@ -59,7 +60,7 @@ export function useImageUpload({ onUpload }: UseImageUploadOptions) {
    * Entry point: call this when a file is selected.
    *
    * It decides the correct action and either uploads directly, shows a prompt,
-   * or auto-compresses non-compressible large files.
+   * or rejects non-compressible large files.
    */
   const handleFile = useCallback(
     (file: File) => {
@@ -67,7 +68,6 @@ export function useImageUpload({ onUpload }: UseImageUploadOptions) {
       const action: CompressionAction = getCompressionAction(file);
 
       if (action === "upload") {
-        // Small file, upload directly
         onUpload(file);
         return;
       }
@@ -77,11 +77,12 @@ export function useImageUpload({ onUpload }: UseImageUploadOptions) {
         // If within upload limit, send as-is; otherwise reject.
         if (action === "suggest") {
           onUpload(file);
-        } else {
-          setCompressionError(
-            `文件大小 ${formatFileSize(file.size)} 超过 10 MB 限制，且该格式无法在浏览器压缩`,
-          );
+          return;
         }
+
+        setCompressionError(
+          `文件大小 ${formatFileSize(file.size)} 超过 10 MB 限制，且该格式无法在浏览器压缩`,
+        );
         return;
       }
 

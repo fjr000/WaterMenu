@@ -59,24 +59,8 @@ export class DishImagesService {
       throw new BadRequestException('仅支持 JPEG、PNG、WebP、HEIC 图片');
     }
 
-    let processedBuffer = file.buffer;
-    let processedMimeType = file.mimetype;
-    let processedSize = file.size;
-
-    if (file.mimetype === 'image/heic' || file.mimetype === 'image/heif') {
-      try {
-        const convertedBuffer = await heicConvert({
-          buffer: file.buffer,
-          format: 'JPEG',
-          quality: 0.9,
-        });
-        processedBuffer = Buffer.from(convertedBuffer);
-        processedMimeType = 'image/jpeg';
-        processedSize = processedBuffer.length;
-      } catch {
-        throw new BadRequestException('HEIC 图片转换失败');
-      }
-    }
+    const { buffer: processedBuffer, mimeType: processedMimeType, size: processedSize } =
+      await this.processImageBuffer(file);
 
     const dimensions = this.readDimensions(processedBuffer, processedMimeType);
     const workspaceId = await this.getWorkspaceId(userId);
@@ -266,6 +250,34 @@ export class DishImagesService {
       await fs.unlink(filePath);
     } catch {
       // 文件缺失不阻断数据库结果。
+    }
+  }
+
+  private async processImageBuffer(file: Express.Multer.File) {
+    const isHeic = file.mimetype === 'image/heic' || file.mimetype === 'image/heif';
+
+    if (!isHeic) {
+      return {
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        size: file.size,
+      };
+    }
+
+    try {
+      const convertedBuffer = await heicConvert({
+        buffer: file.buffer,
+        format: 'JPEG',
+        quality: 0.9,
+      });
+      const buffer = Buffer.from(convertedBuffer);
+      return {
+        buffer,
+        mimeType: 'image/jpeg',
+        size: buffer.length,
+      };
+    } catch {
+      throw new BadRequestException('HEIC 图片转换失败');
     }
   }
 

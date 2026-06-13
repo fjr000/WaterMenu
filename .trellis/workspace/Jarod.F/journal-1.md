@@ -211,3 +211,40 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: Fix operation feedback viewport UX - Modal implementation
+
+**Date**: 2026-06-13
+**Task**: Fix operation feedback viewport UX - Modal implementation
+**Branch**: `main`
+
+### Summary
+
+实现 Modal 基础组件并将所有操作反馈（盲盒、图库、版本、做法、记录已吃）改为 Modal 弹窗，解决用户看不到操作结果的 UX 问题。包含 PR1-PR4 的完整实现和规范文档更新。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `323bb9a` | (see git log) |
+| `3e9de42` | (see git log) |
+| `bf262b5` | (see git log) |
+| `bed060e` | (see git log) |
+| `a3ba1fb` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

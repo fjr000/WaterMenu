@@ -138,8 +138,46 @@ textarea {
   }
 }
 
+@keyframes dish-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95) rotate(-1deg);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.02) rotate(0.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
 .animate-paper-enter {
   animation: paper-enter 220ms ease-out both;
+}
+
+.animate-dish-reveal {
+  animation: dish-reveal 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
 }
 
 .animate-gentle-spin {
@@ -190,6 +228,33 @@ textarea {
 
   .hover\:-translate-y-0\.5:hover,
   .hover\:-translate-y-1:hover {
+    transform: none !important;
+  }
+}
+
+/* 移动端触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 触摸反馈 */
+  button:active {
+    opacity: 0.8;
+    transform: scale(0.98) !important;
+  }
+
+  /* 确保触摸目标足够大 (至少 44x44 px) */
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 禁用悬停效果 */
+  .hover\:shadow-md:hover,
+  .hover\:shadow-lg:hover,
+  .hover\:-translate-y-1:hover {
+    box-shadow: inherit !important;
     transform: none !important;
   }
 }

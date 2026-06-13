@@ -71,11 +71,17 @@ export function RecommendationPanel({
               {recommendPending ? "推荐中…" : "智能推荐"}
             </Button>
             <SecondaryButton
-              className="flex-1"
+              className="group relative flex-1 overflow-hidden"
               onClick={onBlindBox}
               disabled={recommendPending || blindBoxPending}
             >
-              {blindBoxPending ? "抽取中…" : "🎲 盲盒"}
+              {/* 悬停闪光效果 */}
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-amber-200/50 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+
+              <span className="relative flex items-center justify-center gap-1.5">
+                <span className={blindBoxPending ? "animate-gentle-spin" : ""}>🎲</span>
+                <span>{blindBoxPending ? "抽取中…" : "盲盒"}</span>
+              </span>
             </SecondaryButton>
           </div>
         </div>
@@ -103,7 +109,7 @@ export function RecommendationPanel({
         <div className="flex flex-col gap-3">
           <h2 className="font-serif text-lg font-semibold text-slate-900">推荐</h2>
           {recommendResult.map((candidate, index) => (
-            <div key={candidate.dish.id} className={`animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
+            <div key={candidate.dish.id} className={`animate-dish-reveal stagger-${Math.min(index + 1, 6)}`}>
               <CandidateCard
                 candidate={candidate}
                 onRecordDish={onRecordDish}

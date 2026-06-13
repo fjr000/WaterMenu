@@ -149,3 +149,50 @@ export function ErrorBanner({
     </div>
   );
 }
+
+export function DishCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-2xl border border-slate-200/80 bg-white/85 p-5 shadow-[0_12px_28px_rgba(111,82,56,0.10)] relative overflow-hidden">
+      {/* Shimmer effect overlay */}
+      <div className="absolute inset-0 animate-shimmer pointer-events-none" />
+
+      <div className="flex items-start gap-4">
+        {/* 图片骨架 */}
+        <div className="h-20 w-20 shrink-0 rounded-2xl bg-slate-200" />
+
+        <div className="min-w-0 flex-1 space-y-3">
+          {/* 标题骨架 */}
+          <div className="h-6 w-32 rounded-full bg-slate-200" />
+
+          {/* 描述骨架 */}
+          <div className="space-y-2">
+            <div className="h-4 w-full rounded-full bg-slate-200" />
+            <div className="h-4 w-3/4 rounded-full bg-slate-200" />
+          </div>
+
+          {/* 标签骨架 */}
+          <div className="flex gap-2">
+            <div className="h-6 w-16 rounded-full bg-slate-200" />
+            <div className="h-6 w-16 rounded-full bg-slate-200" />
+          </div>
+        </div>
+      </div>
+
+      {/* 开关骨架 */}
+      <div className="mt-3 flex items-center gap-2">
+        <div className="h-5 w-9 rounded-full bg-slate-200" />
+        <div className="h-4 w-12 rounded-full bg-slate-200" />
+      </div>
+
+      {/* 按钮骨架 */}
+      <div className="mt-4 space-y-2.5">
+        <div className="h-10 w-full rounded-xl bg-slate-200" />
+        <div className="flex gap-2">
+          <div className="h-10 flex-1 rounded-xl bg-slate-200" />
+          <div className="h-10 flex-1 rounded-xl bg-slate-200" />
+          <div className="h-10 flex-1 rounded-xl bg-slate-200" />
+        </div>
+      </div>
+    </div>
+  );
+}

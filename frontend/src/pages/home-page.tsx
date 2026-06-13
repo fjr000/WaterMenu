@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import { useRecipes } from "../hooks/use-recipes.ts";
+import { useDebouncedValue } from "../hooks/use-debounced-value.ts";
 import { parseMarkdown } from "../utils/markdown.ts";
 import { DishVariantsPanel } from "../components/dish-variants-panel.tsx";
 import {
@@ -27,6 +28,7 @@ import { BlindBoxResultModal } from "../components/blind-box-result-modal.tsx";
 import {
   Button,
   Card,
+  DishCardSkeleton,
   EmptyState,
   ErrorBanner,
   Input,
@@ -81,7 +83,8 @@ const homeTabs: Array<{
 export function HomePage() {
   const auth = useAuth();
   const [mealType, setMealType] = useState<MealType | "">("");
-  const [dishSearch, setDishSearch] = useState("");
+  const [dishSearchInput, setDishSearchInput] = useState("");
+  const dishSearch = useDebouncedValue(dishSearchInput, 300);
   const [dishMealType, setDishMealType] = useState<MealType | "">("");
   const [dishStatus, setDishStatus] = useState<DishStatusFilter>("");
   const dishesQuery = useDishes({
@@ -116,7 +119,7 @@ export function HomePage() {
   }, [blindBoxMutation.isSuccess, blindBoxMutation.data]);
 
   const resetDishFilters = () => {
-    setDishSearch("");
+    setDishSearchInput("");
     setDishMealType("");
     setDishStatus("");
   };
@@ -302,11 +305,11 @@ export function HomePage() {
             </div>
 
             <DishFiltersCard
-              search={dishSearch}
+              search={dishSearchInput}
               mealType={dishMealType}
               status={dishStatus}
               hasFilters={hasDishFilters}
-              onSearchChange={setDishSearch}
+              onSearchChange={setDishSearchInput}
               onMealTypeChange={setDishMealType}
               onStatusChange={setDishStatus}
               onReset={resetDishFilters}
@@ -320,7 +323,13 @@ export function HomePage() {
               </Card>
             )}
 
-            {dishesQuery.isLoading && <Spinner />}
+            {dishesQuery.isLoading && (
+              <div className="space-y-3">
+                <DishCardSkeleton />
+                <DishCardSkeleton />
+                <DishCardSkeleton />
+              </div>
+            )}
 
             {dishesQuery.isError && (
               <ErrorBanner
@@ -534,6 +543,9 @@ function MobileTabBar({
   return (
     <nav
       className="fixed inset-x-3 bottom-3 z-30 rounded-[2rem] border border-slate-200/70 bg-white/95 p-2.5 shadow-[0_20px_48px_rgba(111,82,56,0.24)] backdrop-blur-md md:hidden"
+      style={{
+        paddingBottom: 'max(0.625rem, calc(0.625rem + env(safe-area-inset-bottom)))',
+      }}
       aria-label="首页栏目"
     >
       <div className="grid grid-cols-4 gap-1.5">

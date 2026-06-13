@@ -272,7 +272,7 @@ describe("业务面板组件", () => {
 
     await userEvent.selectOptions(screen.getByLabelText("餐次筛选"), "DINNER");
     await userEvent.click(screen.getByRole("button", { name: "智能推荐" }));
-    await userEvent.click(screen.getByRole("button", { name: "🎲 盲盒" }));
+    await userEvent.click(screen.getByRole("button", { name: /盲盒/ }));
     await userEvent.click(screen.getByRole("button", { name: "查看做法" }));
     await userEvent.click(screen.getByRole("button", { name: "记录已吃" }));
 

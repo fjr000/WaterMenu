@@ -285,7 +285,7 @@ describe("HomePage", () => {
     // PageHeader is now only on members tab, so check for something else on recommend tab
     expect(screen.getByText("最近用餐")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "智能推荐" }));
-    await userEvent.click(screen.getByRole("button", { name: "🎲 盲盒" }));
+    await userEvent.click(screen.getByRole("button", { name: /盲盒/ }));
 
     expect(recommend).toHaveBeenCalledWith({});
     expect(blindBox).toHaveBeenCalledWith({});

@@ -105,11 +105,11 @@ describe("React Query hooks", () => {
 
     apiFetchMock.mockResolvedValue(sampleRecipe);
     const createHook = renderQueryHook(() => useCreateRecipe("dish-1"));
-    await act(() => createHook.result.current.mutateAsync({ title: "做法", content: "内容" }));
+    await act(() => createHook.result.current.mutateAsync({ instructions: "# 做法\n\n内容" }));
     expect(apiFetchMock).toHaveBeenLastCalledWith("/dishes/dish-1/recipes", expect.objectContaining({ method: "POST" }));
 
     const updateHook = renderQueryHook(() => useUpdateRecipe("dish-1"));
-    await act(() => updateHook.result.current.mutateAsync({ id: "recipe-1", body: { title: "新版" } }));
+    await act(() => updateHook.result.current.mutateAsync({ id: "recipe-1", body: { instructions: "# 新版" } }));
     expect(apiFetchMock).toHaveBeenLastCalledWith("/recipes/recipe-1", expect.objectContaining({ method: "PATCH" }));
   });
 

@@ -1,13 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateRecipeDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(10000)
   @IsOptional()
-  title?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  content?: string;
+  instructions?: string;
 }

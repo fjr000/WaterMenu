@@ -54,8 +54,7 @@ export const sampleRecipe: Recipe = {
   id: "recipe-1",
   workspaceId: "workspace-1",
   dishId: "dish-1",
-  title: "快手做法",
-  content: "先炒蛋，再炒番茄。",
+  instructions: "# 快手做法\n\n先炒蛋，再炒番茄。",
   createdAt: "2026-06-01T00:00:00.000Z",
   updatedAt: "2026-06-01T00:00:00.000Z",
 };

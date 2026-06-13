@@ -1,8 +1,10 @@
 import { memo, useCallback, useEffect, useId, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useAuth } from "../hooks/use-auth.tsx";
 import { useDishImages } from "../hooks/use-dish-images.ts";
 import { useDishes, useUpdateDish } from "../hooks/use-dishes.ts";
 import { useRecipes } from "../hooks/use-recipes.ts";
+import { parseMarkdown } from "../utils/markdown.ts";
 import { DishVariantsPanel } from "../components/dish-variants-panel.tsx";
 import {
   useRecommend,
@@ -920,19 +922,36 @@ const DishCard = memo(function DishCard({
                 <h4 className="font-serif text-base font-semibold text-slate-900">做法</h4>
               </div>
               <div className="space-y-3">
-                {recipesQuery.data.map((recipe) => (
-                  <article
-                    key={recipe.id}
-                    className="rounded-xl border border-white/90 bg-white/80 p-3 shadow-sm"
-                  >
-                    <p className="font-serif text-sm font-semibold text-slate-900">
-                      {recipe.title}
-                    </p>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-                      {recipe.content}
-                    </p>
-                  </article>
-                ))}
+                {recipesQuery.data.map((recipe) => {
+                  const { title, body } = parseMarkdown(recipe.instructions);
+
+                  return (
+                    <article
+                      key={recipe.id}
+                      className="rounded-xl border border-white/90 bg-white/80 p-3 shadow-sm"
+                    >
+                      {title && (
+                        <p className="font-serif text-sm font-semibold text-slate-900">
+                          {title}
+                        </p>
+                      )}
+                      <div className="mt-1.5 text-sm leading-relaxed text-slate-600 prose prose-sm max-w-none">
+                        <ReactMarkdown
+                          disallowedElements={["script", "iframe", "object", "embed"]}
+                          unwrapDisallowed={true}
+                          components={{
+                            p: ({ children }) => <p className="text-sm mb-1">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5">{children}</ol>,
+                            li: ({ children }) => <li className="text-sm">{children}</li>,
+                          }}
+                        >
+                          {body}
+                        </ReactMarkdown>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           )}

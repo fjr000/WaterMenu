@@ -21,15 +21,13 @@ export class RecipesService {
     const workspaceId = await this.getWorkspaceId(userId);
     await this.assertDishInWorkspace(workspaceId, dishId);
 
-    const title = this.trimRequired(body.title);
-    const content = this.trimRequired(body.content);
+    const instructions = this.trimRequired(body.instructions);
 
     return this.prisma.recipe.create({
       data: {
         workspaceId,
         dishId,
-        title,
-        content,
+        instructions,
       },
     });
   }
@@ -48,8 +46,7 @@ export class RecipesService {
     return this.prisma.recipe.update({
       where: { id },
       data: {
-        title: body.title === undefined ? undefined : this.trimRequired(body.title),
-        content: body.content === undefined ? undefined : this.trimRequired(body.content),
+        instructions: body.instructions === undefined ? undefined : this.trimRequired(body.instructions),
       },
     });
   }

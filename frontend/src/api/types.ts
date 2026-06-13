@@ -130,8 +130,7 @@ export interface Recipe {
   id: string;
   workspaceId: string;
   dishId: string;
-  title: string;
-  content: string;
+  instructions: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -171,13 +170,11 @@ export interface UpsertFeedbackRequest {
 }
 
 export interface CreateRecipeRequest {
-  title: string;
-  content: string;
+  instructions: string;
 }
 
 export interface UpdateRecipeRequest {
-  title?: string;
-  content?: string;
+  instructions?: string;
 }
 
 export interface CreateDishVariantRequest {

@@ -48,6 +48,36 @@ grep -r "keyword" .
 
 ### Pattern 2: Similar Components
 
+**Bad**: Duplicating Markdown parsing logic in multiple components
+
+**Good**: Extract to shared utility
+
+**Example from Recipe implementation**:
+```tsx
+// ❌ Bad - duplicated in recipe-panel.tsx and home-page.tsx
+function parseMarkdown(md: string): { title: string | null; body: string } {
+  const lines = md.split("\n");
+  const firstLine = lines[0]?.trim() || "";
+  if (firstLine.startsWith("# ")) {
+    return {
+      title: firstLine.replace(/^#\s*/, ""),
+      body: lines.slice(1).join("\n").trim(),
+    };
+  }
+  return { title: null, body: md };
+}
+
+// ✅ Good - extracted to frontend/src/utils/markdown.ts
+// Import in both components:
+import { parseMarkdown } from "../utils/markdown";
+```
+
+**Lesson**: If you write the same function in two places, extract it immediately. Don't wait until a third occurrence.
+
+**Reference**: Recipe field merge implementation (`.trellis/tasks/06-13-recipe-title-content-instructions-markdown`)
+
+### Pattern 3: Configuration Objects
+
 **Bad**: Creating a new component that's 80% similar to existing
 
 **Good**: Extend existing component with props/variants

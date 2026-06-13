@@ -302,6 +302,117 @@ function MyModal({ isOpen, onClose }) {
 }
 ```
 
+## Pattern: Markdown Editor with Live Preview
+
+**Problem**: Users need to write Markdown content with real-time visual feedback, especially when unfamiliar with Markdown syntax.
+
+**Solution**: Dual-pane layout with editor on left and live preview on right, using `react-markdown` for secure rendering.
+
+**Example**:
+```tsx
+import ReactMarkdown from "react-markdown";
+import { useState } from "react";
+
+function MarkdownEditor() {
+  const [markdown, setMarkdown] = useState("");
+
+  return (
+    <div className="grid gap-0 md:grid-cols-2">
+      {/* Editor Pane */}
+      <div className="flex flex-col border-b border-gray-200 md:border-b-0 md:border-r">
+        <label className="border-b bg-gray-50 px-4 py-2 text-xs font-semibold uppercase">
+          编辑区
+        </label>
+        <textarea
+          value={markdown}
+          onChange={(e) => setMarkdown(e.target.value)}
+          placeholder="# 标题\n\n正文内容..."
+          className="flex-1 resize-none border-0 px-4 py-3 font-mono text-sm"
+          style={{ minHeight: "320px" }}
+        />
+      </div>
+
+      {/* Preview Pane */}
+      <div className="flex flex-col bg-gray-50">
+        <div className="border-b bg-gray-100 px-4 py-2 text-xs font-semibold uppercase">
+          预览
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-3" style={{ minHeight: "320px" }}>
+          <ReactMarkdown
+            components={{
+              h1: ({ node, ...props }) => (
+                <h1 className="mb-3 text-2xl font-bold" {...props} />
+              ),
+              p: ({ node, ...props }) => (
+                <p className="mb-2 text-sm leading-6" {...props} />
+              ),
+              // ... other components
+            }}
+            disallowedElements={["script", "iframe", "object", "embed"]}
+          >
+            {markdown || "*开始输入以查看预览...*"}
+          </ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**Why**:
+- **Immediate feedback**: Users see formatted output while typing
+- **Lower learning curve**: Visual preview reduces Markdown syntax barrier
+- **Responsive**: Grid layout stacks vertically on mobile (`md:grid-cols-2`)
+- **Security**: `disallowedElements` prevents XSS attacks
+
+**Layout Details**:
+- Use `grid` with `md:grid-cols-2` for responsive behavior
+- Set `minHeight` on both panes to ensure usable space
+- Editor uses `font-mono` for code-like feel
+- Preview uses custom component overrides for Tailwind styling
+
+**react-markdown Configuration**:
+```tsx
+<ReactMarkdown
+  components={{
+    // Override default elements with Tailwind-styled versions
+    h1: ({ node, ...props }) => <h1 className="..." {...props} />,
+    h2: ({ node, ...props }) => <h2 className="..." {...props} />,
+    p: ({ node, ...props }) => <p className="..." {...props} />,
+    ul: ({ node, ...props }) => <ul className="..." {...props} />,
+    ol: ({ node, ...props }) => <ol className="..." {...props} />,
+    li: ({ node, ...props }) => <li className="..." {...props} />,
+    a: ({ node, ...props }) => <a className="..." rel="noopener noreferrer" {...props} />,
+    img: ({ node, ...props }) => <img className="..." {...props} />,
+  }}
+  disallowedElements={["script", "iframe", "object", "embed"]}
+  unwrapDisallowed
+>
+  {markdown}
+</ReactMarkdown>
+```
+
+**Security Considerations**:
+- Always set `disallowedElements` to block dangerous tags
+- Use `rel="noopener noreferrer"` on links
+- Set `unwrapDisallowed` to remove blocked elements entirely
+- Never use `dangerouslySetInnerHTML` with user content
+
+**When to use**:
+- User-generated Markdown content (recipes, notes, descriptions)
+- Content that benefits from formatting (headings, lists, links)
+- Scenarios where users may not know Markdown syntax well
+
+**When NOT to use**:
+- Simple single-line text inputs
+- Content that doesn't need formatting
+- Performance-critical scenarios with very large documents
+
+**Reference files**:
+- `frontend/src/components/recipe-panel.tsx` (full implementation)
+- `frontend/src/components/inline-variant-panel.tsx` (react-markdown security config)
+- `frontend/src/utils/markdown.ts` (shared parsing utilities)
+
 ## Common Mistakes
 
 ### Don't: 在组件里直接写请求逻辑

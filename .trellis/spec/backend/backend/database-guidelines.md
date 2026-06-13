@@ -208,6 +208,60 @@ const variant = await prisma.dishVariant.findFirst({
 
 把版本归属、启用状态和菜品绑定一次性校验完整。
 
+## Pattern: Idempotent Migration with Data Transformation
+
+**Problem**: Schema changes that require data transformation (merging fields, format conversion) need to be safe for multiple executions and rollback scenarios.
+
+**Solution**: Use PostgreSQL procedural blocks with conditional column checks and transaction safety.
+
+**Example**:
+```sql
+-- Migration: Merge title + content → instructions
+DO $$
+BEGIN
+  -- Check if migration already applied
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'recipes' AND column_name = 'instructions'
+  ) THEN
+    -- Add new column
+    ALTER TABLE "recipes" ADD COLUMN "instructions" TEXT NOT NULL DEFAULT '';
+    
+    -- Transform data: merge title and content with Markdown format
+    UPDATE "recipes"
+    SET "instructions" = CASE
+      WHEN "title" != '' AND "content" != '' THEN '# ' || "title" || E'\n\n' || "content"
+      WHEN "title" != '' THEN '# ' || "title"
+      WHEN "content" != '' THEN "content"
+      ELSE '做法记录'  -- Fallback for completely empty records
+    END;
+    
+    -- Remove old columns
+    ALTER TABLE "recipes" DROP COLUMN "title";
+    ALTER TABLE "recipes" DROP COLUMN "content";
+  END IF;
+END $$;
+```
+
+**Why**:
+- **Idempotent**: Column existence check prevents errors on repeated execution
+- **Transaction-safe**: `DO $$ ... END $$` wraps everything in a single transaction
+- **Data-preserving**: `CASE` statement handles all edge cases (empty title/content)
+- **Rollback-friendly**: Can restore from backup if needed
+
+**When to use**:
+- Schema changes that require data transformation
+- Migrations that might be run multiple times (development, staging, production)
+- Complex multi-step migrations that must succeed atomically
+
+**Tests Required**:
+- Run migration twice on same database (should succeed both times)
+- Test with empty title, empty content, both empty, both present
+- Verify transaction rollback if any step fails
+
+**Reference files**:
+- `backend/prisma/migrations/20260613010000_recipe_merge_to_instructions/migration.sql`
+
 ## Verification
 
 ```bash

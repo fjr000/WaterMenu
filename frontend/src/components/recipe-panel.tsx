@@ -10,13 +10,13 @@ import {
 } from "../hooks/use-recipes.ts";
 import {
   Button,
-  Card,
   EmptyState,
   ErrorBanner,
   Input,
   SecondaryButton,
   Spinner,
 } from "./ui.tsx";
+import { Modal } from "./modal.tsx";
 
 interface Props {
   dish: Dish;
@@ -36,18 +36,8 @@ export function RecipePanel({ dish, onClose }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
-    <Card className="border-emerald-200 bg-emerald-50/55">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-serif text-lg font-semibold text-slate-900">做法记录</p>
-          <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
-        </div>
-        <SecondaryButton className="px-3 py-1.5 text-xs" onClick={onClose}>
-          关闭
-        </SecondaryButton>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3">
+    <Modal isOpen={true} onClose={onClose} title={`${dish.name} - 做法管理`} size="md">
+      <div className="flex flex-col gap-3">
         {recipesQuery.isLoading && <Spinner />}
 
         {recipesQuery.isError && (
@@ -108,7 +98,7 @@ export function RecipePanel({ dish, onClose }: Props) {
           </Button>
         )}
       </div>
-    </Card>
+    </Modal>
   );
 }
 

@@ -259,33 +259,27 @@ export function HomePage() {
         )}
 
         {recipeDish && (
-          <div className="mt-4">
-            <RecipePanel
-              key={recipeDish.id}
-              dish={recipeDish}
-              onClose={() => setRecipeDish(null)}
-            />
-          </div>
+          <RecipePanel
+            key={recipeDish.id}
+            dish={recipeDish}
+            onClose={() => setRecipeDish(null)}
+          />
         )}
 
         {imageDish && (
-          <div className="mt-4">
-            <DishImagePanel
-              key={imageDish.id}
-              dish={imageDish}
-              onClose={() => setImageDish(null)}
-            />
-          </div>
+          <DishImagePanel
+            key={imageDish.id}
+            dish={imageDish}
+            onClose={() => setImageDish(null)}
+          />
         )}
 
         {variantDish && (
-          <div className="mt-4">
-            <DishVariantsPanel
-              key={variantDish.id}
-              dish={variantDish}
-              onClose={() => setVariantDish(null)}
-            />
-          </div>
+          <DishVariantsPanel
+            key={variantDish.id}
+            dish={variantDish}
+            onClose={() => setVariantDish(null)}
+          />
         )}
 
         {activeTab === "dishes" && (

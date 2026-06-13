@@ -10,14 +10,13 @@ import {
 import { variantTypeOptions, variantTypeLabels } from "../constants/variant-types.ts";
 import {
   Button,
-  Card,
   EmptyState,
   ErrorBanner,
   Input,
-  SecondaryButton,
   Select,
   Spinner,
 } from "./ui.tsx";
+import { Modal } from "./modal.tsx";
 
 const createSchema = z.object({
   name: z.string().trim().min(1, "请输入版本名称"),
@@ -55,18 +54,8 @@ export function DishVariantsPanel({ dish, onClose }: { dish: Dish; onClose: () =
   });
 
   return (
-    <Card className="border-amber-200 bg-amber-50/55">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-serif text-lg font-semibold text-slate-900">版本 / 来源</p>
-          <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
-        </div>
-        <SecondaryButton className="px-3 py-1.5 text-xs" onClick={onClose}>
-          关闭
-        </SecondaryButton>
-      </div>
-
-      <form onSubmit={submit} className="mt-4 grid gap-3 rounded-2xl border border-white/80 bg-white/75 p-3 sm:grid-cols-[1fr_160px_auto]">
+    <Modal isOpen={true} onClose={onClose} title={`${dish.name} - 版本管理`} size="md">
+      <form onSubmit={submit} className="grid gap-3 rounded-2xl border border-white/80 bg-white/75 p-3 sm:grid-cols-[1fr_160px_auto]">
         <div>
           <label htmlFor={`variant-name-${dish.id}`} className="mb-1 block text-sm font-semibold text-slate-700">
             名称
@@ -121,7 +110,7 @@ export function DishVariantsPanel({ dish, onClose }: { dish: Dish; onClose: () =
           />
         ))}
       </div>
-    </Card>
+    </Modal>
   );
 }
 

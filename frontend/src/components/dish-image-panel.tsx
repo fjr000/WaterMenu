@@ -8,12 +8,12 @@ import {
 } from "../hooks/use-dish-images.ts";
 import {
   Button,
-  Card,
   EmptyState,
   ErrorBanner,
   SecondaryButton,
   Spinner,
 } from "./ui.tsx";
+import { Modal } from "./modal.tsx";
 
 interface Props {
   dish: Dish;
@@ -46,18 +46,8 @@ export function DishImagePanel({ dish, onClose }: Props) {
   };
 
   return (
-    <Card className="border-amber-200 bg-amber-50/55">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-serif text-lg font-semibold text-slate-900">菜品图库</p>
-          <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
-        </div>
-        <SecondaryButton className="px-3 py-1.5 text-xs" onClick={onClose}>
-          关闭
-        </SecondaryButton>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3">
+    <Modal isOpen={true} onClose={onClose} title={`${dish.name} - 图库管理`} size="lg">
+      <div className="flex flex-col gap-3">
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
           <label
             htmlFor={`dish-image-${dish.id}`}
@@ -115,7 +105,7 @@ export function DishImagePanel({ dish, onClose }: Props) {
           </div>
         )}
       </div>
-    </Card>
+    </Modal>
   );
 }
 

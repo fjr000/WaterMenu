@@ -1,0 +1,5 @@
+{"path": ".trellis/spec/frontend/frontend/quality-guidelines.md", "why": "Quality checks: lint, typecheck, tests requirements"}
+{"path": ".trellis/spec/frontend/frontend/component-guidelines.md", "why": "Component structure and best practices to verify against"}
+{"path": ".trellis/spec/frontend/frontend/type-safety.md", "why": "TypeScript type safety requirements"}
+{"path": ".trellis/spec/guides/cross-layer-thinking-guide.md", "why": "Check consistency across all Modal implementations"}
+{"path": ".trellis/tasks/06-13-operation-feedback-viewport/prd.md", "why": "Acceptance criteria and requirements to verify"}

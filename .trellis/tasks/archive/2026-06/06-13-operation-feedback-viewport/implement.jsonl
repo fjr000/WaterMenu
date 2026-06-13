@@ -1,0 +1,7 @@
+{"path": ".trellis/spec/frontend/frontend/index.md", "why": "Frontend package overview and coding conventions"}
+{"path": ".trellis/spec/frontend/frontend/component-guidelines.md", "why": "React component structure, naming, and best practices - essential for creating Modal component"}
+{"path": ".trellis/spec/frontend/frontend/hook-guidelines.md", "why": "Custom hooks guidelines - needed for useScrollLock implementation"}
+{"path": ".trellis/spec/frontend/frontend/type-safety.md", "why": "TypeScript usage and type definitions for Modal props"}
+{"path": ".trellis/spec/frontend/frontend/quality-guidelines.md", "why": "Code quality standards, testing requirements"}
+{"path": ".trellis/spec/guides/code-reuse-thinking-guide.md", "why": "Avoid duplication when creating Modal variants"}
+{"path": ".trellis/tasks/06-13-operation-feedback-viewport/prd.md", "why": "Complete requirements and technical approach"}

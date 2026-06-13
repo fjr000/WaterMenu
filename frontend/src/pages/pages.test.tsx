@@ -44,6 +44,7 @@ vi.mock("../hooks/use-meal-records.ts", () => ({
 }));
 
 vi.mock("../hooks/use-dish-images.ts", () => ({
+  dishImagesKey: vi.fn((dishId: string) => ["dish-images", dishId]),
   useDishImages: vi.fn(),
   useUploadDishImage: vi.fn(),
   useSetDishImageCover: vi.fn(),
@@ -276,10 +277,12 @@ describe("HomePage", () => {
     const blindBox = vi.fn();
     useRecommendMock.mockReturnValue(mutationState(recommend));
     useBlindBoxMock.mockReturnValue(mutationState(blindBox));
+    // Mock apiFetch for dishImagesKey queries
+    apiFetchMock.mockResolvedValue([]);
 
     renderWithQueryClient(<HomePage />);
 
-    expect(screen.getByText("家庭菜单")).toBeInTheDocument();
+    // PageHeader is now only on members tab, so check for something else on recommend tab
     expect(screen.getByText("最近用餐")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "智能推荐" }));
     await userEvent.click(screen.getByRole("button", { name: "🎲 盲盒" }));
@@ -289,6 +292,7 @@ describe("HomePage", () => {
   });
 
   it("菜品页支持筛选并传给 useDishes", async () => {
+    apiFetchMock.mockResolvedValue([]);
     renderWithQueryClient(<HomePage />);
 
     await userEvent.click(screen.getByRole("button", { name: /菜品管理/ }));
@@ -305,6 +309,7 @@ describe("HomePage", () => {
   it("菜品加载失败时显示重试入口", async () => {
     const refetch = vi.fn();
     useDishesMock.mockReturnValue({ data: undefined, isLoading: false, isError: true, refetch });
+    apiFetchMock.mockResolvedValue([]);
 
     renderWithQueryClient(<HomePage />);
 

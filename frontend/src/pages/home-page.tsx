@@ -204,15 +204,17 @@ export function HomePage() {
   return (
     <div className="min-h-dvh pb-28 md:pb-0">
       <div className="mx-auto max-w-5xl px-4 pb-8 pt-4 md:pb-10">
-        <PageHeader
-          title={auth.workspace?.name ?? "WaterMenu"}
-          subtitle={auth.user?.name}
-          actions={
-            <SecondaryButton onClick={() => void auth.logout()}>
-              退出
-            </SecondaryButton>
-          }
-        />
+        {activeTab === "members" && (
+          <PageHeader
+            title={auth.workspace?.name ?? "WaterMenu"}
+            subtitle={auth.user?.name}
+            actions={
+              <SecondaryButton onClick={() => void auth.logout()}>
+                退出
+              </SecondaryButton>
+            }
+          />
+        )}
 
         <DesktopTabNav activeTab={activeTab} onChange={setActiveTab} />
 
@@ -480,7 +482,7 @@ function DesktopTabNav({
   onChange: (tab: HomeTab) => void;
 }) {
   return (
-    <nav className="mt-6 hidden grid-cols-4 gap-3 md:grid" aria-label="首页栏目">
+    <nav className="mt-4 hidden grid-cols-4 gap-2 md:grid" aria-label="首页栏目">
       {homeTabs.map((tab) => {
         const active = activeTab === tab.key;
 
@@ -488,16 +490,16 @@ function DesktopTabNav({
           <button
             key={tab.key}
             type="button"
-            className={`group flex items-center gap-3 rounded-3xl border p-4 text-left shadow-sm transition-all duration-300 ${
+            className={`group flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left shadow-sm transition-all duration-200 ${
               active
-                ? "border-red-200 bg-red-50/90 shadow-[0_12px_28px_rgba(217,75,53,0.13)]"
-                : "border-slate-200/70 bg-white/60 hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50/80 hover:shadow-md backdrop-blur-sm"
+                ? "border-red-200 bg-red-50/90 shadow-[0_8px_16px_rgba(217,75,53,0.12)]"
+                : "border-slate-200/70 bg-white/60 hover:border-amber-200 hover:bg-amber-50/80 hover:shadow-md backdrop-blur-sm"
             }`}
             onClick={() => onChange(tab.key)}
             aria-current={active ? "page" : undefined}
           >
             <span
-              className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border text-lg font-black transition-transform duration-300 group-hover:scale-105 ${
+              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border text-base font-black transition-transform duration-200 group-hover:scale-105 ${
                 active
                   ? "border-red-200 bg-red-500 text-white shadow-sm"
                   : "border-amber-200/80 bg-white/90 text-slate-600 group-hover:text-red-600"
@@ -507,11 +509,8 @@ function DesktopTabNav({
               {tab.mark}
             </span>
             <span className="min-w-0">
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                {tab.eyebrow}
-              </span>
               <span
-                className={`block truncate text-base font-bold ${
+                className={`block truncate text-sm font-bold ${
                   active ? "text-red-700" : "text-slate-800"
                 }`}
               >
@@ -710,15 +709,6 @@ const DishCard = memo(function DishCard({
                     <h3 className="font-serif text-xl font-semibold text-slate-900">
                       {dish.name}
                     </h3>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        dish.isActive
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {dish.isActive ? "启用" : "停用"}
-                    </span>
                   </div>
 
                   {dish.description && (
@@ -761,24 +751,47 @@ const DishCard = memo(function DishCard({
           </div>
         </button>
 
+        {/* Enable/Disable Toggle - Always visible */}
+        <div className="mt-3 flex items-center gap-2 pl-1">
+          <label className="flex cursor-pointer items-center gap-2" htmlFor={activeSwitchId}>
+            <input
+              id={activeSwitchId}
+              type="checkbox"
+              checked={dish.isActive}
+              onChange={handleToggleActive}
+              disabled={updateDish.isPending}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="启用状态开关"
+              className="peer sr-only"
+            />
+            <span className="block h-5 w-9 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
+              <span
+                className={`block h-4 w-4 rounded-full bg-white shadow transition ${
+                  dish.isActive ? "translate-x-4" : ""
+                }`}
+              />
+            </span>
+            <span className="text-xs font-medium text-slate-600">
+              {dish.isActive ? "已启用" : "已停用"}
+            </span>
+          </label>
+          {updateDish.isError && (
+            <span className="text-xs text-red-600">更新失败</span>
+          )}
+        </div>
+
         {/* Quick Actions - Always visible with elevated primary action */}
         <div className="mt-4 space-y-2.5">
-          {/* Primary Action - Elevated */}
+          {/* Primary Action - Record Meal */}
           <button
             type="button"
-            className="group relative w-full overflow-hidden rounded-2xl border-2 border-emerald-300/50 bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3.5 shadow-[0_4px_12px_rgba(16,185,129,0.25)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(16,185,129,0.35)] active:scale-[0.98]"
+            className="group relative w-full overflow-hidden rounded-xl border border-amber-300/60 bg-gradient-to-r from-amber-400 to-orange-400 px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98]"
             onClick={(e) => handleActionClick(e, () => onRecordDish(dish))}
             aria-label="记录已吃"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-            <span className="relative flex items-center justify-between">
-              <span className="flex items-center gap-2.5 text-base font-bold text-white">
-                <span className="text-xl">✅</span>
-                <span>记录已吃</span>
-              </span>
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-lg font-black text-white">
-                +
-              </span>
+            <span className="relative flex items-center justify-center gap-2 text-sm font-bold text-white">
+              <span className="text-base">✅</span>
+              <span>记录已吃</span>
             </span>
           </button>
 
@@ -860,44 +873,14 @@ const DishCard = memo(function DishCard({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-100/80 bg-white/80 p-3 shadow-sm">
-            <label className="flex cursor-pointer items-center gap-2.5" htmlFor={activeSwitchId}>
-              <input
-                id={activeSwitchId}
-                type="checkbox"
-                checked={dish.isActive}
-                onChange={handleToggleActive}
-                disabled={updateDish.isPending}
-                aria-label="启用状态开关"
-                className="peer sr-only"
-              />
-              <span className="block h-6 w-11 rounded-full bg-slate-300 p-0.5 transition peer-checked:bg-emerald-500 peer-disabled:opacity-60">
-                <span
-                  className={`block h-5 w-5 rounded-full bg-white shadow transition ${
-                    dish.isActive ? "translate-x-5" : ""
-                  }`}
-                />
-              </span>
-              <span className="text-sm font-semibold text-slate-700">
-                {dish.isActive ? "已启用" : "已停用"}
-              </span>
-            </label>
-          </div>
-
           {isEditing && (
-            <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-4">
               <EditDishForm
                 dish={dish}
                 onCancel={onCancelEdit}
                 onSuccess={onDishUpdated}
               />
             </div>
-          )}
-
-          {updateDish.isError && (
-            <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-2.5 text-center text-sm text-red-700">
-              更新失败，请重试
-            </p>
           )}
 
           {recipesQuery.isLoading && (

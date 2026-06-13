@@ -1,8 +1,10 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { apiFetch } from "../api/client.ts";
 import type { CreateInviteResponse, DishImage, Member, MealRecordsPage, Recipe, WorkspaceInvite } from "../api/types.ts";
-import { sampleDish, sampleMealRecord, sampleRecipe } from "../test/test-utils.tsx";
+import { sampleDish, sampleMealRecord, sampleRecipe, createTestQueryClient } from "../test/test-utils.tsx";
 import { CreateDishForm, EditDishForm } from "./create-dish-form.tsx";
 import { DishCoverImage } from "./dish-cover-image.tsx";
 import { DishImagePanel } from "./dish-image-panel.tsx";
@@ -22,6 +24,10 @@ import { useCreateRecipe, useRecipes, useUpdateRecipe } from "../hooks/use-recip
 import { useCreateInvite, useInvites, useRevokeInvite } from "../hooks/use-invites.ts";
 import { useMembers } from "../hooks/use-members.ts";
 
+vi.mock("../api/client.ts", () => ({
+  apiFetch: vi.fn(),
+}));
+
 vi.mock("../hooks/use-dishes.ts", () => ({
   useDishes: vi.fn(),
   useCreateDish: vi.fn(),
@@ -37,6 +43,7 @@ vi.mock("../hooks/use-meal-records.ts", () => ({
 }));
 
 vi.mock("../hooks/use-dish-images.ts", () => ({
+  dishImagesKey: vi.fn((dishId: string) => ["dish-images", dishId]),
   useDishImages: vi.fn(),
   useUploadDishImage: vi.fn(),
   useSetDishImageCover: vi.fn(),
@@ -63,6 +70,7 @@ vi.mock("../hooks/use-members.ts", () => ({
   useMembers: vi.fn(),
 }));
 
+const apiFetchMock = vi.mocked(apiFetch);
 const useDishesMock = useDishes as Mock;
 const useCreateDishMock = useCreateDish as Mock;
 const useUpdateDishMock = useUpdateDish as Mock;
@@ -104,6 +112,8 @@ function mutationState(mutate = vi.fn()) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  apiFetchMock.mockReset();
+  apiFetchMock.mockResolvedValue([]);
   useDishesMock.mockReturnValue(queryState([sampleDish]));
   useCreateDishMock.mockReturnValue(mutationState());
   useUpdateDishMock.mockReturnValue(mutationState());
@@ -210,7 +220,7 @@ describe("业务面板组件", () => {
     useUploadDishImageMock.mockReturnValue(mutationState(mutate));
     render(<DishImagePanel dish={sampleDish} onClose={vi.fn()} />);
 
-    expect(screen.getByText("菜品图库")).toBeInTheDocument();
+    expect(screen.getByText("番茄炒蛋 - 图库管理")).toBeInTheDocument();
     await userEvent.upload(screen.getByLabelText("上传图片"), new File(["x"], "x.jpg", { type: "image/jpeg" }));
     await userEvent.click(screen.getByRole("button", { name: "上传图片" }));
 
@@ -221,8 +231,9 @@ describe("业务面板组件", () => {
     render(<RecipePanel dish={sampleDish} onClose={vi.fn()} />);
 
     expect(screen.getByText("快手做法")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "+ 新增做法" }));
-    expect(screen.getByLabelText("标题")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "+ 记录新做法" }));
+    expect(screen.getByText("编辑区")).toBeInTheDocument();
+    expect(screen.getByText("预览")).toBeInTheDocument();
   });
 
   it("MembersPanel 渲染成员和管理员邀请区", async () => {
@@ -295,12 +306,13 @@ describe("业务面板组件", () => {
   });
 
   it("RecentMealRecords、MealRecordCard 和 HistoryRecordsPanel 渲染记录", () => {
+    const queryClient = createTestQueryClient();
     render(
-      <div>
+      <QueryClientProvider client={queryClient}>
         <RecentMealRecords userId="user-1" />
         <MealRecordCard record={sampleMealRecord} userId="user-1" />
         <HistoryRecordsPanel userId="user-1" />
-      </div>,
+      </QueryClientProvider>,
     );
 
     expect(screen.getAllByText("番茄炒蛋").length).toBeGreaterThan(0);

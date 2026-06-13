@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FeedbackRating, MealRecord, MealType } from "../api/types.ts";
 import { useDishes } from "../hooks/use-dishes.ts";
 import { useMealRecords } from "../hooks/use-meal-records.ts";
+import { CreateDishForm } from "./create-dish-form.tsx";
 import { ManualMealRecordForm } from "./manual-meal-record-form.tsx";
 import { mealLabel } from "./meal-tag.tsx";
 import { MealRecordCard } from "./recent-meal-records.tsx";
@@ -40,6 +41,7 @@ export function HistoryRecordsPanel({
   const [q, setQ] = useState("");
   const [records, setRecords] = useState<MealRecord[]>([]);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [showCreateDishForm, setShowCreateDishForm] = useState(false);
 
   const from = useMemo(() => buildFrom(range), [range]);
   const mealRecordsQuery = useMealRecords({
@@ -98,6 +100,11 @@ export function HistoryRecordsPanel({
     onRecordChange?.();
   };
 
+  const handleCreateDishSuccess = () => {
+    setShowCreateDishForm(false);
+    onRecordChange?.();
+  };
+
   return (
     <section className="mt-4 flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
@@ -109,14 +116,31 @@ export function HistoryRecordsPanel({
             按菜、餐次、反馈和关键词找回吃过什么，也能区分具体版本
           </p>
         </div>
-        <Button
-          type="button"
-          className="shrink-0 px-3 py-2 text-xs sm:px-4 sm:text-sm"
-          onClick={() => setShowManualForm((value) => !value)}
-        >
-          {showManualForm ? "收起" : "手动记录"}
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <SecondaryButton
+            type="button"
+            className="px-3 py-2 text-xs sm:px-4 sm:text-sm"
+            onClick={() => setShowCreateDishForm((value) => !value)}
+          >
+            {showCreateDishForm ? "收起" : "新增菜品"}
+          </SecondaryButton>
+          <Button
+            type="button"
+            className="px-3 py-2 text-xs sm:px-4 sm:text-sm"
+            onClick={() => setShowManualForm((value) => !value)}
+          >
+            {showManualForm ? "收起" : "手动记录"}
+          </Button>
+        </div>
       </div>
+
+      {showCreateDishForm && (
+        <Card>
+          <CreateDishForm
+            onSuccess={handleCreateDishSuccess}
+          />
+        </Card>
+      )}
 
       {showManualForm && (
         <ManualMealRecordForm

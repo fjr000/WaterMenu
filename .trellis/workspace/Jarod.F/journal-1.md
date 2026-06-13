@@ -248,3 +248,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: Recipe 字段合并：实现 Markdown 支持的统一 instructions 字段
+
+**Date**: 2026-06-13
+**Task**: Recipe 字段合并：实现 Markdown 支持的统一 instructions 字段
+**Branch**: `main`
+
+### Summary
+
+实现 Recipe.title + Recipe.content → Recipe.instructions 合并，支持 Markdown 编辑和实时预览。后端：幂等数据迁移（事务保护，边界处理）；前端：双栏编辑器（Cookbook Editorial 设计，react-markdown 安全渲染）；规范：记录迁移模式、Markdown 编辑器模式、代码复用示例。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c45454e` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

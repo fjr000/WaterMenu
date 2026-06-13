@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
+- **Total Sessions**: 8
 - **Last Active**: 2026-06-13
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~250 | Active |
+| `journal-1.md` | ~283 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-06-13 | Recipe 字段合并：实现 Markdown 支持的统一 instructions 字段 | `c45454e` | `main` |
 | 7 | 2026-06-13 | Fix operation feedback viewport UX - Modal implementation | `323bb9a`, `3e9de42`, `bf262b5`, `bed060e`, `a3ba1fb` | `main` |
 | 6 | 2026-06-13 | 完成Error Boundary和部署修复 | `e5ea46f`, `f52021c`, `4faf72c` | `main` |
 | 5 | 2026-06-12 | 创建Week 1关键优化任务：数据库索引、Error Boundary、性能优化 | `1bbda91`, `4d3bb5b`, `fce1c22` | `main` |

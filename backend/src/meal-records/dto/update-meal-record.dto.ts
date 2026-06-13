@@ -1,5 +1,5 @@
 import { MealType } from '@prisma/client';
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateMealRecordDto {
   @IsEnum(MealType)

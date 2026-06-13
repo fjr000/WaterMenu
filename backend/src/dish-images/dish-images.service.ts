@@ -10,10 +10,17 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { imageSize } from 'image-size';
+import heicConvert from 'heic-convert';
 import { PrismaService } from '../prisma/prisma.service';
 
 const MAX_IMAGES_PER_DISH = 9;
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
 const IMAGE_TYPE_TO_MIME: Record<string, string> = {
   jpg: 'image/jpeg',
   png: 'image/png',
@@ -49,10 +56,29 @@ export class DishImagesService {
     }
 
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-      throw new BadRequestException('仅支持 JPEG、PNG、WebP 图片');
+      throw new BadRequestException('仅支持 JPEG、PNG、WebP、HEIC 图片');
     }
 
-    const dimensions = this.readDimensions(file.buffer, file.mimetype);
+    let processedBuffer = file.buffer;
+    let processedMimeType = file.mimetype;
+    let processedSize = file.size;
+
+    if (file.mimetype === 'image/heic' || file.mimetype === 'image/heif') {
+      try {
+        const convertedBuffer = await heicConvert({
+          buffer: file.buffer,
+          format: 'JPEG',
+          quality: 0.9,
+        });
+        processedBuffer = Buffer.from(convertedBuffer);
+        processedMimeType = 'image/jpeg';
+        processedSize = processedBuffer.length;
+      } catch {
+        throw new BadRequestException('HEIC 图片转换失败');
+      }
+    }
+
+    const dimensions = this.readDimensions(processedBuffer, processedMimeType);
     const workspaceId = await this.getWorkspaceId(userId);
     await this.ensureDish(workspaceId, dishId);
 
@@ -61,7 +87,7 @@ export class DishImagesService {
     const absolutePath = this.getAbsolutePath(storageKey);
 
     await fs.mkdir(path.dirname(absolutePath), { recursive: true });
-    await fs.writeFile(absolutePath, file.buffer);
+    await fs.writeFile(absolutePath, processedBuffer);
 
     try {
       const image = await this.prisma.$transaction(async (tx) => {
@@ -76,7 +102,7 @@ export class DishImagesService {
             dishId,
             storageKey,
             mimeType: dimensions.mimeType,
-            size: file.size,
+            size: processedSize,
             width: dimensions.width,
             height: dimensions.height,
             sortOrder: count,

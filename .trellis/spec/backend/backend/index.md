@@ -28,3 +28,4 @@ Reference files:
 | [Error Handling](./error-handling.md) | Nest 异常、状态码、错误映射 | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | 类型检查、Jest e2e 测试、DTO 校验 | Filled |
 | [Logging Guidelines](./logging-guidelines.md) | 当前无统一日志层的现状与后续建议 | Filled |
+| [File Upload Guidelines](./file-upload-guidelines.md) | 图片上传、HEIC 转换、文件大小限制、压缩策略 | Filled |

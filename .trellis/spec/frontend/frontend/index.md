@@ -31,3 +31,4 @@ Reference files:
 | [State Management](./state-management.md) | server-state、auth context、局部 UI 状态 | Filled |
 | [Quality Guidelines](./quality-guidelines.md) | 类型检查、构建验证、禁止行为 | Filled |
 | [Type Safety](./type-safety.md) | API 类型、Zod、React Hook Form 推导 | Filled |
+| [File Upload Guidelines](../backend/file-upload-guidelines.md) | 图片上传、压缩、格式支持（前后端共享） | Filled |

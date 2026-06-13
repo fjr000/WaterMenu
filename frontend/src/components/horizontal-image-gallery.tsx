@@ -1,6 +1,11 @@
-import { useRef, type ChangeEvent } from "react";
+import { useCallback, useRef, type ChangeEvent } from "react";
 import type { DishImage } from "../api/types.ts";
 import { useUploadDishImage } from "../hooks/use-dish-images.ts";
+import { useImageUpload } from "../hooks/use-image-upload.ts";
+import { CompressionOverlay } from "./compression-overlay.tsx";
+import { CompressionPromptDialog } from "./compression-prompt-dialog.tsx";
+
+const ACCEPTED_FORMATS = "image/jpeg,image/png,image/webp,image/heic,image/heif";
 
 interface HorizontalImageGalleryProps {
   dishId: string;
@@ -16,18 +21,37 @@ export function HorizontalImageGallery({
   const uploadImage = useUploadDishImage(dishId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const doUpload = useCallback(
+    (file: File) => {
+      uploadImage.mutate(file, {
+        onSuccess: () => {
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        },
+      });
+    },
+    [uploadImage],
+  );
+
+  const {
+    handleFile,
+    compressing,
+    compressionProgress,
+    compressionError,
+    prompt,
+    confirmCompress,
+    skipCompress,
+    dismissPrompt,
+  } = useImageUpload({ onUpload: doUpload });
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    uploadImage.mutate(file, {
-      onSuccess: () => {
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      },
-    });
+    handleFile(file);
   };
+
+  const isBusy = compressing || uploadImage.isPending;
 
   return (
     <div className="mt-3">
@@ -56,36 +80,54 @@ export function HorizontalImageGallery({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploadImage.isPending}
+          disabled={isBusy}
           className="group relative flex h-24 w-24 shrink-0 snap-start items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white/80 transition hover:border-red-400 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-28 sm:w-28"
         >
           <div className="flex flex-col items-center gap-1">
-            <svg
-              className="h-6 w-6 text-red-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            {compressing ? (
+              <div className="h-5 w-5 animate-gentle-spin rounded-full border-2 border-amber-200 border-t-red-500" />
+            ) : (
+              <svg
+                className="h-6 w-6 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            )}
             <span className="text-xs font-semibold text-red-500">
-              {uploadImage.isPending ? "上传中" : "添加图片"}
+              {compressing
+                ? "压缩中"
+                : uploadImage.isPending
+                  ? "上传中"
+                  : "添加图片"}
             </span>
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={ACCEPTED_FORMATS}
             onChange={handleFileChange}
             className="hidden"
           />
         </button>
       </div>
+
+      {compressing && (
+        <div className="mt-2">
+          <CompressionOverlay progress={compressionProgress} />
+        </div>
+      )}
+
+      {compressionError && (
+        <p className="mt-2 text-xs text-red-600">{compressionError}</p>
+      )}
 
       {uploadImage.isError && (
         <p className="mt-2 text-xs text-red-600">
@@ -93,10 +135,19 @@ export function HorizontalImageGallery({
         </p>
       )}
 
-      {images.length === 0 && !uploadImage.isPending && (
+      {images.length === 0 && !isBusy && (
         <p className="text-center text-xs text-slate-400">
-          暂无图片，点击添加第一张
+          支持 JPG、PNG、WebP、HEIC，最大 10MB
         </p>
+      )}
+
+      {prompt && (
+        <CompressionPromptDialog
+          prompt={prompt}
+          onCompress={confirmCompress}
+          onSkip={skipCompress}
+          onDismiss={dismissPrompt}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useRef, type ChangeEvent } from "react";
 import type { Dish, DishImage } from "../api/types.ts";
 import {
   useDeleteDishImage,
@@ -6,6 +6,9 @@ import {
   useSetDishImageCover,
   useUploadDishImage,
 } from "../hooks/use-dish-images.ts";
+import { useImageUpload } from "../hooks/use-image-upload.ts";
+import { CompressionOverlay } from "./compression-overlay.tsx";
+import { CompressionPromptDialog } from "./compression-prompt-dialog.tsx";
 import {
   Button,
   EmptyState,
@@ -15,6 +18,8 @@ import {
 } from "./ui.tsx";
 import { Modal } from "./modal.tsx";
 
+const ACCEPTED_FORMATS = "image/jpeg,image/png,image/webp,image/heic,image/heif";
+
 interface Props {
   dish: Dish;
   onClose: () => void;
@@ -23,26 +28,36 @@ interface Props {
 export function DishImagePanel({ dish, onClose }: Props) {
   const imagesQuery = useDishImages(dish.id);
   const uploadImage = useUploadDishImage(dish.id);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const doUpload = useCallback(
+    (file: File) => {
+      uploadImage.mutate(file, {
+        onSuccess: () => {
+          if (inputRef.current) {
+            inputRef.current.value = "";
+          }
+        },
+      });
+    },
+    [uploadImage],
+  );
+
+  const {
+    handleFile,
+    compressing,
+    compressionProgress,
+    compressionError,
+    prompt,
+    confirmCompress,
+    skipCompress,
+    dismissPrompt,
+  } = useImageUpload({ onUpload: doUpload });
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSelectedFile(event.target.files?.[0] ?? null);
-  };
-
-  const handleUpload = () => {
-    if (!selectedFile) {
-      return;
-    }
-
-    uploadImage.mutate(selectedFile, {
-      onSuccess: () => {
-        setSelectedFile(null);
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
-      },
-    });
+    const file = event.target.files?.[0];
+    if (!file) return;
+    handleFile(file);
   };
 
   return (
@@ -59,25 +74,45 @@ export function DishImagePanel({ dish, onClose }: Props) {
             ref={inputRef}
             id={`dish-image-${dish.id}`}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={ACCEPTED_FORMATS}
             onChange={handleFileChange}
+            disabled={compressing || uploadImage.isPending}
             className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-500 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
           />
           <p className="mt-2 text-xs text-slate-500">
-            支持 JPEG / PNG / WebP，单张最大 5MB，最多 9 张。
+            支持 JPG、PNG、WebP、HEIC，最大 10MB，最多 9 张。
           </p>
+
+          {compressing && (
+            <div className="mt-3">
+              <CompressionOverlay progress={compressionProgress} />
+            </div>
+          )}
+
+          {compressionError && (
+            <p className="mt-2 rounded-xl border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+              {compressionError}
+            </p>
+          )}
+
           {uploadImage.isError && (
             <p className="mt-2 rounded-xl border border-red-200 bg-red-50 p-2 text-sm text-red-700">
               上传失败，请确认格式和大小后重试
             </p>
           )}
-          <Button
-            className="mt-3 w-full"
-            onClick={handleUpload}
-            disabled={!selectedFile || uploadImage.isPending}
-          >
-            {uploadImage.isPending ? "上传中…" : "上传图片"}
-          </Button>
+
+          {!compressing && (
+            <Button
+              className="mt-3 w-full"
+              onClick={() => {
+                const file = inputRef.current?.files?.[0];
+                if (file) handleFile(file);
+              }}
+              disabled={!inputRef.current?.files?.length || uploadImage.isPending}
+            >
+              {uploadImage.isPending ? "上传中..." : "上传图片"}
+            </Button>
+          )}
         </div>
 
         {imagesQuery.isLoading && <Spinner />}
@@ -105,6 +140,15 @@ export function DishImagePanel({ dish, onClose }: Props) {
           </div>
         )}
       </div>
+
+      {prompt && (
+        <CompressionPromptDialog
+          prompt={prompt}
+          onCompress={confirmCompress}
+          onSkip={skipCompress}
+          onDismiss={dismissPrompt}
+        />
+      )}
     </Modal>
   );
 }

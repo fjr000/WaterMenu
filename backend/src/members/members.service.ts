@@ -38,12 +38,27 @@ export class MembersService {
       orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
     });
 
-    return members.map((member) => ({
-      id: member.user.id,
-      name: member.user.name,
-      role: member.role,
-      createdAt: member.user.createdAt,
-      ...(currentMembership.role === UserRole.ADMIN ? { email: member.user.email } : {}),
-    }));
+    const isAdmin = currentMembership.role === UserRole.ADMIN;
+
+    return members.map((member) => {
+      const result: {
+        id: string;
+        name: string;
+        role: UserRole;
+        createdAt: Date;
+        email?: string;
+      } = {
+        id: member.user.id,
+        name: member.user.name,
+        role: member.role,
+        createdAt: member.user.createdAt,
+      };
+
+      if (isAdmin) {
+        result.email = member.user.email;
+      }
+
+      return result;
+    });
   }
 }

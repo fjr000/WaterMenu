@@ -23,20 +23,15 @@ RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY backend/package.json backend/package.json
 
-# Install production dependencies only
+# Install production dependencies (includes prisma CLI now)
 RUN pnpm install --frozen-lockfile --prod
-
-# Copy Prisma Client from root node_modules (pnpm workspace)
-COPY --from=build /app/node_modules/.pnpm ./node_modules/.pnpm
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy built backend
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/backend/prisma ./backend/prisma
 COPY --from=build /app/backend/prisma.config.ts ./backend/prisma.config.ts
-COPY --from=build /app/backend/package.json ./backend/package.json
 
 WORKDIR /app/backend
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm prisma:deploy && pnpm start"]
+CMD ["sh", "-c", "pnpm prisma:generate && pnpm prisma:deploy && pnpm start"]

@@ -56,5 +56,8 @@
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.0.0"
+  },
+  "prisma": {
+    "seed": "node dist/prisma/seed.js"
   }
 }

@@ -415,3 +415,36 @@ Implemented six UI improvements: moved enable/disable toggle to always-visible a
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: 数据库 schema 重构：多 workspace 架构实现
+
+**Date**: 2026-06-13
+**Task**: 数据库 schema 重构：多 workspace 架构实现
+**Branch**: `main`
+
+### Summary
+
+完成数据库 schema 重构，实现多 workspace 架构。创建 WorkspaceMember 表支持用户与 workspace 多对多关系，重构 User 表移除 workspaceId 和 role 字段，为 Dish 添加软删除支持，为 Recipe 添加版本管理。更新 12 个模块（auth, invites, dishes, meal-records, recipes, dish-images, dish-variants, feedback, recommendations, members）以支持新架构。编写完整数据迁移 SQL，通过类型检查和质量验证。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3ad571f` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

@@ -43,11 +43,13 @@ export class RecipesService {
       throw new NotFoundException();
     }
 
+    const instructions = body.instructions !== undefined
+      ? this.trimRequired(body.instructions)
+      : undefined;
+
     return this.prisma.recipe.update({
       where: { id },
-      data: {
-        instructions: body.instructions === undefined ? undefined : this.trimRequired(body.instructions),
-      },
+      data: { instructions },
     });
   }
 

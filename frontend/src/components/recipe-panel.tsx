@@ -123,19 +123,16 @@ function RecipeCard({ recipe, onEdit }: { recipe: Recipe; onEdit: () => void }) 
       <div className="relative">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex-1">
-            {title && (
-              <h3
-                className="font-serif text-2xl font-bold leading-tight tracking-tight text-amber-950"
-                style={{ fontFamily: "'Playfair Display', 'Noto Serif SC', serif" }}
-              >
-                {title}
-              </h3>
-            )}
-            {!title && (
-              <h3 className="font-serif text-lg italic text-amber-800/70">
-                做法记录
-              </h3>
-            )}
+            <h3
+              className={
+                title
+                  ? "font-serif text-2xl font-bold leading-tight tracking-tight text-amber-950"
+                  : "font-serif text-lg italic text-amber-800/70"
+              }
+              style={{ fontFamily: "'Playfair Display', 'Noto Serif SC', serif" }}
+            >
+              {title || "做法记录"}
+            </h3>
           </div>
 
           <SecondaryButton
@@ -244,16 +241,13 @@ function RecipeForm({
   });
 
   const submit = handleSubmit((values) => {
-    const body = {
-      instructions: values.instructions.trim(),
-    };
+    const body = { instructions: values.instructions.trim() };
 
     if (recipe) {
       updateRecipe.mutate({ id: recipe.id, body }, { onSuccess });
-      return;
+    } else {
+      createRecipe.mutate(body, { onSuccess });
     }
-
-    createRecipe.mutate(body, { onSuccess });
   });
 
   const currentValue = watch("instructions");

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 10
+- **Total Sessions**: 11
 - **Last Active**: 2026-06-13
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~349 | Active |
+| `journal-1.md` | ~384 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-06-13 | 图片上传改进：HEIC支持、10MB限制、智能压缩 | `d0b3f2a`, `83ff3d1`, `d5d0023` | `main` |
 | 10 | 2026-06-13 | UI optimization: spacing, functionality, and design consistency | `88fe19d` | `main` |
 | 9 | 2026-06-13 | Recipe 代码简化：优化条件渲染和三元逻辑 | `b38c1fc` | `main` |
 | 8 | 2026-06-13 | Recipe 字段合并：实现 Markdown 支持的统一 instructions 字段 | `c45454e` | `main` |

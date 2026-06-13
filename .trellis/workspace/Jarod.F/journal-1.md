@@ -347,3 +347,38 @@ Implemented six UI improvements: moved enable/disable toggle to always-visible a
 ### Next Steps
 
 - None - task complete
+
+
+## Session 11: 图片上传改进：HEIC支持、10MB限制、智能压缩
+
+**Date**: 2026-06-13
+**Task**: 图片上传改进：HEIC支持、10MB限制、智能压缩
+**Branch**: `main`
+
+### Summary
+
+实现图片上传功能改进：后端支持HEIC自动转JPEG、文件大小限制提升至10MB、前端智能压缩（3MB/10MB阈值）、完整的压缩UI和用户提示、更新规范文档记录实现模式
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d0b3f2a` | (see git log) |
+| `83ff3d1` | (see git log) |
+| `d5d0023` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

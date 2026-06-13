@@ -6,8 +6,9 @@ import type { Dish, MealType } from "../api/types.ts";
 import { useDishVariants } from "../hooks/use-dish-variants.ts";
 import { useCreateMealRecord } from "../hooks/use-meal-records.ts";
 import { mealLabel } from "./meal-tag.tsx";
-import { Button, Card, ErrorBanner, Input, SecondaryButton, Select, Spinner } from "./ui.tsx";
+import { Button, ErrorBanner, Input, SecondaryButton, Select, Spinner } from "./ui.tsx";
 import { toLocalInputValue } from "../utils/date-formatting.ts";
+import { Modal } from "./modal.tsx";
 
 interface Props {
   dish: Dish;
@@ -79,13 +80,8 @@ export function MealRecordForm({
   });
 
   return (
-    <Card className="border-red-200 bg-red-50/45">
+    <Modal isOpen={true} onClose={onCancel} title={`记录已吃 - ${dish.name}`} size="md">
       <form onSubmit={submit} className="flex flex-col gap-3">
-        <div>
-          <p className="font-serif text-lg font-semibold text-slate-900">记录已吃</p>
-          <p className="mt-0.5 text-sm text-slate-500">{dish.name}</p>
-        </div>
-
         <div>
           <label
             htmlFor="meal-record-type"
@@ -195,7 +191,7 @@ export function MealRecordForm({
           </Button>
         </div>
       </form>
-    </Card>
+    </Modal>
   );
 }
 

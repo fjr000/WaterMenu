@@ -247,15 +247,13 @@ export function HomePage() {
         />
 
         {recordDish && (
-          <div className="mt-4">
-            <MealRecordForm
-              key={recordDish.id}
-              dish={recordDish}
-              defaultMealType={mealType}
-              onCancel={() => setRecordDish(null)}
-              onSuccess={handleRecordSuccess}
-            />
-          </div>
+          <MealRecordForm
+            key={recordDish.id}
+            dish={recordDish}
+            defaultMealType={mealType}
+            onCancel={() => setRecordDish(null)}
+            onSuccess={handleRecordSuccess}
+          />
         )}
 
         {recipeDish && (

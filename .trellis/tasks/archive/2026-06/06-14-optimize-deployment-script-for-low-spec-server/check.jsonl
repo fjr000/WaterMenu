@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/deployment.md", "reason": "验证部署配置符合规范，检查新增的内存限制和swap配置"}
+{"file": ".trellis/spec/guides/deployment-thinking-guide.md", "reason": "验证设计决策符合部署最佳实践"}

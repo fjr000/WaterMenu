@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/deployment.md", "reason": "部署规范和问题记录，包含现有部署流程、配置验证、故障排查"}
+{"file": ".trellis/spec/guides/deployment-thinking-guide.md", "reason": "部署相关的设计思考指南"}

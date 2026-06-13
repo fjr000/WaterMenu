@@ -14,23 +14,42 @@ Reference files:
 
 ## Query Patterns
 
-所有业务查询必须先解析当前用户所属 `workspaceId`，再把该字段加入查询条件。当前服务层的稳定模式是：
+所有业务查询必须带 `workspaceId` 条件进行数据隔离。当前 `workspaceId` 的获取方式是：
 
-1. `userId -> workspaceId`
-2. 创建时写入 `workspaceId`
-3. 列表/详情/更新/删除都加 `workspaceId`
-4. 跨 workspace 资源统一视为不存在或无权访问
+1. `AuthGuard` 在请求进入时将 `workspaceId` 写入 session（通过 `WorkspaceMember` 表查询）
+2. Controller 从 `request.session.workspaceId` 读取并传递给 service
+3. Service 直接使用传入的 `workspaceId`，不再自行查询数据库
+
+```typescript
+// Controller 层：从 session 传递 workspaceId
+@Get()
+list(@Req() request: SessionRequest, @Query() query: ListDto) {
+  return this.service.list(request.session.userId, request.session.workspaceId, query);
+}
+
+// Service 层：直接使用传入的 workspaceId
+async list(userId: string, workspaceId: string, query: ListDto) {
+  return this.prisma.dish.findMany({
+    where: { workspaceId },
+  });
+}
+```
+
+所有 SessionRequest 类型定义必须包含 `workspaceId`：
+
+```typescript
+type SessionRequest = Request & {
+  session: Request['session'] & {
+    userId: string;
+    workspaceId: string;
+  };
+};
+```
 
 Reference files:
-- `backend/src/dishes/dishes.service.ts`
-- `backend/src/meal-records/meal-records.service.ts`
-- `backend/src/dish-images/dish-images.service.ts`
-
-当前列表查询优先使用明确排序，而不是依赖数据库默认顺序。例如菜品按 `updatedAt`、`createdAt`、`id` 稳定排序。
-
-Reference files:
-- `backend/src/dishes/dishes.service.ts`
-- `backend/src/meal-records/meal-records.service.ts`
+- `backend/src/auth/auth.guard.ts`（WorkspaceMember 查询）
+- `backend/src/dishes/dishes.controller.ts`（session 传递）
+- `backend/src/dishes/dishes.service.ts`（直接使用）
 
 ## Migrations
 

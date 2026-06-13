@@ -9,6 +9,7 @@ import { MealRecordsService } from './meal-records.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -19,26 +20,26 @@ export class MealRecordsController {
 
   @Get()
   list(@Req() request: SessionRequest, @Query() query: ListMealRecordsQueryDto) {
-    return this.mealRecordsService.list(request.session.userId, query);
+    return this.mealRecordsService.list(request.session.userId, request.session.workspaceId, query);
   }
 
   @Post()
   create(@Req() request: SessionRequest, @Body() body: CreateMealRecordDto) {
-    return this.mealRecordsService.create(request.session.userId, body);
+    return this.mealRecordsService.create(request.session.userId, request.session.workspaceId, body);
   }
 
   @Get(':id')
   get(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.mealRecordsService.get(request.session.userId, id);
+    return this.mealRecordsService.get(request.session.userId, request.session.workspaceId, id);
   }
 
   @Patch(':id')
   update(@Req() request: SessionRequest, @Param('id') id: string, @Body() body: UpdateMealRecordDto) {
-    return this.mealRecordsService.update(request.session.userId, id, body);
+    return this.mealRecordsService.update(request.session.userId, request.session.workspaceId, id, body);
   }
 
   @Delete(':id')
   delete(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.mealRecordsService.delete(request.session.userId, id);
+    return this.mealRecordsService.delete(request.session.userId, request.session.workspaceId, id);
   }
 }

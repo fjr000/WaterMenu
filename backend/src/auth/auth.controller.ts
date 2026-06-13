@@ -7,6 +7,8 @@ import { getSessionCookieName, getSessionCookieOptions } from '../session/sessio
 
 type SessionRequest = Request & {
   session: Request['session'] & {
+    userId?: string;
+    workspaceId?: string;
     regenerate: (callback: (error?: Error) => void) => void;
     destroy: (callback: (error?: Error) => void) => void;
   };
@@ -28,6 +30,7 @@ export class AuthController {
           return;
         }
         request.session.userId = me.user.id;
+        request.session.workspaceId = me.workspace.id;
         resolve();
       });
     });
@@ -60,6 +63,6 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard)
   async me(@Req() request: SessionRequest) {
-    return this.authService.getMe(request.session.userId!);
+    return this.authService.getMe(request.session.userId!, request.session.workspaceId);
   }
 }

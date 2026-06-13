@@ -22,6 +22,7 @@ import { DishImagesService } from './dish-images.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -34,7 +35,7 @@ export class DishImagesController {
 
   @Get('dishes/:dishId/images')
   list(@Req() request: SessionRequest, @Param('dishId') dishId: string) {
-    return this.dishImagesService.list(request.session.userId, dishId);
+    return this.dishImagesService.list(request.session.userId, request.session.workspaceId, dishId);
   }
 
   @Post('dishes/:dishId/images')
@@ -49,17 +50,17 @@ export class DishImagesController {
     @Param('dishId') dishId: string,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.dishImagesService.upload(request.session.userId, dishId, file);
+    return this.dishImagesService.upload(request.session.userId, request.session.workspaceId, dishId, file);
   }
 
   @Patch('dish-images/:id/cover')
   setCover(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.dishImagesService.setCover(request.session.userId, id);
+    return this.dishImagesService.setCover(request.session.userId, request.session.workspaceId, id);
   }
 
   @Delete('dish-images/:id')
   delete(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.dishImagesService.delete(request.session.userId, id);
+    return this.dishImagesService.delete(request.session.userId, request.session.workspaceId, id);
   }
 
   @Get('dish-images/:id/file')
@@ -68,7 +69,7 @@ export class DishImagesController {
     @Param('id') id: string,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const file = await this.dishImagesService.getFile(request.session.userId, id);
+    const file = await this.dishImagesService.getFile(request.session.userId, request.session.workspaceId, id);
 
     response.setHeader('Content-Type', file.mimeType);
     response.setHeader('Content-Length', String(file.size));

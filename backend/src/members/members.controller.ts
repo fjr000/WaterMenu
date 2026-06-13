@@ -6,6 +6,7 @@ import { MembersService } from './members.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -16,6 +17,6 @@ export class MembersController {
 
   @Get()
   list(@Req() request: SessionRequest) {
-    return this.membersService.list(request.session.userId);
+    return this.membersService.list(request.session.userId, request.session.workspaceId);
   }
 }

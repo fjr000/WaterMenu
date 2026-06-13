@@ -16,16 +16,17 @@ export class AuthGuard implements CanActivate {
     }
 
     if (!session.workspaceId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: session.userId },
+      // Get user's first workspace
+      const membership = await this.prisma.workspaceMember.findFirst({
+        where: { userId: session.userId },
         select: { workspaceId: true },
       });
 
-      if (!user) {
-        throw new UnauthorizedException();
+      if (!membership) {
+        throw new UnauthorizedException('User is not a member of any workspace');
       }
 
-      session.workspaceId = user.workspaceId;
+      session.workspaceId = membership.workspaceId;
     }
 
     return true;

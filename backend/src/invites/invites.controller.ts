@@ -7,6 +7,7 @@ import { InvitesService } from './invites.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId?: string;
+    workspaceId?: string;
     regenerate: (callback: (error?: Error) => void) => void;
   };
 };
@@ -18,20 +19,20 @@ export class InvitesController {
   @Get()
   @UseGuards(AuthGuard)
   list(@Req() request: SessionRequest) {
-    return this.invitesService.list(request.session.userId!);
+    return this.invitesService.list(request.session.userId!, request.session.workspaceId!);
   }
 
   @Post()
   @UseGuards(AuthGuard)
   create(@Req() request: SessionRequest) {
-    return this.invitesService.create(request.session.userId!, this.getOrigin(request));
+    return this.invitesService.create(request.session.userId!, request.session.workspaceId!, this.getOrigin(request));
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard)
   @HttpCode(200)
   revoke(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.invitesService.revoke(request.session.userId!, id);
+    return this.invitesService.revoke(request.session.userId!, request.session.workspaceId!, id);
   }
 
   @Get(':token/preview')
@@ -55,6 +56,7 @@ export class InvitesController {
           return;
         }
         request.session.userId = me.user.id;
+        request.session.workspaceId = me.workspace.id;
         resolve();
       });
     });

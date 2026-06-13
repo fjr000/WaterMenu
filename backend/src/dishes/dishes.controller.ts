@@ -9,6 +9,7 @@ import { DishesService } from './dishes.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -19,21 +20,21 @@ export class DishesController {
 
   @Get()
   list(@Req() request: SessionRequest, @Query() query: ListDishesQueryDto) {
-    return this.dishesService.list(request.session.userId, query);
+    return this.dishesService.list(request.session.userId, request.session.workspaceId, query);
   }
 
   @Post()
   create(@Req() request: SessionRequest, @Body() body: CreateDishDto) {
-    return this.dishesService.create(request.session.userId, body);
+    return this.dishesService.create(request.session.userId, request.session.workspaceId, body);
   }
 
   @Get(':id')
   get(@Req() request: SessionRequest, @Param('id') id: string) {
-    return this.dishesService.get(request.session.userId, id);
+    return this.dishesService.get(request.session.userId, request.session.workspaceId, id);
   }
 
   @Patch(':id')
   update(@Req() request: SessionRequest, @Param('id') id: string, @Body() body: UpdateDishDto) {
-    return this.dishesService.update(request.session.userId, id, body);
+    return this.dishesService.update(request.session.userId, request.session.workspaceId, id, body);
   }
 }

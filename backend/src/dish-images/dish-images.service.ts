@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
@@ -38,8 +37,7 @@ export class DishImagesService {
     this.uploadsRoot = path.resolve(configService.get<string>('UPLOADS_DIR') ?? 'uploads');
   }
 
-  async list(userId: string, dishId: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async list(userId: string, workspaceId: string, dishId: string) {
     await this.ensureDish(workspaceId, dishId);
 
     const images = await this.prisma.dishImage.findMany({
@@ -50,7 +48,7 @@ export class DishImagesService {
     return images.map((image) => this.toResponse(image));
   }
 
-  async upload(userId: string, dishId: string, file?: Express.Multer.File) {
+  async upload(userId: string, workspaceId: string, dishId: string, file?: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('缺少图片文件');
     }
@@ -63,7 +61,6 @@ export class DishImagesService {
       await this.processImageBuffer(file);
 
     const dimensions = this.readDimensions(processedBuffer, processedMimeType);
-    const workspaceId = await this.getWorkspaceId(userId);
     await this.ensureDish(workspaceId, dishId);
 
     const extension = this.getExtension(dimensions.mimeType);
@@ -102,8 +99,7 @@ export class DishImagesService {
     }
   }
 
-  async setCover(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async setCover(userId: string, workspaceId: string, id: string) {
     const image = await this.findImage(workspaceId, id);
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -121,8 +117,7 @@ export class DishImagesService {
     return this.toResponse(updated);
   }
 
-  async delete(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async delete(userId: string, workspaceId: string, id: string) {
     const image = await this.findImage(workspaceId, id);
     const absolutePath = this.getAbsolutePath(image.storageKey);
 
@@ -149,8 +144,7 @@ export class DishImagesService {
     return { ok: true };
   }
 
-  async getFile(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async getFile(userId: string, workspaceId: string, id: string) {
     const image = await this.findImage(workspaceId, id);
     const absolutePath = this.getAbsolutePath(image.storageKey);
 
@@ -220,19 +214,6 @@ export class DishImagesService {
     }
 
     return image;
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 
   private getAbsolutePath(storageKey: string) {

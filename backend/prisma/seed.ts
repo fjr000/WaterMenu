@@ -22,10 +22,27 @@ async function main() {
 
   const passwordHash = await argon2.hash(password);
 
-  await prisma.user.upsert({
+  // Create or update user
+  const user = await prisma.user.upsert({
     where: { email },
-    update: { name, passwordHash, workspaceId: workspace.id, role: UserRole.ADMIN },
-    create: { email, name, passwordHash, workspaceId: workspace.id, role: UserRole.ADMIN },
+    update: { name, passwordHash },
+    create: { email, name, passwordHash },
+  });
+
+  // Create or update workspace membership
+  await prisma.workspaceMember.upsert({
+    where: {
+      userId_workspaceId: {
+        userId: user.id,
+        workspaceId: workspace.id,
+      },
+    },
+    update: { role: UserRole.ADMIN },
+    create: {
+      userId: user.id,
+      workspaceId: workspace.id,
+      role: UserRole.ADMIN,
+    },
   });
 }
 

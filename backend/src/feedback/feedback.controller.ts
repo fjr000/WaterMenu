@@ -7,6 +7,7 @@ import { FeedbackService } from './feedback.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -17,6 +18,6 @@ export class FeedbackController {
 
   @Post()
   upsert(@Req() request: SessionRequest, @Body() body: UpsertFeedbackDto) {
-    return this.feedbackService.upsert(request.session.userId, body);
+    return this.feedbackService.upsert(request.session.userId, request.session.workspaceId, body);
   }
 }

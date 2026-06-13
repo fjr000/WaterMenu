@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMealRecordDto } from './dto/create-meal-record.dto';
@@ -44,8 +44,7 @@ function getMealRecordInclude(workspaceId: string): Prisma.MealRecordInclude {
 export class MealRecordsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string, query: ListMealRecordsQueryDto = {}) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async list(userId: string, workspaceId: string, query: ListMealRecordsQueryDto = {}) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const where: Prisma.MealRecordWhereInput = { workspaceId };
@@ -100,8 +99,7 @@ export class MealRecordsService {
     return { items, total, page, pageSize };
   }
 
-  async create(userId: string, body: CreateMealRecordDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async create(userId: string, workspaceId: string, body: CreateMealRecordDto) {
     await this.assertDishInWorkspace(workspaceId, body.dishId);
     await this.assertVariantInWorkspace(workspaceId, body.dishId, body.variantId);
 
@@ -118,8 +116,7 @@ export class MealRecordsService {
     });
   }
 
-  async get(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async get(userId: string, workspaceId: string, id: string) {
     const mealRecord = await this.prisma.mealRecord.findFirst({
       where: { id, workspaceId },
       include: getMealRecordInclude(workspaceId),
@@ -132,8 +129,7 @@ export class MealRecordsService {
     return mealRecord;
   }
 
-  async update(userId: string, id: string, body: UpdateMealRecordDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async update(userId: string, workspaceId: string, id: string, body: UpdateMealRecordDto) {
     const mealRecord = await this.prisma.mealRecord.findFirst({
       where: { id, workspaceId },
       select: { id: true },
@@ -154,8 +150,7 @@ export class MealRecordsService {
     });
   }
 
-  async delete(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async delete(userId: string, workspaceId: string, id: string) {
     const mealRecord = await this.prisma.mealRecord.findFirst({
       where: { id, workspaceId },
       select: { id: true },
@@ -194,18 +189,5 @@ export class MealRecordsService {
     if (!variant) {
       throw new NotFoundException();
     }
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 }

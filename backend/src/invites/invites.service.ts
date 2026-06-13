@@ -22,12 +22,12 @@ type InviteReason = 'EXPIRED' | 'USED' | 'REVOKED' | 'UNAVAILABLE';
 export class InvitesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string) {
-    const currentUser = await this.requireAdmin(userId);
+  async list(userId: string, workspaceId: string) {
+    await this.requireAdmin(userId, workspaceId);
     const now = new Date();
 
     return this.prisma.workspaceInvite.findMany({
-      where: this.pendingInviteWhere(currentUser.workspaceId, now),
+      where: this.pendingInviteWhere(workspaceId, now),
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: {
         id: true,
@@ -37,11 +37,11 @@ export class InvitesService {
     });
   }
 
-  async create(userId: string, origin: string) {
-    const currentUser = await this.requireAdmin(userId);
+  async create(userId: string, workspaceId: string, origin: string) {
+    await this.requireAdmin(userId, workspaceId);
     const now = new Date();
     const pendingCount = await this.prisma.workspaceInvite.count({
-      where: this.pendingInviteWhere(currentUser.workspaceId, now),
+      where: this.pendingInviteWhere(workspaceId, now),
     });
 
     if (pendingCount >= MAX_PENDING_INVITES) {
@@ -53,7 +53,7 @@ export class InvitesService {
     const expiresAt = new Date(now.getTime() + INVITE_TTL_MS);
     const invite = await this.prisma.workspaceInvite.create({
       data: {
-        workspaceId: currentUser.workspaceId,
+        workspaceId,
         createdByUserId: userId,
         tokenHash,
         expiresAt,
@@ -71,12 +71,12 @@ export class InvitesService {
     };
   }
 
-  async revoke(userId: string, id: string) {
-    const currentUser = await this.requireAdmin(userId);
+  async revoke(userId: string, workspaceId: string, id: string) {
+    await this.requireAdmin(userId, workspaceId);
     const invite = await this.prisma.workspaceInvite.findFirst({
       where: {
         id,
-        ...this.pendingInviteWhere(currentUser.workspaceId),
+        ...this.pendingInviteWhere(workspaceId),
       },
       select: { id: true },
     });
@@ -140,13 +140,19 @@ export class InvitesService {
 
         const user = await tx.user.create({
           data: {
-            workspaceId: invite.workspaceId,
             email,
             name,
             passwordHash,
+          },
+        });
+
+        // Create workspace membership
+        await tx.workspaceMember.create({
+          data: {
+            userId: user.id,
+            workspaceId: invite.workspaceId,
             role: UserRole.MEMBER,
           },
-          include: { workspace: true },
         });
 
         const usedAt = new Date();
@@ -173,11 +179,11 @@ export class InvitesService {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role,
+            role: UserRole.MEMBER,
           },
           workspace: {
-            id: user.workspace.id,
-            name: user.workspace.name,
+            id: invite.workspace.id,
+            name: invite.workspace.name,
           },
         };
       });
@@ -199,21 +205,24 @@ export class InvitesService {
     };
   }
 
-  private async requireAdmin(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true, role: true },
+  private async requireAdmin(userId: string, workspaceId: string) {
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: {
+        userId_workspaceId: {
+          userId,
+          workspaceId,
+        },
+      },
+      select: { role: true },
     });
 
-    if (!user) {
+    if (!membership) {
       throw new UnauthorizedException();
     }
 
-    if (user.role !== UserRole.ADMIN) {
+    if (membership.role !== UserRole.ADMIN) {
       throw new ForbiddenException();
     }
-
-    return user;
   }
 
   private async findInviteByToken(token: string) {

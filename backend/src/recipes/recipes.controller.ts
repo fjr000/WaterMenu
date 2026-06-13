@@ -8,6 +8,7 @@ import { RecipesService } from './recipes.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -18,16 +19,16 @@ export class RecipesController {
 
   @Get('dishes/:dishId/recipes')
   list(@Req() request: SessionRequest, @Param('dishId') dishId: string) {
-    return this.recipesService.list(request.session.userId, dishId);
+    return this.recipesService.list(request.session.userId, request.session.workspaceId, dishId);
   }
 
   @Post('dishes/:dishId/recipes')
   create(@Req() request: SessionRequest, @Param('dishId') dishId: string, @Body() body: CreateRecipeDto) {
-    return this.recipesService.create(request.session.userId, dishId, body);
+    return this.recipesService.create(request.session.userId, request.session.workspaceId, dishId, body);
   }
 
   @Patch('recipes/:id')
   update(@Req() request: SessionRequest, @Param('id') id: string, @Body() body: UpdateRecipeDto) {
-    return this.recipesService.update(request.session.userId, id, body);
+    return this.recipesService.update(request.session.userId, request.session.workspaceId, id, body);
   }
 }

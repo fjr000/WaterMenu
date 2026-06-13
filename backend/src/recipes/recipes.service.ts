@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -7,8 +7,7 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 export class RecipesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string, dishId: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async list(userId: string, workspaceId: string, dishId: string) {
     await this.assertDishInWorkspace(workspaceId, dishId);
 
     return this.prisma.recipe.findMany({
@@ -17,8 +16,7 @@ export class RecipesService {
     });
   }
 
-  async create(userId: string, dishId: string, body: CreateRecipeDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async create(userId: string, workspaceId: string, dishId: string, body: CreateRecipeDto) {
     await this.assertDishInWorkspace(workspaceId, dishId);
 
     const instructions = this.trimRequired(body.instructions);
@@ -32,8 +30,7 @@ export class RecipesService {
     });
   }
 
-  async update(userId: string, id: string, body: UpdateRecipeDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async update(userId: string, workspaceId: string, id: string, body: UpdateRecipeDto) {
     const recipe = await this.prisma.recipe.findFirst({
       where: { id, workspaceId },
       select: { id: true },
@@ -62,19 +59,6 @@ export class RecipesService {
     if (!dish) {
       throw new NotFoundException();
     }
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 
   private trimRequired(value: string) {

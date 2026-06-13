@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FeedbackRating, MealType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecommendationQueryDto } from './dto/recommendation-query.dto';
@@ -43,24 +43,23 @@ type ScoredCandidate = {
 export class RecommendationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recommend(userId: string, body: RecommendationQueryDto) {
-    const candidates = await this.getScoredCandidates(userId, body);
+  async recommend(userId: string, workspaceId: string, body: RecommendationQueryDto) {
+    const candidates = await this.getScoredCandidates(userId, workspaceId, body);
 
     return {
       items: candidates.slice(0, RECOMMENDATION_LIMIT),
     };
   }
 
-  async pickBlindBox(userId: string, body: RecommendationQueryDto) {
-    const candidates = await this.getScoredCandidates(userId, body);
+  async pickBlindBox(userId: string, workspaceId: string, body: RecommendationQueryDto) {
+    const candidates = await this.getScoredCandidates(userId, workspaceId, body);
 
     return {
       item: this.pickWeighted(candidates),
     };
   }
 
-  private async getScoredCandidates(userId: string, body: RecommendationQueryDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  private async getScoredCandidates(userId: string, workspaceId: string, body: RecommendationQueryDto) {
     const dishes = await this.findActiveDishes(workspaceId, body.mealType);
 
     if (dishes.length === 0) {
@@ -230,18 +229,5 @@ export class RecommendationsService {
     }
 
     return candidates[candidates.length - 1];
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 }

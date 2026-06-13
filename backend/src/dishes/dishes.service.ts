@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { FeedbackRating, MealType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDishDto } from './dto/create-dish.dto';
@@ -34,8 +34,7 @@ type DishWithStats = Prisma.DishGetPayload<{ include: ReturnType<typeof dishIncl
 export class DishesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string, query: ListDishesQueryDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async list(userId: string, workspaceId: string, query: ListDishesQueryDto) {
     const where: Prisma.DishWhereInput = {
       workspaceId,
     };
@@ -64,9 +63,7 @@ export class DishesService {
     return dishes.map((dish) => this.withCoverImage(dish));
   }
 
-  async create(userId: string, body: CreateDishDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
-
+  async create(userId: string, workspaceId: string, body: CreateDishDto) {
     try {
       const dish = await this.prisma.dish.create({
         data: {
@@ -85,8 +82,7 @@ export class DishesService {
     }
   }
 
-  async get(userId: string, id: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async get(userId: string, workspaceId: string, id: string) {
     const dish = await this.prisma.dish.findFirst({
       where: {
         id,
@@ -102,8 +98,7 @@ export class DishesService {
     return this.withCoverImage(dish);
   }
 
-  async update(userId: string, id: string, body: UpdateDishDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async update(userId: string, workspaceId: string, id: string, body: UpdateDishDto) {
     const dish = await this.prisma.dish.findFirst({
       where: {
         id,
@@ -132,19 +127,6 @@ export class DishesService {
     } catch (error) {
       this.handlePrismaError(error);
     }
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 
   private withCoverImage(dish: DishWithStats) {

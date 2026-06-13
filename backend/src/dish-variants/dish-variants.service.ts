@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDishVariantDto } from './dto/create-dish-variant.dto';
@@ -8,8 +8,7 @@ import { UpdateDishVariantDto } from './dto/update-dish-variant.dto';
 export class DishVariantsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string, dishId: string) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async list(userId: string, workspaceId: string, dishId: string) {
     await this.assertDishInWorkspace(workspaceId, dishId);
 
     return this.prisma.dishVariant.findMany({
@@ -18,8 +17,7 @@ export class DishVariantsService {
     });
   }
 
-  async create(userId: string, dishId: string, body: CreateDishVariantDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async create(userId: string, workspaceId: string, dishId: string, body: CreateDishVariantDto) {
     await this.assertDishInWorkspace(workspaceId, dishId);
 
     try {
@@ -38,8 +36,7 @@ export class DishVariantsService {
     }
   }
 
-  async update(userId: string, id: string, body: UpdateDishVariantDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async update(userId: string, workspaceId: string, id: string, body: UpdateDishVariantDto) {
     const variant = await this.prisma.dishVariant.findFirst({
       where: { id, workspaceId },
       select: { id: true },
@@ -73,19 +70,6 @@ export class DishVariantsService {
     if (!dish) {
       throw new NotFoundException();
     }
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 
   private trimRequired(value: string) {

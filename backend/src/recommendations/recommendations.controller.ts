@@ -7,6 +7,7 @@ import { RecommendationsService } from './recommendations.service';
 type SessionRequest = Request & {
   session: Request['session'] & {
     userId: string;
+    workspaceId: string;
   };
 };
 
@@ -17,11 +18,11 @@ export class RecommendationsController {
 
   @Post('recommendations')
   recommend(@Req() request: SessionRequest, @Body() body: RecommendationQueryDto) {
-    return this.recommendationsService.recommend(request.session.userId, body);
+    return this.recommendationsService.recommend(request.session.userId, request.session.workspaceId, body);
   }
 
   @Post('blind-box')
   pickBlindBox(@Req() request: SessionRequest, @Body() body: RecommendationQueryDto) {
-    return this.recommendationsService.pickBlindBox(request.session.userId, body);
+    return this.recommendationsService.pickBlindBox(request.session.userId, request.session.workspaceId, body);
   }
 }

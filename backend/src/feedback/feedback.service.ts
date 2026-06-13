@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpsertFeedbackDto } from './dto/upsert-feedback.dto';
 
@@ -6,8 +6,7 @@ import { UpsertFeedbackDto } from './dto/upsert-feedback.dto';
 export class FeedbackService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async upsert(userId: string, body: UpsertFeedbackDto) {
-    const workspaceId = await this.getWorkspaceId(userId);
+  async upsert(userId: string, workspaceId: string, body: UpsertFeedbackDto) {
     const mealRecord = await this.prisma.mealRecord.findFirst({
       where: { id: body.mealRecordId, workspaceId },
       select: { id: true },
@@ -36,18 +35,5 @@ export class FeedbackService {
         note: body.note ?? null,
       },
     });
-  }
-
-  private async getWorkspaceId(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { workspaceId: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-
-    return user.workspaceId;
   }
 }

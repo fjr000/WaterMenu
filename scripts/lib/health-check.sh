@@ -1,10 +1,10 @@
 #!/bin/bash
 # Health check utilities for deployment validation
 
-# Source logger
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source logger (use local variable to avoid polluting parent SCRIPT_DIR)
+_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/logger.sh
-source "${SCRIPT_DIR}/logger.sh"
+source "${_LIB_DIR}/logger.sh"
 
 # Health check configuration
 HEALTH_CHECK_RETRIES="${HEALTH_CHECK_RETRIES:-3}"

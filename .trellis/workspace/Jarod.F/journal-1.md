@@ -281,3 +281,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 9: Recipe 代码简化：优化条件渲染和三元逻辑
+
+**Date**: 2026-06-13
+**Task**: Recipe 代码简化：优化条件渲染和三元逻辑
+**Branch**: `main`
+
+### Summary
+
+对 Recipe 实现进行代码简化：RecipeCard 合并重复 h3 元素，RecipeForm 使用对称 if/else，RecipesService 提取三元运算符。净减少 4 行代码，提升可读性，无功能变更。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b38c1fc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

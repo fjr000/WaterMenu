@@ -26,15 +26,17 @@ COPY backend/package.json backend/package.json
 # Install production dependencies only
 RUN pnpm install --frozen-lockfile --prod
 
+# Copy generated Prisma Client from build stage
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy built backend
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/backend/prisma ./backend/prisma
 COPY --from=build /app/backend/prisma.config.ts ./backend/prisma.config.ts
 COPY --from=build /app/backend/package.json ./backend/package.json
 
-# Generate Prisma Client in production environment
 WORKDIR /app/backend
-RUN pnpm prisma:generate
-
 EXPOSE 3000
 
 CMD ["sh", "-c", "pnpm prisma:deploy && pnpm start"]

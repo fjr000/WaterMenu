@@ -156,6 +156,152 @@ const handleToggleDish = (dishId: string) => {
 </button>
 ```
 
+## Modal Pattern
+
+### Convention: Use Modal Base Component
+
+**What**: 所有弹窗交互统一使用 `Modal` 基础组件，而不是自己实现 Portal 和遮罩层。
+
+**Why**: 
+- 统一的 UX（ESC 键、遮罩层点击、关闭按钮）
+- 自动处理滚动锁定、焦点管理、无障碍支持
+- 避免重复实现 Portal、滚动锁定、键盘监听等复杂逻辑
+
+**Example**:
+```tsx
+import { Modal } from "./components/modal";
+
+function MyFeatureModal({ isOpen, onClose, data }) {
+  return (
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose}
+      title="功能标题"
+      size="md"  // sm | md | lg
+    >
+      {/* 你的内容 */}
+    </Modal>
+  );
+}
+```
+
+**Modal Sizes**:
+- `sm` (448px): 小型确认对话框、简短提示
+- `md` (672px): 表单和列表（默认尺寸）
+- `lg` (896px): 需要更多空间的内容（如图片网格）
+
+**Features Automatically Provided**:
+- ✅ Portal rendering to `document.body`
+- ✅ Background overlay with scroll lock (`useScrollLock`)
+- ✅ ESC key to close
+- ✅ Click backdrop to close
+- ✅ Close button in header
+- ✅ Focus management (focus trap + restore)
+- ✅ ARIA attributes (`role="dialog"`, `aria-modal="true"`)
+- ✅ Smooth fade-in/scale animation
+- ✅ Responsive sizing (mobile/desktop)
+- ✅ Internal scrolling when content exceeds viewport
+
+**Reference files**:
+- `frontend/src/components/modal.tsx` - Modal 基础组件
+- `frontend/src/hooks/use-scroll-lock.ts` - 滚动锁定 hook
+- `frontend/src/components/blind-box-result-modal.tsx` - 使用示例
+
+### Pattern: Modal for Operation Feedback
+
+**Problem**: 操作触发点与结果反馈区域不在同一视口，用户看不到操作结果。
+
+**Solution**: 当操作结果需要用户关注时（如抽奖、表单、管理界面），使用 Modal 而不是 inline 展开。
+
+**When to Use Modal**:
+- ✅ 操作结果需要用户立即看到（如盲盒结果、提交反馈）
+- ✅ 管理界面有操作区域（如图库上传、版本管理）
+- ✅ 表单提交（如记录已吃、创建内容）
+- ✅ 确认对话框（删除、重要操作）
+
+**When NOT to Use Modal**:
+- ❌ 简单的状态切换（如启用/停用开关）
+- ❌ 纯展示内容且无操作（如查看详情，可考虑 inline 展开）
+- ❌ 频繁切换的内容（如 Tab 切换）
+
+**Example**:
+```tsx
+// Good - 操作结果用 Modal
+const [blindBoxOpen, setBlindBoxOpen] = useState(false);
+
+useEffect(() => {
+  if (blindBoxMutation.isSuccess && blindBoxMutation.data?.item) {
+    setBlindBoxOpen(true);  // 自动打开 Modal
+  }
+}, [blindBoxMutation.isSuccess]);
+
+<Modal isOpen={blindBoxOpen} onClose={() => setBlindBoxOpen(false)}>
+  {/* 盲盒结果立即在视口中央显示 */}
+</Modal>
+
+// Bad - inline 展开在页面底部
+{blindBoxResult && (
+  <div className="mt-4">
+    {/* 用户需要滚动才能看到 */}
+  </div>
+)}
+```
+
+**Why**: 
+- 用户操作后立即看到反馈，无需滚动
+- Modal 关闭后原页面位置不变，用户可继续操作
+- 统一的交互模式，降低学习成本
+
+**Reference files**:
+- `frontend/src/components/blind-box-result-modal.tsx` - 盲盒结果 Modal
+- `frontend/src/components/dish-image-panel.tsx` - 图库管理 Modal
+- `frontend/src/components/meal-record-form.tsx` - 记录表单 Modal
+
+### Don't: Implement Portal and Overlay Manually
+
+**Problem**:
+```tsx
+// Don't do this
+function MyModal({ isOpen, onClose }) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50" onClick={onClose}>
+      <div className="fixed inset-0 flex items-center justify-center">
+        {/* 内容 */}
+      </div>
+    </div>,
+    document.body
+  );
+}
+```
+
+**Why it's bad**: 
+- 重复实现 Portal、滚动锁定、ESC 键监听
+- 容易遗漏焦点管理、ARIA 属性等无障碍支持
+- 多个 Modal 同时打开时滚动锁定可能冲突
+
+**Instead**:
+```tsx
+// Do this - 使用 Modal 基础组件
+import { Modal } from "./components/modal";
+
+function MyModal({ isOpen, onClose }) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="标题">
+      {/* 内容 */}
+    </Modal>
+  );
+}
+```
+
 ## Common Mistakes
 
 ### Don't: 在组件里直接写请求逻辑
